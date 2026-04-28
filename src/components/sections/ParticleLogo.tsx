@@ -13,7 +13,7 @@ interface ParticleData {
   colors: Float32Array;
 }
 
-async function sampleImage(url: string, sampleStep = 2, alphaThreshold = 80): Promise<ParticleData> {
+async function sampleImage(url: string, sampleStep = 1, alphaThreshold = 80): Promise<ParticleData> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -41,7 +41,7 @@ async function sampleImage(url: string, sampleStep = 2, alphaThreshold = 80): Pr
           // Centered, flipped Y, slight Z noise
           const wx = (x - W / 2) * scale;
           const wy = -(y - H / 2) * scale;
-          const wz = (Math.random() - 0.5) * 0.15;
+          const wz = (Math.random() - 0.5) * 0.04;
 
           positions.push(wx, wy, wz);
 
@@ -90,9 +90,9 @@ function ParticleField({ data }: { data: ParticleData }) {
     mouse.current.x = (pointer.x * viewport.width)  / 2;
     mouse.current.y = (pointer.y * viewport.height) / 2;
 
-    const repulseRadius = 1.0;
-    const repulseStrength = 0.04;
-    const springStrength = 0.04;
+    const repulseRadius = 1.3;
+    const repulseStrength = 0.07;
+    const springStrength = 0.05;
     const damping = 0.88;
 
     for (let i = 0; i < arr.length; i += 3) {
@@ -100,9 +100,9 @@ function ParticleField({ data }: { data: ParticleData }) {
       const ty = target[i + 1];
       const tz = target[i + 2];
 
-      // Idle breathing — subtle organic motion
-      const idleX = Math.sin(t * 0.6 + tx * 1.5) * 0.015;
-      const idleY = Math.cos(t * 0.5 + ty * 1.5) * 0.015;
+      // Idle breathing — very subtle, only visible on close inspection
+      const idleX = Math.sin(t * 0.6 + tx * 1.5) * 0.003;
+      const idleY = Math.cos(t * 0.5 + ty * 1.5) * 0.003;
 
       const targetX = tx + idleX;
       const targetY = ty + idleY;
@@ -158,13 +158,12 @@ function ParticleField({ data }: { data: ParticleData }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.045}
+        size={0.028}
         vertexColors
         transparent
         opacity={0.95}
         sizeAttenuation
         depthWrite={false}
-        blending={THREE.AdditiveBlending}
       />
     </points>
   );
