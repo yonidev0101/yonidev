@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { ArrowRight, Code2, Database, Cloud } from "lucide-react";
 import { RadialBlob, OrganicShape } from "@/components/shared/BackgroundDeco";
+
+const ParticleLogo = dynamic(() => import("./ParticleLogo"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const floatingCards = [
   {
@@ -128,25 +133,9 @@ export default function Hero() {
               {/* Soft glow behind logo */}
               <div className="absolute inset-[15%] rounded-full bg-brand-500/10 blur-3xl" />
 
-              {/* Platform / pedestal */}
-              <div
-                className="absolute bottom-[18%] left-1/2 -translate-x-1/2 w-[55%] h-10 rounded-full"
-                style={{
-                  background: "linear-gradient(180deg, #e2ecff 0%, #c8dbff 100%)",
-                  boxShadow: "0 20px 50px rgba(43,127,255,0.2)",
-                }}
-              />
-
-              {/* Y Logo */}
-              <div className="absolute inset-0 flex items-center justify-center pb-6 float-slow">
-                <Image
-                  src="/logo/y-logo.png"
-                  alt="YoniDev Y logo"
-                  width={260}
-                  height={300}
-                  className="object-contain drop-shadow-[0_24px_48px_rgba(43,127,255,0.25)]"
-                  priority
-                />
+              {/* Particle Y Logo — interactive 3D */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ParticleLogo />
               </div>
 
               {/* Floating icon cards */}
