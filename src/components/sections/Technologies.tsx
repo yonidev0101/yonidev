@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import * as Si from "react-icons/si";
 import { technologies } from "@/data/technologies";
+import { RadialBlob } from "@/components/shared/BackgroundDeco";
 
 type SiIconKey = keyof typeof Si;
 
@@ -20,8 +21,10 @@ export default function Technologies() {
   const items = [...technologies, ...technologies];
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container">
+    <section className="relative py-16 bg-white overflow-hidden">
+      <RadialBlob className="-top-24 left-1/4" size={380} opacity={0.04} />
+
+      <div className="container relative">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

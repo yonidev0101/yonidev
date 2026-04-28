@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, Code2, Database, Cloud } from "lucide-react";
+import { RadialBlob, OrganicShape } from "@/components/shared/BackgroundDeco";
 
 const floatingCards = [
   {
@@ -51,6 +52,11 @@ export default function Hero() {
           backgroundSize: "32px 32px",
         }}
       />
+
+      {/* Soft blue blobs that bleed into next section */}
+      <RadialBlob className="-bottom-32 -right-24" size={520} opacity={0.07} />
+      <RadialBlob className="top-1/4 -left-32" size={380} opacity={0.05} />
+      <OrganicShape className="-bottom-40 -right-32 w-[600px] h-[600px]" opacity={0.4} />
 
       <div className="container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-6 items-center py-16 lg:py-24">
