@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Code2, Sparkles, Bot, Plug } from "lucide-react";
 import { services } from "@/data/services";
+import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
 
 const iconMap: Record<string, React.ElementType> = {
   Code2, Sparkles, Bot, Plug,
@@ -10,8 +11,12 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function Services() {
   return (
-    <section className="py-24 bg-bg-soft">
-      <div className="container">
+    <section className="relative py-24 bg-bg-soft overflow-hidden">
+      <DotGrid opacity={0.025} size={28} />
+      <RadialBlob className="-top-40 -left-40" size={500} opacity={0.06} />
+      <RadialBlob className="-bottom-32 -right-20" size={420} opacity={0.05} />
+
+      <div className="container relative">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

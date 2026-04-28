@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { featuredProjects } from "@/data/projects";
+import { RadialBlob, FlowingCurves } from "@/components/shared/BackgroundDeco";
 
 export default function FeaturedProjects() {
   const [current, setCurrent] = useState(0);
@@ -15,25 +16,9 @@ export default function FeaturedProjects() {
 
   return (
     <section className="relative py-24 bg-white overflow-hidden">
-      {/* Subtle flowing curves background */}
-      <svg
-        className="absolute left-0 bottom-10 w-[55%] h-[280px] pointer-events-none opacity-60"
-        viewBox="0 0 800 280"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <defs>
-          <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"  stopColor="#2B7FFF" stopOpacity="0" />
-            <stop offset="50%" stopColor="#2B7FFF" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#2B7FFF" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d="M0,200 C200,140 400,260 600,180 S 900,200 900,200" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
-        <path d="M0,220 C200,160 400,280 600,200 S 900,220 900,220" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
-        <path d="M0,240 C200,180 400,300 600,220 S 900,240 900,240" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
-        <path d="M0,260 C200,200 400,320 600,240 S 900,260 900,260" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
-      </svg>
+      <FlowingCurves className="left-0 bottom-10 w-[55%] h-[280px]" opacity={0.5} />
+      <RadialBlob className="-top-32 -right-20" size={460} opacity={0.05} />
+      <RadialBlob className="bottom-10 left-1/3" size={320} opacity={0.04} />
 
       <div className="container relative">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-12 lg:gap-10 items-center">

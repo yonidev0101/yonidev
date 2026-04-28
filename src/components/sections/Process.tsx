@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Search, PenTool, Code2, Rocket } from "lucide-react";
 import { processSteps } from "@/data/services";
+import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
 
 const iconMap: Record<string, React.ElementType> = {
   Search, PenTool, Code2, Rocket,
@@ -10,8 +11,12 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function Process() {
   return (
-    <section className="py-24 bg-bg-soft">
-      <div className="container">
+    <section className="relative py-24 bg-bg-soft overflow-hidden">
+      <DotGrid opacity={0.025} size={28} />
+      <RadialBlob className="-top-20 -right-32" size={460} opacity={0.06} />
+      <RadialBlob className="-bottom-32 left-10" size={380} opacity={0.04} />
+
+      <div className="container relative">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
