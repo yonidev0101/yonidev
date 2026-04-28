@@ -7,13 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { featuredProjects } from "@/data/projects";
 
-const categoryColors: Record<string, string> = {
-  web:        "bg-blue-50 text-blue-600",
-  ai:         "bg-purple-50 text-purple-600",
-  automation: "bg-orange-50 text-orange-600",
-  bot:        "bg-green-50 text-green-600",
-};
-
 export default function FeaturedProjects() {
   const [current, setCurrent] = useState(0);
 
@@ -21,9 +14,29 @@ export default function FeaturedProjects() {
   const next = () => setCurrent((c) => (c + 1) % featuredProjects.length);
 
   return (
-    <section className="py-24 bg-white overflow-hidden">
-      <div className="container">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <section className="relative py-24 bg-white overflow-hidden">
+      {/* Subtle flowing curves background */}
+      <svg
+        className="absolute left-0 bottom-10 w-[55%] h-[280px] pointer-events-none opacity-60"
+        viewBox="0 0 800 280"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"  stopColor="#2B7FFF" stopOpacity="0" />
+            <stop offset="50%" stopColor="#2B7FFF" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#2B7FFF" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d="M0,200 C200,140 400,260 600,180 S 900,200 900,200" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
+        <path d="M0,220 C200,160 400,280 600,200 S 900,220 900,220" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
+        <path d="M0,240 C200,180 400,300 600,220 S 900,240 900,240" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
+        <path d="M0,260 C200,200 400,320 600,240 S 900,260 900,260" stroke="url(#curveGrad)" strokeWidth="1" fill="none" />
+      </svg>
+
+      <div className="container relative">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-12 lg:gap-10 items-center">
           {/* Left — text */}
           <motion.div
             initial={{ opacity: 0, x: -24 }}
@@ -36,7 +49,7 @@ export default function FeaturedProjects() {
             <h2 className="section-heading">
               Projects That<br />Make an Impact
             </h2>
-            <p className="section-body">
+            <p className="section-body max-w-sm">
               A selection of recent work where ideas turned into powerful digital solutions.
             </p>
             <Link
@@ -47,29 +60,29 @@ export default function FeaturedProjects() {
             </Link>
 
             {/* Navigation */}
-            <div className="flex items-center gap-3 pt-4">
+            <div className="flex items-center gap-3 pt-6">
               <button
                 onClick={prev}
-                className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
+                className="w-11 h-11 rounded-full border border-border bg-white flex items-center justify-center hover:border-brand-500 hover:text-brand-500 transition-colors"
                 aria-label="Previous project"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={next}
-                className="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600 transition-colors"
+                className="w-11 h-11 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600 transition-colors shadow-[0_8px_20px_rgba(43,127,255,0.35)]"
                 aria-label="Next project"
               >
                 <ChevronRight size={18} />
               </button>
-              <span className="text-sm text-muted-text ml-1">
-                {current + 1} / {featuredProjects.length}
+              <span className="text-sm text-muted-text ml-1 font-medium">
+                {String(current + 1).padStart(2, "0")} / {String(featuredProjects.length).padStart(2, "0")}
               </span>
             </div>
           </motion.div>
 
-          {/* Right — stacked cards */}
-          <div className="relative h-[420px] sm:h-[460px]">
+          {/* Right — fanned cards */}
+          <div className="relative h-[480px] sm:h-[520px]">
             <AnimatePresence mode="popLayout">
               {featuredProjects.map((project, i) => {
                 const offset = i - current;
@@ -82,59 +95,62 @@ export default function FeaturedProjects() {
 
                 if (!isCurrent && !isNext && !isAfter) return null;
 
+                const stackProps = isCurrent
+                  ? { x: 0,   y: 0,  scale: 1,    rotate: -2, zIndex: 30, opacity: 1   }
+                  : isNext
+                  ? { x: 95,  y: 14, scale: 0.96, rotate:  1, zIndex: 20, opacity: 0.85 }
+                  : { x: 190, y: 28, scale: 0.92, rotate:  3, zIndex: 10, opacity: 0.6  };
+
                 return (
                   <motion.div
                     key={project.slug}
                     layout
-                    initial={{ opacity: 0, x: 60 }}
-                    animate={{
-                      opacity: isCurrent ? 1 : isNext ? 0.6 : 0.3,
-                      x:       isCurrent ? 0  : isNext ? 28  : 48,
-                      y:       isCurrent ? 0  : isNext ? 16  : 28,
-                      scale:   isCurrent ? 1  : isNext ? 0.94 : 0.88,
-                      zIndex:  isCurrent ? 30 : isNext ? 20  : 10,
-                      rotate:  isCurrent ? 0  : isNext ? 2   : 3.5,
-                    }}
-                    exit={{ opacity: 0, x: -60 }}
-                    transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
-                    className="absolute inset-0 card-base overflow-hidden cursor-pointer"
-                    onClick={() => isCurrent ? undefined : next()}
+                    initial={{ opacity: 0, x: 80 }}
+                    animate={stackProps}
+                    exit={{ opacity: 0, x: -80 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="absolute inset-0 max-w-[320px] sm:max-w-[340px] cursor-pointer"
+                    onClick={() => (isCurrent ? undefined : next())}
                   >
-                    {/* Project image */}
-                    <div className="relative h-[55%] bg-gradient-to-br from-brand-50 to-brand-100 overflow-hidden">
-                      <Image
-                        src={project.image}
-                        alt={project.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        onError={() => {}} // gracefully handle missing images
-                      />
-                      {/* Category badge */}
-                      <span className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-xs font-semibold ${categoryColors[project.category]}`}>
-                        {project.category.charAt(0).toUpperCase() + project.category.slice(1)}
-                      </span>
-                    </div>
+                    <div className="relative h-full rounded-3xl bg-white border border-border shadow-[0_20px_50px_-15px_rgba(15,23,42,0.18)] overflow-hidden flex flex-col">
+                      {/* Browser chrome */}
+                      <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#F8FAFC] border-b border-border-soft shrink-0">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]/60" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]/60" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F]/60" />
+                      </div>
 
-                    {/* Info */}
-                    <div className="p-5">
-                      <h3 className="font-bold text-heading text-lg mb-1">{project.title}</h3>
-                      <p className="text-sm text-body line-clamp-2 mb-3">{project.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-1.5 flex-wrap">
-                          {project.stack.slice(0, 3).map((s) => (
-                            <span key={s} className="text-xs px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
-                              {s}
-                            </span>
-                          ))}
+                      {/* Image */}
+                      <div className="relative bg-gradient-to-br from-brand-50 to-brand-100 aspect-[4/3] overflow-hidden">
+                        <Image
+                          src={project.image}
+                          alt={project.title}
+                          fill
+                          className="object-cover object-top"
+                          sizes="(max-width: 768px) 100vw, 340px"
+                        />
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                        <h3 className="font-bold text-heading text-lg leading-tight mb-2">
+                          {project.title}
+                        </h3>
+                        <p className="text-sm text-body leading-relaxed line-clamp-3 flex-1">
+                          {project.description}
+                        </p>
+
+                        {/* Arrow CTA */}
+                        <div className="flex justify-end mt-4">
+                          <Link
+                            href={`/projects/${project.slug}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-9 h-9 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600 transition-colors shadow-[0_6px_16px_rgba(43,127,255,0.35)]"
+                            aria-label={`View ${project.title}`}
+                          >
+                            <ArrowRight size={14} />
+                          </Link>
                         </div>
-                        <Link
-                          href={`/projects/${project.slug}`}
-                          className="p-1.5 rounded-full bg-brand-500 text-white hover:bg-brand-600 transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ArrowRight size={13} />
-                        </Link>
                       </div>
                     </div>
                   </motion.div>
