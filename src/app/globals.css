@@ -148,6 +148,21 @@
     animation: floatCard3 5s ease-in-out infinite 1.6s;
   }
 
+  @keyframes marqueeScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marqueeScroll 30s linear infinite;
+  }
+
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+
   @keyframes floatSlow {
     0%, 100% { transform: translateY(0px); }
     50%       { transform: translateY(-14px); }
