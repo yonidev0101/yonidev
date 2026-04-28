@@ -13,7 +13,7 @@ interface ParticleData {
   colors: Float32Array;
 }
 
-async function sampleImage(url: string, sampleStep = 1, alphaThreshold = 80): Promise<ParticleData> {
+async function sampleImage(url: string, sampleStep = 2, alphaThreshold = 130): Promise<ParticleData> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -45,12 +45,16 @@ async function sampleImage(url: string, sampleStep = 1, alphaThreshold = 80): Pr
 
           positions.push(wx, wy, wz);
 
-          // Mix sampled color with brand blue for cohesion
+          // Strong bias toward brand blue (#2B7FFF = 0.168, 0.498, 1.0)
+          // 75% brand, 25% sampled — vivid blue with subtle pixel variation
           const r = data[i]     / 255;
           const g = data[i + 1] / 255;
           const b = data[i + 2] / 255;
-          // Slight bias toward brand blue (#2B7FFF = 0.168, 0.498, 1.0)
-          colors.push(r * 0.5 + 0.168 * 0.5, g * 0.5 + 0.498 * 0.5, b * 0.5 + 1 * 0.5);
+          colors.push(
+            r * 0.25 + 0.168 * 0.75,
+            g * 0.25 + 0.498 * 0.75,
+            b * 0.25 + 1     * 0.75,
+          );
         }
       }
 
@@ -68,14 +72,13 @@ async function sampleImage(url: string, sampleStep = 1, alphaThreshold = 80): Pr
 /*  Particle field component                                                   */
 /* -------------------------------------------------------------------------- */
 
-function ParticleField({ data }: { data: ParticleData }) {
+function ParticleField({ data, active }: { data: ParticleData; active: boolean }) {
   const pointsRef = useRef<THREE.Points>(null);
   const positionsRef = useRef<Float32Array>(data.positions.slice());
   const velocitiesRef = useRef<Float32Array>(new Float32Array(data.positions.length));
 
   // Mouse tracking in world space
   const mouse = useRef(new THREE.Vector3(999, 999, 0));
-  const mouseActive = useRef(false);
   const { viewport, pointer } = useThree();
 
   useFrame(({ clock }) => {
@@ -108,9 +111,9 @@ function ParticleField({ data }: { data: ParticleData }) {
       const targetY = ty + idleY;
       const targetZ = tz;
 
-      // Mouse repulsion
+      // Mouse repulsion (only when active)
       let fx = 0, fy = 0;
-      if (mouseActive.current) {
+      if (active) {
         const dx = arr[i]     - mouse.current.x;
         const dy = arr[i + 1] - mouse.current.y;
         const distSq = dx * dx + dy * dy;
@@ -142,11 +145,7 @@ function ParticleField({ data }: { data: ParticleData }) {
   });
 
   return (
-    <points
-      ref={pointsRef}
-      onPointerOver={() => (mouseActive.current = true)}
-      onPointerOut={() => (mouseActive.current = false)}
-    >
+    <points ref={pointsRef}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -158,7 +157,7 @@ function ParticleField({ data }: { data: ParticleData }) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.028}
+        size={0.045}
         vertexColors
         transparent
         opacity={0.95}
@@ -173,7 +172,7 @@ function ParticleField({ data }: { data: ParticleData }) {
 /*  Outer wrapper — handles image sampling                                     */
 /* -------------------------------------------------------------------------- */
 
-export default function ParticleLogo() {
+export default function ParticleLogo({ active = false }: { active?: boolean }) {
   const [data, setData] = useState<ParticleData | null>(null);
 
   useEffect(() => {
@@ -193,8 +192,9 @@ export default function ParticleLogo() {
         dpr={[1, 2]}
         gl={{ alpha: true, antialias: true }}
         style={{ background: "transparent" }}
+        frameloop={active ? "always" : "demand"}
       >
-        {data && <ParticleField data={data} />}
+        {data && <ParticleField data={data} active={active} />}
       </Canvas>
     </div>
   );

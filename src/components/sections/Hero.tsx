@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { ArrowRight, Code2, Database, Cloud } from "lucide-react";
@@ -45,6 +47,8 @@ const itemVariants = {
 };
 
 export default function Hero() {
+  const [isHovering, setIsHovering] = useState(false);
+
   return (
     <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-white">
       {/* Background halo */}
@@ -133,9 +137,36 @@ export default function Hero() {
               {/* Soft glow behind logo */}
               <div className="absolute inset-[15%] rounded-full bg-brand-500/10 blur-3xl" />
 
-              {/* Particle Y Logo — interactive 3D */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ParticleLogo />
+              {/* Logo area — image by default, particles on hover */}
+              <div
+                className="absolute inset-0"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+              >
+                {/* Static image — visible by default */}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center pb-6 float-slow transition-opacity duration-500 ${
+                    isHovering ? "opacity-0" : "opacity-100"
+                  }`}
+                >
+                  <Image
+                    src="/logo/y-logo.png"
+                    alt="YoniDev Y logo"
+                    width={260}
+                    height={300}
+                    className="object-contain drop-shadow-[0_24px_48px_rgba(43,127,255,0.25)]"
+                    priority
+                  />
+                </div>
+
+                {/* Particle field — fades in on hover */}
+                <div
+                  className={`absolute inset-0 transition-opacity duration-500 ${
+                    isHovering ? "opacity-100" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <ParticleLogo active={isHovering} />
+                </div>
               </div>
 
               {/* Floating icon cards */}
