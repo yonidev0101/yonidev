@@ -23,7 +23,7 @@ function Separator() {
 
 export default function Technologies() {
   return (
-    <section className="py-16 bg-white" style={{ overflowX: "clip" }}>
+    <section className="py-16 bg-white" style={{ overflow: "hidden" }}>
       <div className="container">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
