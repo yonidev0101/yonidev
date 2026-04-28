@@ -8,12 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev      # dev server on http://localhost:3000
-npm run build    # production build (always run before pushing)
+npm run build    # production build
 npm run lint     # eslint
 npm run start    # serve production build
 ```
 
-**Always run `npm run build` before pushing** — TypeScript errors surface here, not in `dev`.
+**The dev server is usually running in the background.** Do NOT run `npm run build` — it kills the dev server. To verify code before pushing, use `npm run lint` for quick checks. Only run `npm run build` explicitly if the user asks for it or the dev server is confirmed to be stopped.
 
 ## Architecture
 
