@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Mail, ArrowRight } from "lucide-react";
+import Logo from "./Logo";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 function GithubIcon() {
   return (
@@ -16,34 +20,34 @@ function LinkedinIcon() {
     </svg>
   );
 }
-import Logo from "./Logo";
-
-const navLinks = [
-  { href: "/",         label: "Home"     },
-  { href: "/about",    label: "About"    },
-  { href: "/services", label: "Services" },
-  { href: "/projects", label: "Projects" },
-  { href: "/contact",  label: "Contact"  },
-];
-
-const serviceLinks = [
-  { href: "/services#fullstack", label: "Frontend Development" },
-  { href: "/services#fullstack", label: "Backend Development"  },
-  { href: "/services#ai",        label: "AI Integrations"      },
-  { href: "/services#bots",      label: "Bots & Automation"    },
-  { href: "/services#apis",      label: "API Development"      },
-];
 
 export default function Footer() {
+  const t = useT();
+
+  const navLinks = [
+    { href: "/",         label: t.nav.home     },
+    { href: "/about",    label: t.nav.about    },
+    { href: "/services", label: t.nav.services },
+    { href: "/projects", label: t.nav.projects },
+    { href: "/contact",  label: t.nav.contact  },
+  ];
+
+  const serviceLinks = [
+    { href: "/services#fullstack", label: t.footer.services.frontend },
+    { href: "/services#fullstack", label: t.footer.services.backend  },
+    { href: "/services#ai",        label: t.footer.services.ai       },
+    { href: "/services#bots",      label: t.footer.services.bots     },
+    { href: "/services#apis",      label: t.footer.services.apis     },
+  ];
+
   return (
     <footer className="bg-white border-t border-border mt-0">
       <div className="container py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          {/* Brand */}
           <div className="space-y-4">
             <Logo />
             <p className="text-sm text-body leading-relaxed max-w-[200px]">
-              Full Stack Developer passionate about building modern, scalable and beautiful web applications.
+              {t.footer.tagline}
             </p>
             <div className="flex items-center gap-3 pt-1">
               <a
@@ -74,12 +78,11 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
           <div>
-            <h4 className="text-sm font-semibold text-heading mb-4">Navigation</h4>
+            <h4 className="text-sm font-semibold text-heading mb-4">{t.footer.navTitle}</h4>
             <ul className="space-y-2.5">
               {navLinks.map((l) => (
-                <li key={l.href}>
+                <li key={l.href + l.label}>
                   <Link
                     href={l.href}
                     className="text-sm text-body hover:text-brand-500 transition-colors"
@@ -91,9 +94,8 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Services */}
           <div>
-            <h4 className="text-sm font-semibold text-heading mb-4">Services</h4>
+            <h4 className="text-sm font-semibold text-heading mb-4">{t.footer.servicesTitle}</h4>
             <ul className="space-y-2.5">
               {serviceLinks.map((l) => (
                 <li key={l.label}>
@@ -108,17 +110,16 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Connect */}
           <div>
-            <h4 className="text-sm font-semibold text-heading mb-4">Let&apos;s Connect</h4>
+            <h4 className="text-sm font-semibold text-heading mb-4">{t.footer.connectTitle}</h4>
             <p className="text-sm text-body mb-4">
-              Available for freelance and full-time opportunities.
+              {t.footer.connectBody}
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-500 hover:gap-2.5 transition-all"
             >
-              Let&apos;s Talk <ArrowRight size={14} />
+              {t.footer.cta} <ArrowRight size={14} className="rtl:-scale-x-100" />
             </Link>
             <p className="mt-4 text-xs text-muted-text">yonidev0101@gmail.com</p>
           </div>
@@ -126,10 +127,10 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-border-soft flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-text">
-            © 2024 YoniDev. All rights reserved.
+            {t.footer.copyright}
           </p>
           <p className="text-xs text-muted-text">
-            Built with passion ❤️
+            {t.footer.builtWith}
           </p>
         </div>
       </div>

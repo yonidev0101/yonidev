@@ -6,16 +6,11 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import Logo from "./Logo";
-
-const navLinks = [
-  { href: "/",         label: "Home"     },
-  { href: "/about",    label: "About"    },
-  { href: "/services", label: "Services" },
-  { href: "/projects", label: "Projects" },
-  { href: "/contact",  label: "Contact"  },
-];
+import LocaleToggle from "./LocaleToggle";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 export default function Navbar() {
+  const t = useT();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,6 +20,14 @@ export default function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const navLinks = [
+    { href: "/",         label: t.nav.home     },
+    { href: "/about",    label: t.nav.about    },
+    { href: "/services", label: t.nav.services },
+    { href: "/projects", label: t.nav.projects },
+    { href: "/contact",  label: t.nav.contact  },
+  ];
 
   return (
     <header
@@ -37,7 +40,6 @@ export default function Navbar() {
       <nav className="container flex items-center justify-between h-20">
         <Logo />
 
-        {/* Desktop links */}
         <ul className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
@@ -53,7 +55,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.span
                       layoutId="nav-dot"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-500"
+                      className="absolute bottom-0 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 w-1 h-1 rounded-full bg-brand-500"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -63,26 +65,29 @@ export default function Navbar() {
           })}
         </ul>
 
-        {/* CTA */}
-        <Link
-          href="/contact"
-          className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full border border-brand-500 text-brand-500 text-sm font-semibold hover:bg-brand-500 hover:text-white transition-all duration-200"
-        >
-          Let&apos;s Talk
-          <ArrowRight size={15} />
-        </Link>
+        <div className="hidden md:flex items-center gap-2">
+          <LocaleToggle />
+          <Link
+            href="/contact"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-brand-500 text-brand-500 text-sm font-semibold hover:bg-brand-500 hover:text-white transition-all duration-200"
+          >
+            {t.nav.cta}
+            <ArrowRight size={15} className="rtl:-scale-x-100" />
+          </Link>
+        </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 rounded-lg text-heading"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="md:hidden flex items-center gap-2">
+          <LocaleToggle compact />
+          <button
+            className="p-2 rounded-lg text-heading"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={t.nav.menu}
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </nav>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -114,7 +119,7 @@ export default function Navbar() {
               onClick={() => setMobileOpen(false)}
               className="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-full bg-brand-500 text-white text-sm font-semibold"
             >
-              Let&apos;s Talk <ArrowRight size={15} />
+              {t.nav.cta} <ArrowRight size={15} className="rtl:-scale-x-100" />
             </Link>
           </motion.div>
         )}

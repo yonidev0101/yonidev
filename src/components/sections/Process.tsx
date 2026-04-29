@@ -1,89 +1,102 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Search, PenTool, Code2, Rocket } from "lucide-react";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { processSteps } from "@/data/services";
-import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
-
-const iconMap: Record<string, React.ElementType> = {
-  Search, PenTool, Code2, Rocket,
-};
+import { RadialBlob } from "@/components/shared/BackgroundDeco";
+import { useT } from "@/lib/i18n/LocaleProvider";
 
 export default function Process() {
+  const t = useT();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start 75%", "end 60%"],
+  });
+  const lineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
   return (
-    <section className="relative py-24 bg-bg-soft overflow-hidden">
-      <DotGrid opacity={0.025} size={28} />
-      <RadialBlob className="-top-20 -right-32" size={460} opacity={0.06} />
-      <RadialBlob className="-bottom-32 left-10" size={380} opacity={0.04} />
+    <section className="relative py-28 bg-white overflow-hidden">
+      <RadialBlob className="top-40 -end-40" size={500} opacity={0.05} />
+      <RadialBlob className="bottom-20 -start-32" size={420} opacity={0.04} />
 
       <div className="container relative">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end mb-16"
+          className="max-w-2xl mb-20"
         >
-          <div>
-            <p className="section-eyebrow mb-3">How I Work</p>
-            <h2 className="section-heading">
-              Simple Process,<br />Powerful Results
-            </h2>
-          </div>
+          <p className="section-eyebrow mb-3">{t.process.eyebrow}</p>
+          <h2 className="section-heading">
+            {t.process.headingLine1}
+            <br />
+            {t.process.headingLine2}
+          </h2>
         </motion.div>
 
-        {/* Steps */}
-        <div className="relative">
-          {/* Dashed connector */}
-          <svg
-            className="absolute top-[40px] inset-x-[8%] w-[84%] hidden md:block pointer-events-none"
-            height="4"
-            preserveAspectRatio="none"
-          >
-            <line
-              x1="0" y1="2" x2="100%" y2="2"
-              stroke="#CBD5E1"
-              strokeWidth="1.5"
-              strokeDasharray="5 7"
-            />
-            {/* Start dot (filled) */}
-            <circle cx="0" cy="2" r="4" fill="#2B7FFF" />
-          </svg>
+        <div ref={containerRef} className="relative max-w-5xl mx-auto">
+          <div className="absolute start-[60px] md:start-[88px] top-0 bottom-0 w-px bg-slate-200" />
+          <motion.div
+            className="absolute start-[60px] md:start-[88px] top-0 w-px bg-gradient-to-b from-brand-500 via-brand-500 to-brand-500/0"
+            style={{ height: lineHeight }}
+          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            {processSteps.map((step, i) => {
-              const Icon = iconMap[step.icon] ?? Code2;
-              return (
-                <motion.div
-                  key={step.number}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.12 }}
-                  className="flex flex-col items-center text-center"
-                >
-                  {/* Icon circle */}
-                  <div className="relative mb-5">
-                    <div className="w-[72px] h-[72px] rounded-full bg-white border border-border shadow-[0_4px_20px_-6px_rgba(15,23,42,0.08)] flex items-center justify-center">
-                      <Icon size={26} className="text-brand-500" />
-                    </div>
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-brand-500/50" />
-                  </div>
-
-                  <span className="text-xs font-semibold text-muted-text mb-1.5">
+          {processSteps.map((step, i) => {
+            const item = t.process.items[step.id];
+            return (
+              <motion.article
+                key={step.number}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-80px" }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="relative grid grid-cols-[120px_1fr] md:grid-cols-[176px_1fr] gap-6 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0 group"
+              >
+                <div className="relative">
+                  <span
+                    className="block font-bold text-[72px] md:text-[112px] leading-none tracking-tighter text-slate-100 group-hover:text-brand-500/15 transition-colors duration-500 select-none"
+                    aria-hidden
+                  >
                     {step.number}
                   </span>
-                  <h3 className="font-semibold text-heading mb-2 text-[15px]">
-                    {step.title}
+
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true, margin: "-80px" }}
+                    transition={{ duration: 0.4, delay: 0.2, ease: "backOut" }}
+                    className="absolute top-1/2 -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500"
+                  />
+                </div>
+
+                <div className="self-center">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: 48 }}
+                    viewport={{ once: true, margin: "-80px" }}
+                    transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+                    className="h-px bg-brand-500 mb-5"
+                  />
+                  <h3 className="text-[22px] md:text-[26px] font-bold text-heading mb-3 tracking-tight">
+                    {item.title}
                   </h3>
-                  <p className="text-sm text-body leading-relaxed">
-                    {step.description}
+                  <p className="text-base text-body leading-relaxed max-w-xl">
+                    {item.description}
                   </p>
-                </motion.div>
-              );
-            })}
-          </div>
+
+                  <div className="mt-5 flex items-center gap-2 text-xs text-muted-text">
+                    <span className="font-mono tabular-nums">
+                      {t.process.stepLabel} {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="h-px w-8 bg-slate-200" />
+                    <span>{t.process.stepOf} {String(processSteps.length).padStart(2, "0")}</span>
+                  </div>
+                </div>
+              </motion.article>
+            );
+          })}
         </div>
       </div>
     </section>
