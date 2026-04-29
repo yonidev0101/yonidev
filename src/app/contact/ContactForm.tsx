@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, ChevronDown } from "lucide-react";
 import { contactSchema, type ContactFormData } from "@/lib/contact/schema";
 import { useT } from "@/lib/i18n/LocaleProvider";
 import SuccessState from "./SuccessState";
@@ -18,6 +18,7 @@ export default function ContactForm() {
   const f = t.contact.form;
   const [status, setStatus] = useState<Status>("idle");
   const [serverError, setServerError] = useState("");
+  const [extrasOpen, setExtrasOpen] = useState(false);
 
   const {
     register,
@@ -28,7 +29,7 @@ export default function ContactForm() {
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
     mode: "onTouched",
-    defaultValues: { projectType: "web", timeline: "flexible", budget: "unsure", _hp: "" },
+    defaultValues: { _hp: "" },
   });
 
   const msgLen = watch("message")?.length ?? 0;
@@ -69,6 +70,7 @@ export default function ContactForm() {
     reset();
     setStatus("idle");
     setServerError("");
+    setExtrasOpen(false);
   }
 
   const isDisabled = status === "submitting";
@@ -95,7 +97,7 @@ export default function ContactForm() {
             exit={{ opacity: 0 }}
             onSubmit={handleSubmit(onSubmit)}
             noValidate
-            className="space-y-7"
+            className="space-y-6"
           >
             {/* Honeypot */}
             <input
@@ -107,7 +109,7 @@ export default function ContactForm() {
             />
 
             {/* Name + Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className={labelClass}>
                   {f.name} <span className="text-brand-500">{f.requiredMark}</span>
@@ -121,7 +123,7 @@ export default function ContactForm() {
                   {...register("name")}
                 />
                 {errors.name && (
-                  <p className="mt-1 text-xs text-red-500">
+                  <p className="mt-1.5 text-xs text-red-500">
                     {getErrorMessage(errors.name.message)}
                   </p>
                 )}
@@ -139,110 +141,16 @@ export default function ContactForm() {
                   {...register("email")}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-xs text-red-500">
+                  <p className="mt-1.5 text-xs text-red-500">
                     {getErrorMessage(errors.email.message)}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label className={labelClass}>
-                {f.phone}{" "}
-                <span className="text-muted-text text-xs font-normal">({f.phoneOptional})</span>
-              </label>
-              <input
-                type="tel"
-                dir="auto"
-                placeholder={f.phonePlaceholder}
-                disabled={isDisabled}
-                className={`${inputClass} ${errors.phone ? inputErrorClass : ""}`}
-                {...register("phone")}
-              />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-red-500">
-                  {getErrorMessage(errors.phone.message)}
-                </p>
-              )}
-            </div>
-
-            <hr className="border-border-soft" />
-
-            {/* Project type */}
-            <div>
-              <label className={labelClass}>
-                {f.projectType.label} <span className="text-brand-500">{f.requiredMark}</span>
-              </label>
-              <div className="flex flex-wrap gap-2.5 mt-1">
-                {projectTypes.map((key) => (
-                  <label key={key} className="cursor-pointer">
-                    <input type="radio" className="sr-only" value={key} {...register("projectType")} />
-                    <span
-                      className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
-                        projectType === key
-                          ? "bg-brand-500 text-white border-brand-500"
-                          : "bg-bg-soft text-body border-border hover:border-brand-500/50"
-                      }`}
-                    >
-                      {f.projectType.options[key]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Budget */}
-            <div>
-              <label className={labelClass}>
-                {f.budget.label} <span className="text-brand-500">{f.requiredMark}</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-1">
-                {budgets.map((key) => (
-                  <label key={key} className="cursor-pointer">
-                    <input type="radio" className="sr-only" value={key} {...register("budget")} />
-                    <span
-                      className={`flex items-center justify-center px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center ${
-                        budget === key
-                          ? "bg-brand-500/10 text-brand-500 border-brand-500"
-                          : "bg-bg-soft text-body border-border hover:border-brand-500/50"
-                      }`}
-                    >
-                      {f.budget.options[key]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div>
-              <label className={labelClass}>
-                {f.timeline.label} <span className="text-brand-500">{f.requiredMark}</span>
-              </label>
-              <div className="flex flex-wrap gap-2.5 mt-1">
-                {timelines.map((key) => (
-                  <label key={key} className="cursor-pointer">
-                    <input type="radio" className="sr-only" value={key} {...register("timeline")} />
-                    <span
-                      className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
-                        timeline === key
-                          ? "bg-brand-500 text-white border-brand-500"
-                          : "bg-bg-soft text-body border-border hover:border-brand-500/50"
-                      }`}
-                    >
-                      {f.timeline.options[key]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <hr className="border-border-soft" />
-
             {/* Message */}
             <div>
-              <div className="flex justify-between items-baseline mb-1.5">
+              <div className="flex justify-between items-baseline mb-2">
                 <label className={labelClass}>
                   {f.message} <span className="text-brand-500">{f.requiredMark}</span>
                 </label>
@@ -262,10 +170,126 @@ export default function ContactForm() {
                 {...register("message")}
               />
               {errors.message && (
-                <p className="mt-1 text-xs text-red-500">
+                <p className="mt-1.5 text-xs text-red-500">
                   {getErrorMessage(errors.message.message)}
                 </p>
               )}
+            </div>
+
+            {/* Extras toggle */}
+            <div className="rounded-2xl border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setExtrasOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold text-body hover:text-heading hover:bg-bg-soft transition-colors"
+              >
+                <span>{extrasOpen ? f.extrasHide : f.extrasShow}</span>
+                <motion.span
+                  animate={{ rotate: extrasOpen ? 180 : 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <ChevronDown size={16} />
+                </motion.span>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {extrasOpen && (
+                  <motion.div
+                    key="extras"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-6 pt-1 space-y-6 border-t border-border">
+                      {/* Phone */}
+                      <div>
+                        <label className={labelClass}>
+                          {f.phone}{" "}
+                          <span className="text-muted-text text-xs font-normal">({f.phoneOptional})</span>
+                        </label>
+                        <input
+                          type="tel"
+                          dir="auto"
+                          placeholder={f.phonePlaceholder}
+                          disabled={isDisabled}
+                          className={`${inputClass} ${errors.phone ? inputErrorClass : ""}`}
+                          {...register("phone")}
+                        />
+                        {errors.phone && (
+                          <p className="mt-1.5 text-xs text-red-500">
+                            {getErrorMessage(errors.phone.message)}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Project type */}
+                      <div>
+                        <label className={labelClass}>{f.projectType.label}</label>
+                        <div className="flex flex-wrap gap-2.5 mt-1">
+                          {projectTypes.map((key) => (
+                            <label key={key} className="cursor-pointer">
+                              <input type="radio" className="sr-only" value={key} {...register("projectType")} />
+                              <span
+                                className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
+                                  projectType === key
+                                    ? "bg-brand-500 text-white border-brand-500"
+                                    : "bg-bg-soft text-body border-border hover:border-brand-500/50"
+                                }`}
+                              >
+                                {f.projectType.options[key]}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Budget */}
+                      <div>
+                        <label className={labelClass}>{f.budget.label}</label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-1">
+                          {budgets.map((key) => (
+                            <label key={key} className="cursor-pointer">
+                              <input type="radio" className="sr-only" value={key} {...register("budget")} />
+                              <span
+                                className={`flex items-center justify-center px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center ${
+                                  budget === key
+                                    ? "bg-brand-500/10 text-brand-500 border-brand-500"
+                                    : "bg-bg-soft text-body border-border hover:border-brand-500/50"
+                                }`}
+                              >
+                                {f.budget.options[key]}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Timeline */}
+                      <div>
+                        <label className={labelClass}>{f.timeline.label}</label>
+                        <div className="flex flex-wrap gap-2.5 mt-1">
+                          {timelines.map((key) => (
+                            <label key={key} className="cursor-pointer">
+                              <input type="radio" className="sr-only" value={key} {...register("timeline")} />
+                              <span
+                                className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
+                                  timeline === key
+                                    ? "bg-brand-500 text-white border-brand-500"
+                                    : "bg-bg-soft text-body border-border hover:border-brand-500/50"
+                                }`}
+                              >
+                                {f.timeline.options[key]}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Server error */}

@@ -59,6 +59,7 @@ export interface TranslationDict {
       submit: string; sending: string;
       requiredMark: string;
       charCount: string;
+      extrasShow: string; extrasHide: string;
       errors: { required: string; email: string; phone: string; messageMin: string; messageMax: string; generic: string };
       success: { heading: string; body: string; again: string };
       serverError: string;
@@ -247,6 +248,8 @@ export const translations: Record<Locale, TranslationDict> = {
         sending: "Sending…",
         requiredMark: "*",
         charCount: "{n}/{max}",
+        extrasShow: "Add project details (optional)",
+        extrasHide: "Hide project details",
         errors: {
           required: "This field is required",
           email: "Enter a valid email address",
@@ -455,6 +458,8 @@ export const translations: Record<Locale, TranslationDict> = {
         sending: "שולח…",
         requiredMark: "*",
         charCount: "{n}/{max}",
+        extrasShow: "הוסף פרטי פרויקט (אופציונלי)",
+        extrasHide: "הסתר פרטי פרויקט",
         errors: {
           required: "שדה זה הוא חובה",
           email: "הכנס כתובת אימייל תקנית",
