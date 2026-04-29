@@ -19,9 +19,11 @@ export const technologies: Technology[] = [
   { name: "Zapier",      icon: "SiZapier",      color: "#FF4A00" },
 ];
 
-export const stats = [
-  { value: "5+",  label: "Years Building"       },
-  { value: "20+", label: "Projects Delivered"   },
-  { value: "4",   label: "Service Areas"        },
-  { value: "∞",   label: "Lines of Code"        },
+export type StatKey = "yearsBuilding" | "projectsDelivered" | "serviceAreas" | "linesOfCode";
+
+export const stats: { key: StatKey; value: string }[] = [
+  { key: "yearsBuilding",     value: "5+"  },
+  { key: "projectsDelivered", value: "20+" },
+  { key: "serviceAreas",      value: "4"   },
+  { key: "linesOfCode",       value: "∞"   },
 ];
