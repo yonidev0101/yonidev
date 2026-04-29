@@ -76,14 +76,14 @@ export default function ContactForm() {
   const inputClass =
     "w-full h-12 rounded-xl border border-border px-4 text-sm text-heading placeholder:text-muted-text focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all disabled:opacity-60";
   const inputErrorClass = "border-red-400 focus:border-red-400 focus:ring-red-400/20";
-  const labelClass = "block mb-1.5 text-xs font-semibold text-heading";
+  const labelClass = "block mb-2 text-sm font-semibold text-heading";
 
   const projectTypes = ["web", "ai", "bot", "api", "other"] as const;
   const budgets = ["lt5", "mid", "high", "top", "unsure"] as const;
   const timelines = ["asap", "short", "medium", "flexible"] as const;
 
   return (
-    <div className="rounded-3xl bg-white border border-border shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] p-6 md:p-8">
+    <div className="rounded-3xl bg-white border border-border shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] p-8 md:p-10">
       <AnimatePresence mode="wait">
         {status === "success" ? (
           <SuccessState onReset={handleReset} />
@@ -95,7 +95,7 @@ export default function ContactForm() {
             exit={{ opacity: 0 }}
             onSubmit={handleSubmit(onSubmit)}
             noValidate
-            className="space-y-5"
+            className="space-y-7"
           >
             {/* Honeypot */}
             <input
@@ -150,7 +150,7 @@ export default function ContactForm() {
             <div>
               <label className={labelClass}>
                 {f.phone}{" "}
-                <span className="text-muted-text font-normal">({f.phoneOptional})</span>
+                <span className="text-muted-text text-xs font-normal">({f.phoneOptional})</span>
               </label>
               <input
                 type="tel"
@@ -167,17 +167,19 @@ export default function ContactForm() {
               )}
             </div>
 
+            <hr className="border-border-soft" />
+
             {/* Project type */}
             <div>
               <label className={labelClass}>
                 {f.projectType.label} <span className="text-brand-500">{f.requiredMark}</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5 mt-1">
                 {projectTypes.map((key) => (
                   <label key={key} className="cursor-pointer">
                     <input type="radio" className="sr-only" value={key} {...register("projectType")} />
                     <span
-                      className={`inline-flex px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+                      className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
                         projectType === key
                           ? "bg-brand-500 text-white border-brand-500"
                           : "bg-bg-soft text-body border-border hover:border-brand-500/50"
@@ -195,12 +197,12 @@ export default function ContactForm() {
               <label className={labelClass}>
                 {f.budget.label} <span className="text-brand-500">{f.requiredMark}</span>
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-1">
                 {budgets.map((key) => (
                   <label key={key} className="cursor-pointer">
                     <input type="radio" className="sr-only" value={key} {...register("budget")} />
                     <span
-                      className={`flex items-center justify-center px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all text-center ${
+                      className={`flex items-center justify-center px-3 py-3 rounded-xl text-xs font-semibold border transition-all text-center ${
                         budget === key
                           ? "bg-brand-500/10 text-brand-500 border-brand-500"
                           : "bg-bg-soft text-body border-border hover:border-brand-500/50"
@@ -218,12 +220,12 @@ export default function ContactForm() {
               <label className={labelClass}>
                 {f.timeline.label} <span className="text-brand-500">{f.requiredMark}</span>
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5 mt-1">
                 {timelines.map((key) => (
                   <label key={key} className="cursor-pointer">
                     <input type="radio" className="sr-only" value={key} {...register("timeline")} />
                     <span
-                      className={`inline-flex px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+                      className={`inline-flex px-4 py-2.5 rounded-full text-xs font-semibold border transition-all ${
                         timeline === key
                           ? "bg-brand-500 text-white border-brand-500"
                           : "bg-bg-soft text-body border-border hover:border-brand-500/50"
@@ -236,6 +238,8 @@ export default function ContactForm() {
               </div>
             </div>
 
+            <hr className="border-border-soft" />
+
             {/* Message */}
             <div>
               <div className="flex justify-between items-baseline mb-1.5">
@@ -247,7 +251,7 @@ export default function ContactForm() {
                 </span>
               </div>
               <textarea
-                rows={5}
+                rows={6}
                 dir="auto"
                 placeholder={f.messagePlaceholder}
                 disabled={isDisabled}
