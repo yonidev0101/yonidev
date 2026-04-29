@@ -3,7 +3,51 @@ export type Locale = "en" | "he";
 export const LOCALES: Locale[] = ["en", "he"];
 export const DEFAULT_LOCALE: Locale = "en";
 
-export const translations = {
+export interface TranslationDict {
+  nav: { home: string; about: string; services: string; projects: string; contact: string; cta: string; menu: string; };
+  hero: { eyebrow: string; headingLine1: string; headingLine2: string; body: string; ctaPrimary: string; ctaSecondary: string; available: string; logoAlt: string; };
+  stats: { yearsBuilding: string; projectsDelivered: string; serviceAreas: string; linesOfCode: string; };
+  services: {
+    eyebrow: string; heading: string; body: string;
+    items: {
+      fullstack: { title: string; description: string };
+      ai: { title: string; description: string };
+      bots: { title: string; description: string };
+      apis: { title: string; description: string };
+    };
+  };
+  projects: {
+    eyebrow: string; headingLine1: string; headingLine2: string; body: string;
+    seeAll: string; prevAria: string; nextAria: string; viewAria: string;
+    items: {
+      yoniverse: { title: string; description: string };
+      "al-hamacom": { title: string; description: string };
+      "ai-whatsapp-bot": { title: string; description: string };
+      "project-4": { title: string; description: string };
+      "project-5": { title: string; description: string };
+    };
+  };
+  process: {
+    eyebrow: string; headingLine1: string; headingLine2: string;
+    stepLabel: string; stepOf: string;
+    items: {
+      discover: { title: string; description: string };
+      design: { title: string; description: string };
+      develop: { title: string; description: string };
+      deliver: { title: string; description: string };
+    };
+  };
+  technologies: { eyebrow: string; };
+  cta: { headingLine1: string; headingLine2: string; body: string; button: string; };
+  footer: {
+    tagline: string; navTitle: string; servicesTitle: string;
+    services: { frontend: string; backend: string; ai: string; bots: string; apis: string; };
+    connectTitle: string; connectBody: string; cta: string; copyright: string; builtWith: string;
+  };
+  locale: { switchTo: string; ariaLabel: string; };
+}
+
+export const translations: Record<Locale, TranslationDict> = {
   en: {
     nav: {
       home: "Home",
@@ -283,6 +327,4 @@ export const translations = {
       ariaLabel: "Switch to English",
     },
   },
-} as const;
-
-export type TranslationDict = typeof translations.en;
+};
