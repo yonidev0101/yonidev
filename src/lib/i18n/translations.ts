@@ -338,11 +338,11 @@ export const translations: Record<Locale, TranslationDict> = {
       story: {
         eyebrow: "My Story",
         heading: "From curiosity to craft",
-        p1: "I started building on the web because I love the moment an idea becomes real — when someone clicks a button I designed and something useful happens.",
-        p2: "That curiosity grew into a craft. Today I work full-stack across the whole pipeline: from the pixels in the browser to the database that holds it all together. I've shipped community platforms, AI-powered tools, WhatsApp bots, browser automations, and IoT projects running on a Raspberry Pi.",
-        p3: "What I care about most is how something is built — not just whether it works. Clean architecture, a modern stack, scalable from day one, and code that the next developer (often me, six months later) can actually understand.",
-        p4: "When I'm not coding for clients, I'm usually building something else — a multi-agent AI experiment, a smart digital frame, or another ESP32 project taking over the apartment. The side projects feed back into the work; every weird experiment teaches me something I bring to the next client.",
-        pullQuote: "I work direct, no fluff, step-by-step.",
+        p1: "Hey 👋 I'm Yonatan. I got into coding because, honestly, I'm a little obsessed with the moment an idea turns into something real — you click a button, and stuff actually happens. That feeling never gets old.",
+        p2: "These days I work across the whole stack — from the pixels in your browser all the way down to the database holding everything together. I've shipped community platforms, AI tools, WhatsApp bots, browser automations, and IoT projects running on Raspberry Pis 🍓. Basically: if it has code in it, I've probably tried to break and rebuild it.",
+        p3: "What I really care about? How something is built — not just whether it works. Clean architecture, a modern stack, scalable from day one, and code that the next dev (let's be honest, usually me six months later 😅) can actually read.",
+        p4: "When I'm not coding for clients, I'm probably tinkering with something else 🛠️ — a multi-agent AI experiment, a smart photo frame on a Raspberry Pi, or another ESP32 project slowly taking over the apartment. These weird side projects always feed back into the client work. Every random experiment teaches me something I end up bringing to the next thing.",
+        pullQuote: "I keep it direct. No fluff, step-by-step.",
       },
       building: {
         eyebrow: "Currently Building",
@@ -624,11 +624,11 @@ export const translations: Record<Locale, TranslationDict> = {
       story: {
         eyebrow: "הסיפור שלי",
         heading: "מסקרנות למקצוע",
-        p1: "התחלתי לבנות באינטרנט כי אני אוהב את הרגע שבו רעיון הופך לאמיתי — כשמישהו לוחץ על כפתור שעיצבתי ומשהו שימושי קורה.",
-        p2: "הסקרנות הזו הפכה למקצוע. היום אני עובד full-stack לאורך כל הצינור: מהפיקסלים שאתה רואה בדפדפן ועד הדאטהבייס שמחזיק את הכל. השקתי פלטפורמות קהילתיות, כלים מבוססי AI, בוטים בוואטסאפ, אוטומציות לדפדפן ופרויקטי IoT שרצים על Raspberry Pi.",
-        p3: "מה שהכי חשוב לי זה איך משהו נבנה — לא רק אם הוא עובד. ארכיטקטורה נקייה, סטאק מודרני, מתרחב מהיום הראשון, וקוד שהמפתח הבא (לרוב אני, בעוד שישה חודשים) באמת יוכל להבין.",
-        p4: "כשאני לא מקודד ללקוחות, אני בדרך כלל בונה משהו אחר — ניסוי AI עם כמה agents, מסגרת תמונה דיגיטלית חכמה, או עוד פרויקט ESP32 שמשתלט על הדירה. ה-side projects מזינים בחזרה את עבודת הלקוחות; כל ניסוי משונה מלמד אותי משהו שאני מביא ללקוח הבא.",
-        pullQuote: "אני עובד ישירות, בלי מסביב, צעד-צעד.",
+        p1: "היי 👋 אני יהונתן. נכנסתי לקוד כי, בכנות, אני קצת אובססיבי לרגע שבו רעיון הופך למשהו אמיתי — לוחצים על כפתור, ובאמת קורה משהו. הרגע הזה אף פעם לא יתיישן.",
+        p2: "היום אני עובד על כל הסטאק — מהפיקסלים בדפדפן ועד הדאטהבייס שמחזיק את הכל. השקתי פלטפורמות קהילתיות, כלי AI, בוטים בוואטסאפ, אוטומציות לדפדפן ופרויקטי IoT שרצים על Raspberry Pi 🍓. בעיקרון, אם יש בזה קוד, כנראה ניסיתי לשבור ולבנות איתו משהו מחדש.",
+        p3: "מה שבאמת חשוב לי? איך משהו נבנה — לא רק אם זה עובד. ארכיטקטורה נקייה, סטאק מודרני, מתרחב מהיום הראשון, וקוד שהמפתח הבא (בואו נודה בזה, בדרך כלל אני בעוד חצי שנה 😅) באמת יוכל לקרוא.",
+        p4: "כשאני לא מקודד ללקוחות, אני בטח מתעסק במשהו אחר 🛠️ — ניסוי AI עם כמה agents, מסגרת תמונה חכמה על Raspberry Pi, או עוד פרויקט ESP32 שלאט-לאט משתלט לי על הדירה. ה-side projects המוזרים האלה תמיד מזינים בחזרה את העבודה ללקוחות. כל ניסוי אקראי מלמד אותי משהו שאני מביא לפעם הבאה.",
+        pullQuote: "אני שומר על זה ישיר. בלי מסביב, צעד-צעד.",
       },
       building: {
         eyebrow: "במלאכה כעת",

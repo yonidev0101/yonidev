@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { useT } from "@/lib/i18n/LocaleProvider";
 
@@ -10,6 +10,7 @@ const SPEED_VARIATION = 0.40; // ±40% randomness
 const PAUSE_PERIOD    = 240;  // ms after .  !  ?
 const PAUSE_COMMA     = 110;  // ms after ,  ;  :
 const PAUSE_DASH      = 150;  // ms after — -
+const PAUSE_EMOJI     = 180;  // ms after an emoji — like pausing to react
 const HEADER_DURATION = 600;  // ms — wait for header to fade in before typing
 const QUOTE_DURATION  = 550;  // ms — pull quote slide-in
 const POST_QUOTE_GAP  = 280;  // ms — small pause after quote before resuming
@@ -20,7 +21,18 @@ function nextDelay(prevChar: string): number {
   if (".!?".includes(prevChar))      return base + PAUSE_PERIOD;
   if (",;:".includes(prevChar))      return base + PAUSE_COMMA;
   if ("—-".includes(prevChar))       return base + PAUSE_DASH;
+  // Emoji or any multi-codepoint grapheme — small pause to feel like reacting
+  if (prevChar.length > 1)           return base + PAUSE_EMOJI;
   return base;
+}
+
+// Split text into grapheme clusters so emojis don't break mid-typing
+function toGraphemes(text: string): string[] {
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    return Array.from(seg.segment(text), (s) => s.segment);
+  }
+  return Array.from(text);
 }
 
 function Cursor() {
@@ -42,6 +54,7 @@ function TypedText({
   active: boolean;
   onDone: () => void;
 }) {
+  const chars = useMemo(() => toGraphemes(text), [text]);
   const [shown, setShown] = useState(0);
   const onDoneRef = useRef(onDone);
 
@@ -60,11 +73,11 @@ function TypedText({
       if (cancelled) return;
       i++;
       setShown(i);
-      if (i >= text.length) {
+      if (i >= chars.length) {
         onDoneRef.current();
         return;
       }
-      timer = window.setTimeout(tick, nextDelay(text[i - 1]));
+      timer = window.setTimeout(tick, nextDelay(chars[i - 1]));
     };
 
     // Tiny initial pause so the cursor blinks once before typing starts
@@ -74,13 +87,14 @@ function TypedText({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [active, text]);
+  }, [active, chars]);
 
-  const isTyping = active && shown < text.length;
+  const isTyping = active && shown < chars.length;
+  const visible = chars.slice(0, shown).join("");
 
   return (
     <p className="text-body leading-relaxed text-[1.0625rem] min-h-[1.6em]">
-      {text.slice(0, shown)}
+      {visible}
       {isTyping && <Cursor />}
     </p>
   );
