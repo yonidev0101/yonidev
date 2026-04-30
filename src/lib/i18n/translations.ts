@@ -70,6 +70,47 @@ export interface TranslationDict {
       responseTime: string;
     };
   };
+  about: {
+    meta: { title: string; description: string };
+    hero: { eyebrow: string; headingLine1: string; headingLine2: string; body: string; ctaPrimary: string; ctaSecondary: string; available: string; portraitAlt: string };
+    story: { eyebrow: string; heading: string; p1: string; p2: string; p3: string; p4: string; pullQuote: string };
+    building: {
+      eyebrow: string; heading: string;
+      statusLive: string; statusDev: string; statusMvp: string;
+      items: {
+        "al-hamacom": { title: string; description: string };
+        yoniverse:    { title: string; description: string };
+        frame:        { title: string; description: string };
+      };
+    };
+    principles: {
+      eyebrow: string; heading: string;
+      items: {
+        direct:    { title: string; description: string };
+        modern:    { title: string; description: string };
+        stepwise:  { title: string; description: string };
+        languages: { title: string; description: string };
+      };
+    };
+    passions: {
+      eyebrow: string; heading: string;
+      items: {
+        teaching: { title: string; description: string };
+        hardware: { title: string; description: string };
+      };
+    };
+    tech: {
+      eyebrow: string; heading: string;
+      categories: {
+        frontend: { title: string };
+        backend:  { title: string };
+        data:     { title: string };
+        ai:       { title: string };
+        infra:    { title: string };
+        iot:      { title: string };
+      };
+    };
+  };
 }
 
 export const translations: Record<Locale, TranslationDict> = {
@@ -277,6 +318,82 @@ export const translations: Record<Locale, TranslationDict> = {
           copied: "Copied!",
         },
         responseTime: "Usually replies within 24 hours",
+      },
+    },
+    about: {
+      meta: {
+        title: "About — YoniDev",
+        description: "Full-Stack Developer from Jerusalem. Building modern, scalable web applications, AI tools, and real-world automation systems.",
+      },
+      hero: {
+        eyebrow: "About Me",
+        headingLine1: "Building things that",
+        headingLine2: "solve real problems",
+        body: "Full-Stack Developer from Jerusalem. I work across the whole stack — from pixel-perfect UIs to scalable server architecture — and I love the moment an idea becomes real.",
+        ctaPrimary: "View My Work",
+        ctaSecondary: "Let's Talk",
+        available: "Available for new projects",
+        portraitAlt: "Yonatan Yaglenik — YoniDev",
+      },
+      story: {
+        eyebrow: "My Story",
+        heading: "From curiosity to craft",
+        p1: "I started building on the web because I love the moment an idea becomes real — when someone clicks a button I designed and something useful happens.",
+        p2: "That curiosity grew into a craft. Today I work full-stack across the whole pipeline: from the pixels in the browser to the database that holds it all together. I've shipped community platforms, AI-powered tools, WhatsApp bots, browser automations, and IoT projects running on a Raspberry Pi.",
+        p3: "What I care about most is how something is built — not just whether it works. Clean architecture, a modern stack, scalable from day one, and code that the next developer (often me, six months later) can actually understand.",
+        p4: "When I'm not coding for clients, I'm usually building something else — a multi-agent AI experiment, a smart digital frame, or another ESP32 project taking over the apartment. The side projects feed back into the work; every weird experiment teaches me something I bring to the next client.",
+        pullQuote: "I work direct, no fluff, step-by-step.",
+      },
+      building: {
+        eyebrow: "Currently Building",
+        heading: "Beyond client work",
+        statusLive: "Live",
+        statusDev: "In Development",
+        statusMvp: "MVP",
+        items: {
+          "al-hamacom": {
+            title: "AL-HAMACOM",
+            description: "A neighborhood platform connecting residents with local services, events, and community boards. Built for Jerusalem, starting with Ramot.",
+          },
+          yoniverse: {
+            title: "Yoniverse",
+            description: "A personal AI ecosystem with a multi-agent architecture — one Brain to coordinate them all. An ongoing R&D playground that keeps evolving.",
+          },
+          frame: {
+            title: "Yoniverse Frame",
+            description: "A smart digital photo frame running on a Raspberry Pi 4, displaying curated memories in a custom React kiosk interface.",
+          },
+        },
+      },
+      principles: {
+        eyebrow: "How I Work",
+        heading: "Principles I build by",
+        items: {
+          direct:    { title: "Direct & concise",       description: "No fluff, just clarity. I say what I mean and build what I say." },
+          modern:    { title: "Modern, scalable stack",  description: "Built right from day one — architecture that grows with the product." },
+          stepwise:  { title: "Step-by-step on complexity", description: "Hard problems broken into small, clear pieces. No magic, just method." },
+          languages: { title: "Two languages, one craft", description: "Hebrew for the conversation, English for the code. Comfortable in both worlds." },
+        },
+      },
+      passions: {
+        eyebrow: "Beyond Code",
+        heading: "Things I love outside the editor",
+        items: {
+          teaching: { title: "Teaching melodica", description: "I volunteer at a youth club teaching melodica with a number-based notation system kids can read in minutes — no sheet music required." },
+          hardware: { title: "Tinkering with hardware", description: "ESP32, IoT sensors, smart-home automations on Raspberry Pi. If it has a chip and wires, I want to know how it works." },
+        },
+      },
+      tech: {
+        eyebrow: "Tech & Tools",
+        heading: "The full stack",
+        categories: {
+          frontend: { title: "Frontend" },
+          backend:  { title: "Backend" },
+          data:     { title: "Data" },
+          ai:       { title: "AI & Automation" },
+          infra:    { title: "Infra & DevOps" },
+          iot:      { title: "IoT" },
+        },
       },
     },
   },
@@ -487,6 +604,82 @@ export const translations: Record<Locale, TranslationDict> = {
           copied: "הועתק!",
         },
         responseTime: "בדרך כלל עונה תוך 24 שעות",
+      },
+    },
+    about: {
+      meta: {
+        title: "אודות — YoniDev",
+        description: "מפתח Full-Stack מירושלים. בונה אפליקציות web מודרניות ומתרחבות, כלי AI ומערכות אוטומציה בעולם האמיתי.",
+      },
+      hero: {
+        eyebrow: "אודות",
+        headingLine1: "בונה דברים שפותרים",
+        headingLine2: "בעיות אמיתיות",
+        body: "מפתח Full-Stack מירושלים. אני עובד לאורך כל הסטאק — מ-UI מדויק לפיקסל ועד ארכיטקטורת שרת מתרחבת — ואני אוהב את הרגע שבו רעיון הופך לאמיתי.",
+        ctaPrimary: "לעבודות שלי",
+        ctaSecondary: "בוא נדבר",
+        available: "זמין לפרויקטים חדשים",
+        portraitAlt: "יהונתן יגלניק — YoniDev",
+      },
+      story: {
+        eyebrow: "הסיפור שלי",
+        heading: "מסקרנות למקצוע",
+        p1: "התחלתי לבנות באינטרנט כי אני אוהב את הרגע שבו רעיון הופך לאמיתי — כשמישהו לוחץ על כפתור שעיצבתי ומשהו שימושי קורה.",
+        p2: "הסקרנות הזו הפכה למקצוע. היום אני עובד full-stack לאורך כל הצינור: מהפיקסלים שאתה רואה בדפדפן ועד הדאטהבייס שמחזיק את הכל. השקתי פלטפורמות קהילתיות, כלים מבוססי AI, בוטים בוואטסאפ, אוטומציות לדפדפן ופרויקטי IoT שרצים על Raspberry Pi.",
+        p3: "מה שהכי חשוב לי זה איך משהו נבנה — לא רק אם הוא עובד. ארכיטקטורה נקייה, סטאק מודרני, מתרחב מהיום הראשון, וקוד שהמפתח הבא (לרוב אני, בעוד שישה חודשים) באמת יוכל להבין.",
+        p4: "כשאני לא מקודד ללקוחות, אני בדרך כלל בונה משהו אחר — ניסוי AI עם כמה agents, מסגרת תמונה דיגיטלית חכמה, או עוד פרויקט ESP32 שמשתלט על הדירה. ה-side projects מזינים בחזרה את עבודת הלקוחות; כל ניסוי משונה מלמד אותי משהו שאני מביא ללקוח הבא.",
+        pullQuote: "אני עובד ישירות, בלי מסביב, צעד-צעד.",
+      },
+      building: {
+        eyebrow: "במלאכה כעת",
+        heading: "מעבר לעבודה ללקוחות",
+        statusLive: "פעיל",
+        statusDev: "בפיתוח",
+        statusMvp: "MVP",
+        items: {
+          "al-hamacom": {
+            title: "על המקום",
+            description: "פלטפורמה שכונתית שמחברת תושבים לשירותים מקומיים, אירועים ולוחות קהילתיים. נבנתה עבור ירושלים, מתחילה עם רמות.",
+          },
+          yoniverse: {
+            title: "Yoniverse",
+            description: "מערכת AI אישית עם ארכיטקטורת multi-agent — Brain אחד שמתאם את כולם. מגרש ניסוי ופיתוח שממשיך להתפתח.",
+          },
+          frame: {
+            title: "Yoniverse Frame",
+            description: "מסגרת תמונה דיגיטלית חכמה שרצה על Raspberry Pi 4, מציגה זיכרונות נבחרים בממשק React בסגנון kiosk.",
+          },
+        },
+      },
+      principles: {
+        eyebrow: "איך אני עובד",
+        heading: "עקרונות שלפיהם אני בונה",
+        items: {
+          direct:    { title: "ישיר ותמציתי",          description: "בלי מסביב, רק בהירות. אני אומר מה שאני מתכוון ובונה מה שאני אומר." },
+          modern:    { title: "סטאק מודרני ומתרחב",     description: "נבנה נכון מהיום הראשון — ארכיטקטורה שגדלה עם המוצר." },
+          stepwise:  { title: "צעד-צעד על הדברים המורכבים", description: "בעיות קשות שמתפרקות לחלקים קטנים וברורים. אין קסמים, יש שיטה." },
+          languages: { title: "שתי שפות, מלאכה אחת",   description: "עברית לשיחה, אנגלית לקוד. נוח בשני העולמות." },
+        },
+      },
+      passions: {
+        eyebrow: "מעבר לקוד",
+        heading: "מה שאני אוהב מחוץ לעורך",
+        items: {
+          teaching: { title: "מורה למלודיקה",      description: "אני מתנדב במועדון נוער ומלמד מלודיקה עם שיטת מספרים שילדים יכולים לקרוא תוך דקות — בלי תווים." },
+          hardware: { title: "תיקונים וחומרה",    description: "ESP32, חיישני IoT, אוטומציות בית חכם על Raspberry Pi. אם יש לו שבב וחוטים — אני רוצה לדעת איך הוא עובד." },
+        },
+      },
+      tech: {
+        eyebrow: "סטאק וכלים",
+        heading: "הסטאק המלא",
+        categories: {
+          frontend: { title: "פרונטאנד" },
+          backend:  { title: "בקאנד" },
+          data:     { title: "נתונים" },
+          ai:       { title: "AI ואוטומציה" },
+          infra:    { title: "תשתית ו-DevOps" },
+          iot:      { title: "IoT" },
+        },
       },
     },
   },
