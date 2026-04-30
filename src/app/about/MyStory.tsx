@@ -3,27 +3,26 @@
 import { motion } from "framer-motion";
 import { useT } from "@/lib/i18n/LocaleProvider";
 
-const wordVariants = {
-  hidden: { opacity: 0, filter: "blur(6px)", y: 3 },
-  visible: { opacity: 1, filter: "blur(0px)", y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
+const charVariant = {
+  hidden:  { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.01 } },
 };
 
-function WritingParagraph({ text, delay = 0, className = "" }: { text: string; delay?: number; className?: string }) {
-  const words = text.split(" ");
+function TypeLine({ text, delay = 0 }: { text: string; delay?: number }) {
   return (
     <motion.p
-      className={className}
+      className="text-body leading-relaxed text-[1.0625rem]"
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-60px" }}
+      viewport={{ once: true, margin: "-40px" }}
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.03, delayChildren: delay } },
+        visible: { transition: { staggerChildren: 0.012, delayChildren: delay } },
       }}
     >
-      {words.map((word, i) => (
-        <motion.span key={i} variants={wordVariants} style={{ display: "inline-block", marginInlineEnd: "0.28em" }}>
-          {word}
+      {text.split("").map((char, i) => (
+        <motion.span key={i} variants={charVariant} style={{ display: "inline" }}>
+          {char}
         </motion.span>
       ))}
     </motion.p>
@@ -38,13 +37,14 @@ export default function MyStory() {
     <section className="py-24 bg-bg-soft">
       <div className="container">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
+
+          {/* Header — fade in first, before the typing starts */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="mb-12"
+            viewport={{ once: true, margin: "0px" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="mb-14"
           >
             <div className="flex items-center gap-2 mb-4">
               <span className="w-2 h-2 rounded-full bg-brand-500 inline-block" />
@@ -53,27 +53,28 @@ export default function MyStory() {
             <h2 className="section-heading">{s.heading}</h2>
           </motion.div>
 
-          {/* Story paragraphs */}
-          <div className="space-y-6 text-body leading-relaxed text-[1.0625rem]">
-            <WritingParagraph text={s.p1} />
-            <WritingParagraph text={s.p2} />
+          {/* Paragraphs — character-by-character, each independent on scroll */}
+          {/* First paragraph waits for header to finish (delay 0.55s) */}
+          <div className="space-y-7">
+            <TypeLine text={s.p1} delay={0.55} />
+            <TypeLine text={s.p2} />
 
-            {/* Pull quote */}
             <motion.blockquote
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -16 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="my-8 border-s-4 border-brand-500 ps-6 py-2"
+              viewport={{ once: true, margin: "-40px" }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              className="my-2 border-s-4 border-brand-500 ps-6 py-2"
             >
               <p className="text-xl font-semibold text-heading italic leading-relaxed">
                 &ldquo;{s.pullQuote}&rdquo;
               </p>
             </motion.blockquote>
 
-            <WritingParagraph text={s.p3} />
-            <WritingParagraph text={s.p4} />
+            <TypeLine text={s.p3} />
+            <TypeLine text={s.p4} />
           </div>
+
         </div>
       </div>
     </section>
