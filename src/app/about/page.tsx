@@ -5,9 +5,7 @@ import CTABanner from "@/components/sections/CTABanner";
 import AboutHero from "./AboutHero";
 import MyStory from "./MyStory";
 import CurrentlyBuilding from "./CurrentlyBuilding";
-import HowIWork from "./HowIWork";
 import BeyondCode from "./BeyondCode";
-import TechStack from "./TechStack";
 
 export const metadata: Metadata = {
   title: "About — YoniDev",
@@ -23,9 +21,7 @@ export default function AboutPage() {
         <AboutHero />
         <MyStory />
         <CurrentlyBuilding />
-        <HowIWork />
         <BeyondCode />
-        <TechStack />
         <CTABanner />
       </main>
       <Footer />

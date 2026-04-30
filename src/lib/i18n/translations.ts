@@ -83,31 +83,11 @@ export interface TranslationDict {
         frame:        { title: string; description: string };
       };
     };
-    principles: {
-      eyebrow: string; heading: string;
-      items: {
-        direct:    { title: string; description: string };
-        modern:    { title: string; description: string };
-        stepwise:  { title: string; description: string };
-        languages: { title: string; description: string };
-      };
-    };
     passions: {
       eyebrow: string; heading: string;
       items: {
         teaching: { title: string; description: string };
         hardware: { title: string; description: string };
-      };
-    };
-    tech: {
-      eyebrow: string; heading: string;
-      categories: {
-        frontend: { title: string };
-        backend:  { title: string };
-        data:     { title: string };
-        ai:       { title: string };
-        infra:    { title: string };
-        iot:      { title: string };
       };
     };
   };
@@ -365,34 +345,12 @@ export const translations: Record<Locale, TranslationDict> = {
           },
         },
       },
-      principles: {
-        eyebrow: "How I Work",
-        heading: "Principles I build by",
-        items: {
-          direct:    { title: "Direct & concise",       description: "No fluff, just clarity. I say what I mean and build what I say." },
-          modern:    { title: "Modern, scalable stack",  description: "Built right from day one — architecture that grows with the product." },
-          stepwise:  { title: "Step-by-step on complexity", description: "Hard problems broken into small, clear pieces. No magic, just method." },
-          languages: { title: "Two languages, one craft", description: "Hebrew for the conversation, English for the code. Comfortable in both worlds." },
-        },
-      },
       passions: {
         eyebrow: "Beyond Code",
-        heading: "Things I love outside the editor",
+        heading: "When I close the editor",
         items: {
-          teaching: { title: "Teaching melodica", description: "I volunteer at a youth club teaching melodica with a number-based notation system kids can read in minutes — no sheet music required." },
-          hardware: { title: "Tinkering with hardware", description: "ESP32, IoT sensors, smart-home automations on Raspberry Pi. If it has a chip and wires, I want to know how it works." },
-        },
-      },
-      tech: {
-        eyebrow: "Tech & Tools",
-        heading: "The full stack",
-        categories: {
-          frontend: { title: "Frontend" },
-          backend:  { title: "Backend" },
-          data:     { title: "Data" },
-          ai:       { title: "AI & Automation" },
-          infra:    { title: "Infra & DevOps" },
-          iot:      { title: "IoT" },
+          teaching: { title: "Teaching melodica", description: "I volunteer at a youth club teaching kids melodica with a number-based notation system — 1 to 7 instead of sheet music. Watching them play their first song in 10 minutes never gets old." },
+          hardware: { title: "Tinkering with hardware", description: "ESP32 sensors, smart-home automations, Raspberry Pi setups. Half my apartment is slowly becoming a side project. If it has a chip and wires, I want to take it apart." },
         },
       },
     },
@@ -651,34 +609,12 @@ export const translations: Record<Locale, TranslationDict> = {
           },
         },
       },
-      principles: {
-        eyebrow: "איך אני עובד",
-        heading: "עקרונות שלפיהם אני בונה",
-        items: {
-          direct:    { title: "ישיר ותמציתי",          description: "בלי מסביב, רק בהירות. אני אומר מה שאני מתכוון ובונה מה שאני אומר." },
-          modern:    { title: "סטאק מודרני ומתרחב",     description: "נבנה נכון מהיום הראשון — ארכיטקטורה שגדלה עם המוצר." },
-          stepwise:  { title: "צעד-צעד על הדברים המורכבים", description: "בעיות קשות שמתפרקות לחלקים קטנים וברורים. אין קסמים, יש שיטה." },
-          languages: { title: "שתי שפות, מלאכה אחת",   description: "עברית לשיחה, אנגלית לקוד. נוח בשני העולמות." },
-        },
-      },
       passions: {
         eyebrow: "מעבר לקוד",
-        heading: "מה שאני אוהב מחוץ לעורך",
+        heading: "כשהעורך נסגר",
         items: {
-          teaching: { title: "מורה למלודיקה",      description: "אני מתנדב במועדון נוער ומלמד מלודיקה עם שיטת מספרים שילדים יכולים לקרוא תוך דקות — בלי תווים." },
-          hardware: { title: "תיקונים וחומרה",    description: "ESP32, חיישני IoT, אוטומציות בית חכם על Raspberry Pi. אם יש לו שבב וחוטים — אני רוצה לדעת איך הוא עובד." },
-        },
-      },
-      tech: {
-        eyebrow: "סטאק וכלים",
-        heading: "הסטאק המלא",
-        categories: {
-          frontend: { title: "פרונטאנד" },
-          backend:  { title: "בקאנד" },
-          data:     { title: "נתונים" },
-          ai:       { title: "AI ואוטומציה" },
-          infra:    { title: "תשתית ו-DevOps" },
-          iot:      { title: "IoT" },
+          teaching: { title: "מלמד מלודיקה", description: "מתנדב במועדון נוער ומלמד ילדים מלודיקה לפי שיטת מספרים — 1 עד 7 במקום תווים. לראות אותם מנגנים שיר ראשון תוך 10 דקות זה משהו שלא נמאס." },
+          hardware: { title: "מתעסק עם חומרה", description: "חיישני ESP32, אוטומציות בית חכם, פרויקטים על Raspberry Pi. חצי דירה אצלי בהדרגה הופכת ל-side project. אם יש לזה שבב וחוטים, אני רוצה לפתוח את זה." },
         },
       },
     },
