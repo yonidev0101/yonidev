@@ -35,13 +35,20 @@ function toGraphemes(text: string): string[] {
   return Array.from(text);
 }
 
+// 0-width inline marker — bar is rendered via absolutely-positioned child
+// so the cursor never affects line wrapping or layout width.
 function Cursor() {
   return (
     <span
       aria-hidden
-      className="inline-block w-[2px] h-[1.05em] bg-brand-500 align-middle ms-[2px] rounded-[1px]"
-      style={{ animation: "cursor-blink 0.55s step-end infinite" }}
-    />
+      className="relative inline-block align-text-bottom"
+      style={{ width: 0, height: "1em" }}
+    >
+      <span
+        className="absolute start-0 top-0 h-full bg-brand-500 rounded-[1px]"
+        style={{ width: 2, animation: "cursor-blink 0.55s step-end infinite" }}
+      />
+    </span>
   );
 }
 
@@ -90,12 +97,17 @@ function TypedText({
   }, [active, chars]);
 
   const isTyping = active && shown < chars.length;
-  const visible = chars.slice(0, shown).join("");
+  const typed = chars.slice(0, shown).join("");
+  const remaining = chars.slice(shown).join("");
 
   return (
-    <p className="text-body leading-relaxed text-[1.0625rem] min-h-[1.6em]">
-      {visible}
+    <p className="text-body leading-relaxed text-[1.0625rem]">
+      {typed}
       {isTyping && <Cursor />}
+      {/* Reserve full final layout so the paragraph doesn't grow as it types */}
+      <span aria-hidden style={{ visibility: "hidden" }}>
+        {remaining}
+      </span>
     </p>
   );
 }

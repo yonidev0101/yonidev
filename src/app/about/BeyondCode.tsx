@@ -27,6 +27,7 @@ export default function BeyondCode() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-14 max-w-4xl">
           {passions.map((passion, i) => {
+            const Icon = passion.icon;
             const item = b.items[passion.id];
             return (
               <motion.div
@@ -36,7 +37,9 @@ export default function BeyondCode() {
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.55, ease: "easeOut", delay: i * 0.12 }}
               >
-                <div className="text-5xl mb-5 leading-none">{passion.emoji}</div>
+                <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
+                  <Icon size={26} className="text-brand-500" strokeWidth={1.75} />
+                </div>
                 <h3 className="text-xl font-bold text-heading mb-3">{item.title}</h3>
                 <p className="text-body leading-relaxed">{item.description}</p>
               </motion.div>

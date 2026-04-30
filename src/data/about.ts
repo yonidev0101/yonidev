@@ -1,3 +1,6 @@
+import { Music, Cpu } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
 export type ProjectStatus = "live" | "dev" | "mvp";
 
 export interface CurrentProject {
@@ -9,7 +12,7 @@ export interface CurrentProject {
 
 export interface Passion {
   id: "teaching" | "hardware";
-  emoji: string;
+  icon: LucideIcon;
 }
 
 export const currentProjects: CurrentProject[] = [
@@ -32,6 +35,6 @@ export const currentProjects: CurrentProject[] = [
 ];
 
 export const passions: Passion[] = [
-  { id: "teaching", emoji: "🎵" },
-  { id: "hardware", emoji: "🛠️" },
+  { id: "teaching", icon: Music },
+  { id: "hardware", icon: Cpu },
 ];
