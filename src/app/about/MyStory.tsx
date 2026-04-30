@@ -1,91 +1,116 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { useT } from "@/lib/i18n/LocaleProvider";
 
-const STAGGER   = 0.010; // seconds per character
-const HDR_DONE  = 0.65;  // header finishes fading in
-const PARA_GAP  = 0.30;  // pause between paragraphs
-const QUOTE_DUR = 0.55;  // pull-quote slide-in
+// Real human-typing feel
+const BASE_SPEED      = 26;   // ms per char — fast typist
+const SPEED_VARIATION = 0.40; // ±40% randomness
+const PAUSE_PERIOD    = 240;  // ms after .  !  ?
+const PAUSE_COMMA     = 110;  // ms after ,  ;  :
+const PAUSE_DASH      = 150;  // ms after — -
+const HEADER_DURATION = 600;  // ms — wait for header to fade in before typing
+const QUOTE_DURATION  = 550;  // ms — pull quote slide-in
+const POST_QUOTE_GAP  = 280;  // ms — small pause after quote before resuming
 
-// Snap in — no fade, just appears, like a key press
-const charVariant = {
-  hidden:  { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.001 } },
-};
+function nextDelay(prevChar: string): number {
+  const variation = 1 + (Math.random() - 0.5) * SPEED_VARIATION;
+  const base = BASE_SPEED * variation;
+  if (".!?".includes(prevChar))      return base + PAUSE_PERIOD;
+  if (",;:".includes(prevChar))      return base + PAUSE_COMMA;
+  if ("—-".includes(prevChar))       return base + PAUSE_DASH;
+  return base;
+}
 
 function Cursor() {
   return (
     <span
       aria-hidden
-      className="inline-block w-[2px] h-[0.88em] bg-heading/70 align-text-bottom ms-[1px] rounded-[1px]"
-      style={{ animation: "cursor-blink 0.65s step-end infinite" }}
+      className="inline-block w-[2px] h-[1.05em] bg-brand-500 align-middle ms-[2px] rounded-[1px]"
+      style={{ animation: "cursor-blink 0.55s step-end infinite" }}
     />
   );
 }
 
-function TypedParagraph({
+function TypedText({
   text,
-  delay,
-  started,
-  isCurrent,
+  active,
+  onDone,
 }: {
   text: string;
-  delay: number;
-  started: boolean;
-  isCurrent: boolean;
+  active: boolean;
+  onDone: () => void;
 }) {
+  const [shown, setShown] = useState(0);
+  const onDoneRef = useRef(onDone);
+
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
+
+  useEffect(() => {
+    if (!active) return;
+
+    let i = 0;
+    let timer: number | undefined;
+    let cancelled = false;
+
+    const tick = () => {
+      if (cancelled) return;
+      i++;
+      setShown(i);
+      if (i >= text.length) {
+        onDoneRef.current();
+        return;
+      }
+      timer = window.setTimeout(tick, nextDelay(text[i - 1]));
+    };
+
+    // Tiny initial pause so the cursor blinks once before typing starts
+    timer = window.setTimeout(tick, 120);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [active, text]);
+
+  const isTyping = active && shown < text.length;
+
   return (
-    <motion.p
-      className="text-body leading-relaxed text-[1.0625rem]"
-      initial="hidden"
-      animate={started ? "visible" : "hidden"}
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: STAGGER, delayChildren: delay } },
-      }}
-    >
-      {text.split("").map((char, i) => (
-        <motion.span key={i} variants={charVariant} style={{ display: "inline" }}>
-          {char}
-        </motion.span>
-      ))}
-      {isCurrent && <Cursor />}
-    </motion.p>
+    <p className="text-body leading-relaxed text-[1.0625rem] min-h-[1.6em]">
+      {text.slice(0, shown)}
+      {isTyping && <Cursor />}
+    </p>
   );
 }
+
+type Phase = "idle" | "p1" | "p2" | "quote" | "p3" | "p4" | "done";
 
 export default function MyStory() {
   const t = useT();
   const s = t.about.story;
 
   const ref = useRef<HTMLDivElement>(null);
-  const started = useInView(ref, { once: true, margin: "-80px" });
-  const [currentPara, setCurrentPara] = useState(-1);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const [phase, setPhase] = useState<Phase>("idle");
 
-  // Compute when each paragraph starts (based on char count of previous paragraphs)
-  const p1Delay    = HDR_DONE;
-  const p2Delay    = p1Delay    + s.p1.length * STAGGER + PARA_GAP;
-  const quoteDelay = p2Delay    + s.p2.length * STAGGER + 0.15;
-  const p3Delay    = quoteDelay + QUOTE_DUR + 0.20;
-  const p4Delay    = p3Delay    + s.p3.length * STAGGER + PARA_GAP;
-  const doneAt     = p4Delay    + s.p4.length * STAGGER;
-
-  // Move cursor from paragraph to paragraph on schedule
+  // Start the chain after the header has finished fading in
   useEffect(() => {
-    if (!started) return;
-    const t = (s: number) => s * 1000;
-    const ids = [
-      setTimeout(() => setCurrentPara(0), t(p1Delay)),
-      setTimeout(() => setCurrentPara(1), t(p2Delay)),
-      setTimeout(() => setCurrentPara(2), t(p3Delay)),
-      setTimeout(() => setCurrentPara(3), t(p4Delay)),
-      setTimeout(() => setCurrentPara(-1), t(doneAt + 0.4)),
-    ];
-    return () => ids.forEach(clearTimeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [started]);
+    if (!inView) return;
+    const id = setTimeout(() => setPhase("p1"), HEADER_DURATION);
+    return () => clearTimeout(id);
+  }, [inView]);
+
+  // After p2 finishes, show the pull quote, then move to p3
+  useEffect(() => {
+    if (phase !== "quote") return;
+    const id = setTimeout(() => setPhase("p3"), QUOTE_DURATION + POST_QUOTE_GAP);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  const showQuote = phase === "quote" || phase === "p3" || phase === "p4" || phase === "done";
 
   return (
     <section className="py-24 bg-bg-soft">
@@ -95,7 +120,7 @@ export default function MyStory() {
           {/* Heading — fades in first */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={started ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="mb-14"
           >
@@ -106,24 +131,42 @@ export default function MyStory() {
             <h2 className="section-heading">{s.heading}</h2>
           </motion.div>
 
-          {/* Story — one paragraph at a time, blinking cursor tracks progress */}
+          {/* Story — live typed, one paragraph after another */}
           <div className="space-y-7">
-            <TypedParagraph text={s.p1} delay={p1Delay} started={started} isCurrent={currentPara === 0} />
-            <TypedParagraph text={s.p2} delay={p2Delay} started={started} isCurrent={currentPara === 1} />
+            <TypedText
+              text={s.p1}
+              active={phase === "p1"}
+              onDone={() => setPhase("p2")}
+            />
+            <TypedText
+              text={s.p2}
+              active={phase === "p2"}
+              onDone={() => setPhase("quote")}
+            />
 
-            <motion.blockquote
-              initial={{ opacity: 0, x: -16 }}
-              animate={started ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-              transition={{ duration: 0.45, ease: "easeOut", delay: quoteDelay }}
-              className="my-2 border-s-4 border-brand-500 ps-6 py-2"
-            >
-              <p className="text-xl font-semibold text-heading italic leading-relaxed">
-                &ldquo;{s.pullQuote}&rdquo;
-              </p>
-            </motion.blockquote>
+            {showQuote && (
+              <motion.blockquote
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: QUOTE_DURATION / 1000, ease: "easeOut" }}
+                className="my-2 border-s-4 border-brand-500 ps-6 py-2"
+              >
+                <p className="text-xl font-semibold text-heading italic leading-relaxed">
+                  &ldquo;{s.pullQuote}&rdquo;
+                </p>
+              </motion.blockquote>
+            )}
 
-            <TypedParagraph text={s.p3} delay={p3Delay} started={started} isCurrent={currentPara === 2} />
-            <TypedParagraph text={s.p4} delay={p4Delay} started={started} isCurrent={currentPara === 3} />
+            <TypedText
+              text={s.p3}
+              active={phase === "p3"}
+              onDone={() => setPhase("p4")}
+            />
+            <TypedText
+              text={s.p4}
+              active={phase === "p4"}
+              onDone={() => setPhase("done")}
+            />
           </div>
 
         </div>
