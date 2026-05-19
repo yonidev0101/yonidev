@@ -88,17 +88,17 @@ export default function AboutHero() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="relative flex items-center justify-center"
           >
-            <div className="relative w-[300px] h-[340px] sm:w-[360px] sm:h-[400px] lg:w-[400px] lg:h-[440px]">
+            <div className="relative w-[300px] h-[360px] sm:w-[360px] sm:h-[440px] lg:w-[400px] lg:h-[500px]">
               {/* Brand glow behind portrait */}
               <div className="absolute inset-[10%] rounded-full bg-brand-500/15 blur-3xl" />
 
-              {/* Portrait */}
-              <div className="relative w-full h-full float-slow">
+              {/* Portrait — cover-crop from the top so we see head + torso, never the awkward mid-thigh cut */}
+              <div className="relative w-full h-full overflow-hidden rounded-3xl float-slow">
                 <Image
                   src="/about/yoni-portrait.png"
                   alt={h.portraitAlt}
                   fill
-                  className="object-contain drop-shadow-[0_24px_48px_rgba(43,127,255,0.18)]"
+                  className="object-cover object-top drop-shadow-[0_24px_48px_rgba(43,127,255,0.18)]"
                   priority
                 />
               </div>

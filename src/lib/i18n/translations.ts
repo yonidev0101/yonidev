@@ -5,7 +5,7 @@ export const DEFAULT_LOCALE: Locale = "en";
 
 export interface TranslationDict {
   nav: { home: string; about: string; services: string; projects: string; contact: string; cta: string; menu: string; };
-  hero: { eyebrow: string; headingLine1: string; headingLine2: string; body: string; ctaPrimary: string; ctaSecondary: string; available: string; logoAlt: string; };
+  hero: { eyebrow: string; headingLine1: string; headingLine2: string; headingLine3: string; body: string; ctaPrimary: string; ctaSecondary: string; available: string; logoAlt: string; };
   stats: { yearsBuilding: string; projectsDelivered: string; serviceAreas: string; linesOfCode: string; };
   services: {
     eyebrow: string; heading: string; body: string;
@@ -23,8 +23,8 @@ export interface TranslationDict {
       yoniverse: { title: string; description: string };
       "al-hamacom": { title: string; description: string };
       "ai-whatsapp-bot": { title: string; description: string };
-      "project-4": { title: string; description: string };
-      "project-5": { title: string; description: string };
+      "categories-game": { title: string; description: string };
+      "git-explorer": { title: string; description: string };
     };
   };
   process: {
@@ -39,6 +39,34 @@ export interface TranslationDict {
   };
   technologies: { eyebrow: string; };
   cta: { headingLine1: string; headingLine2: string; body: string; button: string; };
+  projectDetail: {
+    overview: string;
+    problem: string;
+    solution: string;
+    features: string;
+    techStack: string;
+    howToRun: string;
+    prerequisites: string;
+    liveSite: string;
+    sourceCode: string;
+    backToProjects: string;
+    prevProject: string;
+    nextProject: string;
+  };
+  projectsPage: {
+    meta: { title: string; description: string };
+    eyebrow: string;
+    headingLine1: string;
+    headingLine2: string;
+    body: string;
+    filters: { all: string; web: string; ai: string; bot: string; automation: string };
+    viewLive: string;
+    caseStudy: string;
+    workshopEyebrow: string;
+    workshopHeading: string;
+    workshopBody: string;
+    noProjects: string;
+  };
   footer: {
     tagline: string; navTitle: string; servicesTitle: string;
     services: { frontend: string; backend: string; ai: string; bots: string; apis: string; };
@@ -91,10 +119,88 @@ export interface TranslationDict {
       };
     };
   };
+  servicesPage: {
+    meta: { title: string; description: string };
+    hero: { eyebrow: string; headingLine1: string; headingLine2: string; body: string };
+    items: {
+      fullstack: { title: string; tagline: string; description: string; bullets: [string, string, string]; useCase: string };
+      ai:        { title: string; tagline: string; description: string; bullets: [string, string, string]; useCase: string };
+      bots:      { title: string; tagline: string; description: string; bullets: [string, string, string]; useCase: string };
+      apis:      { title: string; tagline: string; description: string; bullets: [string, string, string]; useCase: string };
+    };
+    useCaseLabel: string;
+  };
 }
 
 export const translations: Record<Locale, TranslationDict> = {
   en: {
+    servicesPage: {
+      meta: {
+        title: "Services — YoniDev",
+        description: "Full-stack development, AI integrations, bots, and API services by YoniDev.",
+      },
+      hero: {
+        eyebrow: "What I Do",
+        headingLine1: "From Idea",
+        headingLine2: "to Production",
+        body: "Clean code, powerful functionality and great user experience — end to end.",
+      },
+      useCaseLabel: "For example",
+      items: {
+        fullstack: {
+          title: "Full-Stack Development",
+          tagline: "Complete web products, start to finish",
+          description:
+            "I design and build full web applications — from the interface users see to the server logic and database behind it. Every project is optimised for speed, scalability and maintainability.",
+          bullets: [
+            "Pixel-perfect UI with React / Next.js",
+            "Scalable backends with Node.js or Python",
+            "Database design & cloud deployment",
+          ],
+          useCase:
+            "A marketplace platform with real-time listings, auth, and an admin dashboard",
+        },
+        ai: {
+          title: "AI Integrations",
+          tagline: "Smart features wired into your product",
+          description:
+            "I connect LLM APIs (OpenAI, Claude, Gemini) into real products — not demos. RAG pipelines, semantic search, smart agents and context-aware features that actually ship.",
+          bullets: [
+            "LLM-powered features (chat, summary, classification)",
+            "RAG pipelines with vector search",
+            "Custom AI agents with tool use",
+          ],
+          useCase:
+            "An internal knowledge bot that answers questions from your company docs",
+        },
+        bots: {
+          title: "Bots & Automation",
+          tagline: "Automate the repetitive, scale the rest",
+          description:
+            "WhatsApp and Telegram bots that understand natural language, plus workflow automations with Make, Zapier or custom code. Anything that runs in the background so you don't have to.",
+          bullets: [
+            "WhatsApp / Telegram bots with NLP",
+            "Make / Zapier / n8n automation flows",
+            "Scheduled jobs and background workers",
+          ],
+          useCase:
+            "A WhatsApp bot that qualifies leads and books calls — without lifting a finger",
+        },
+        apis: {
+          title: "API & Integrations",
+          tagline: "Connect your stack, sync your data",
+          description:
+            "REST and GraphQL APIs, third-party integrations, and data pipelines. I build the glue between your systems so everything talks to everything.",
+          bullets: [
+            "RESTful and GraphQL API design",
+            "Third-party service integrations",
+            "Data syncing and ETL pipelines",
+          ],
+          useCase:
+            "Syncing CRM contacts to a mailing list and triggering Slack alerts on new deals",
+        },
+      },
+    },
     nav: {
       home: "Home",
       about: "About",
@@ -106,8 +212,9 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     hero: {
       eyebrow: "Full Stack Developer",
-      headingLine1: "I Code.",
-      headingLine2: "You Grow.",
+      headingLine1: "Your Idea.",
+      headingLine2: "My Code.",
+      headingLine3: "Our Result.",
       body: "Building modern, fast and scalable web applications, automations and AI-powered tools — from idea to production.",
       ctaPrimary: "View My Work",
       ctaSecondary: "Let's Work Together",
@@ -165,13 +272,13 @@ export const translations: Record<Locale, TranslationDict> = {
           title: "AI WhatsApp Bot",
           description: "Smart WhatsApp bot with natural language understanding and business automation.",
         },
-        "project-4": {
-          title: "Task Management App",
-          description: "Collaborative task management app with real-time updates and team features.",
+        "categories-game": {
+          title: "ארץ עיר — Categories Game",
+          description: "Real-time multiplayer Hebrew word game with AI-powered answer validation and Socket.IO live sync.",
         },
-        "project-5": {
-          title: "Business Automation Suite",
-          description: "End-to-end business automation connecting CRM, invoicing and email workflows.",
+        "git-explorer": {
+          title: "GitExplorer",
+          description: "Native desktop file explorer with a full Git client built in — browse files and manage your entire Git workflow from one Tauri app.",
         },
       },
     },
@@ -202,6 +309,34 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     technologies: {
       eyebrow: "Technologies I Use",
+    },
+    projectDetail: {
+      overview: "Overview",
+      problem: "The Problem",
+      solution: "The Solution",
+      features: "Key Features",
+      techStack: "Tech Stack",
+      howToRun: "How to Run",
+      prerequisites: "Prerequisites",
+      liveSite: "Live Site",
+      sourceCode: "Source Code",
+      backToProjects: "All Projects",
+      prevProject: "Previous",
+      nextProject: "Next",
+    },
+    projectsPage: {
+      meta: { title: "Projects — YoniDev", description: "A curated selection of web apps, AI tools, bots, and automation systems built by YoniDev." },
+      eyebrow: "Selected Work",
+      headingLine1: "Projects That",
+      headingLine2: "Make an Impact",
+      body: "Every project here started as a real problem and ended as a working product.",
+      filters: { all: "All", web: "Web", ai: "AI", bot: "Bots", automation: "Automation" },
+      viewLive: "View Live",
+      caseStudy: "Case Study",
+      workshopEyebrow: "In the Workshop",
+      workshopHeading: "Coming Next",
+      workshopBody: "More projects are on the way.",
+      noProjects: "No projects in this category yet.",
     },
     cta: {
       headingLine1: "Have a project",
@@ -356,6 +491,73 @@ export const translations: Record<Locale, TranslationDict> = {
     },
   },
   he: {
+    servicesPage: {
+      meta: {
+        title: "שירותים — YoniDev",
+        description: "פיתוח Full-Stack, שילובי AI, בוטים ו-API על ידי YoniDev.",
+      },
+      hero: {
+        eyebrow: "מה אני עושה",
+        headingLine1: "מרעיון",
+        headingLine2: "לייצור",
+        body: "קוד נקי, פונקציונליות עוצמתית וחוויית משתמש מצוינת — מקצה לקצה.",
+      },
+      useCaseLabel: "לדוגמה",
+      items: {
+        fullstack: {
+          title: "פיתוח Full-Stack",
+          tagline: "מוצרי web מלאים, מההתחלה ועד הסוף",
+          description:
+            "אני מעצב ובונה אפליקציות web שלמות — מהממשק שהמשתמשים רואים ועד לוגיקת השרת ומסד הנתונים מאחוריו. כל פרויקט מותאם למהירות, יכולת הרחבה ותחזוקה.",
+          bullets: [
+            "UI מדויק לפיקסל עם React / Next.js",
+            "Backends מתרחבים עם Node.js או Python",
+            "עיצוב מסד נתונים ופריסה לענן",
+          ],
+          useCase:
+            "פלטפורמת מרקטפלייס עם מודעות בזמן אמת, התחברות ודאשבורד ניהול",
+        },
+        ai: {
+          title: "שילובי AI",
+          tagline: "פיצ'רים חכמים משולבים במוצר שלך",
+          description:
+            "אני מחבר ממשקי LLM (OpenAI, Claude, Gemini) למוצרים אמיתיים — לא דמואים. צינורות RAG, חיפוש סמנטי, agents חכמים ופיצ'רים מבוססי הקשר שבאמת יוצאים לאוויר.",
+          bullets: [
+            "פיצ'רים מבוססי LLM (צ'אט, סיכום, סיווג)",
+            "צינורות RAG עם חיפוש וקטורי",
+            "Agents AI מותאמים עם שימוש בכלים",
+          ],
+          useCase:
+            "בוט ידע פנימי שעונה על שאלות מהמסמכים של החברה שלך",
+        },
+        bots: {
+          title: "בוטים ואוטומציה",
+          tagline: "אוטומציה של החוזר, הרחבה של השאר",
+          description:
+            "בוטים לוואטסאפ וטלגרם שמבינים שפה טבעית, בנוסף לאוטומציות זרימת עבודה עם Make, Zapier או קוד מותאם. כל מה שרץ ברקע כדי שאתה לא תצטרך.",
+          bullets: [
+            "בוטים לוואטסאפ / טלגרם עם NLP",
+            "זרימות אוטומציה עם Make / Zapier / n8n",
+            "עבודות מתוזמנות ו-workers ברקע",
+          ],
+          useCase:
+            "בוט וואטסאפ שמכשיר לידים ומזמין שיחות — בלי לגעת בזה",
+        },
+        apis: {
+          title: "API ואינטגרציות",
+          tagline: "חיבור הסטאק שלך, סנכרון הנתונים שלך",
+          description:
+            "ממשקי REST ו-GraphQL, אינטגרציות עם צד שלישי וצינורות נתונים. אני בונה את הדבק בין המערכות שלך כדי שהכל ידבר עם הכל.",
+          bullets: [
+            "עיצוב ממשקי RESTful ו-GraphQL",
+            "אינטגרציות שירות צד שלישי",
+            "סנכרון נתונים וצינורות ETL",
+          ],
+          useCase:
+            "סנכרון אנשי קשר מ-CRM לרשימת תפוצה עם התראות Slack על עסקאות חדשות",
+        },
+      },
+    },
     nav: {
       home: "בית",
       about: "אודות",
@@ -367,8 +569,9 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     hero: {
       eyebrow: "מפתח Full Stack",
-      headingLine1: "אני מקודד.",
-      headingLine2: "אתם צומחים.",
+      headingLine1: "הרעיון שלך.",
+      headingLine2: "הקוד שלי.",
+      headingLine3: "התוצאה שלנו.",
       body: "בונה אפליקציות אינטרנט מודרניות, מהירות ומתרחבות, אוטומציות וכלים מבוססי AI — מהרעיון ועד הייצור.",
       ctaPrimary: "לעבודות שלי",
       ctaSecondary: "בואו נעבוד יחד",
@@ -429,13 +632,13 @@ export const translations: Record<Locale, TranslationDict> = {
           title: "בוט WhatsApp חכם",
           description: "בוט WhatsApp חכם עם הבנת שפה טבעית ואוטומציה עסקית.",
         },
-        "project-4": {
-          title: "אפליקציית ניהול משימות",
-          description: "ניהול משימות שיתופי עם עדכונים בזמן אמת ופיצ'רים לצוותים.",
+        "categories-game": {
+          title: "ארץ עיר — Categories Game",
+          description: "משחק ארץ עיר מולטיפלייר בזמן אמת עם שיפוט תשובות מבוסס AI וסנכרון חי דרך Socket.IO.",
         },
-        "project-5": {
-          title: "חבילת אוטומציה לעסקים",
-          description: "אוטומציה עסקית מקצה לקצה שמחברת CRM, חשבוניות ותהליכי אימייל.",
+        "git-explorer": {
+          title: "GitExplorer",
+          description: "סייר קבצים נייטיב לשולחן עבודה עם לקוח Git מובנה — לדפדף בקבצים ולנהל את כל זרימת העבודה עם Git מאפליקציית Tauri אחת.",
         },
       },
     },
@@ -466,6 +669,34 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     technologies: {
       eyebrow: "הטכנולוגיות שאני עובד איתן",
+    },
+    projectDetail: {
+      overview: "סקירה",
+      problem: "הבעיה",
+      solution: "הפתרון",
+      features: "פיצ'רים מרכזיים",
+      techStack: "סטאק טכנולוגי",
+      howToRun: "איך להריץ",
+      prerequisites: "דרישות מוקדמות",
+      liveSite: "לאתר החי",
+      sourceCode: "קוד מקור",
+      backToProjects: "כל הפרויקטים",
+      prevProject: "הקודם",
+      nextProject: "הבא",
+    },
+    projectsPage: {
+      meta: { title: "פרויקטים — YoniDev", description: "מבחר עבודות — אפליקציות Web, כלי AI, בוטים ואוטומציות שנבנו על ידי YoniDev." },
+      eyebrow: "עבודות נבחרות",
+      headingLine1: "פרויקטים",
+      headingLine2: "שעושים את ההבדל",
+      body: "כל פרויקט כאן התחיל כבעיה אמיתית וסיים כמוצר עובד.",
+      filters: { all: "הכל", web: "Web", ai: "AI", bot: "בוטים", automation: "אוטומציה" },
+      viewLive: "לאתר החי",
+      caseStudy: "קייס סטאדי",
+      workshopEyebrow: "בסדנה",
+      workshopHeading: "מה הבא",
+      workshopBody: "עוד פרויקטים בדרך.",
+      noProjects: "אין פרויקטים בקטגוריה הזו עדיין.",
     },
     cta: {
       headingLine1: "יש לך פרויקט",

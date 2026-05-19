@@ -2,8 +2,8 @@ export type ProjectSlug =
   | "yoniverse"
   | "al-hamacom"
   | "ai-whatsapp-bot"
-  | "project-4"
-  | "project-5";
+  | "categories-game"
+  | "git-explorer";
 
 export interface Project {
   slug: ProjectSlug;
@@ -38,17 +38,17 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    slug: "project-4",
-    stack: ["React", "Node.js", "Socket.io", "PostgreSQL"],
+    slug: "categories-game",
+    stack: ["Next.js", "Node.js", "Socket.IO", "OpenAI", "MongoDB"],
     category: "web",
-    image: "/projects/project-4.png",
+    image: "/projects/categories-game.png",
     featured: false,
   },
   {
-    slug: "project-5",
-    stack: ["Node.js", "Make", "REST APIs", "TypeScript"],
-    category: "automation",
-    image: "/projects/project-5.png",
+    slug: "git-explorer",
+    stack: ["Tauri", "React", "Rust", "TypeScript"],
+    category: "web",
+    image: "/projects/git-explorer.png",
     featured: false,
   },
 ];

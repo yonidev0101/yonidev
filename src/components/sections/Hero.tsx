@@ -61,8 +61,10 @@ export default function Hero() {
             >
               {t.hero.headingLine1}
               <br />
+              {t.hero.headingLine2}
+              <br />
               <span className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent">
-                {t.hero.headingLine2}
+                {t.hero.headingLine3}
               </span>
             </motion.h1>
 
@@ -101,16 +103,16 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="relative flex items-center justify-center"
           >
-            <div className="relative w-[340px] h-[400px] sm:w-[400px] sm:h-[460px]">
+            <div className="relative w-[340px] h-[420px] sm:w-[420px] sm:h-[500px]">
               <div className="absolute inset-[15%] rounded-full bg-brand-500/10 blur-3xl" />
 
-              <div className="absolute inset-0 flex items-center justify-center pb-6 float-slow">
+              <div className="absolute inset-0 flex items-end justify-center float-slow">
                 <Image
-                  src="/logo/y-logo.png"
+                  src="/hero-character.png"
                   alt={t.hero.logoAlt}
-                  width={260}
-                  height={300}
-                  className="object-contain drop-shadow-[0_24px_48px_rgba(43,127,255,0.25)]"
+                  width={420}
+                  height={500}
+                  className="object-contain drop-shadow-[0_24px_48px_rgba(43,127,255,0.2)]"
                   priority
                 />
               </div>
