@@ -3,6 +3,21 @@ export const EMAIL_TO = process.env.CONTACT_TO_EMAIL ?? "yonidev0101@gmail.com";
 export const EMAIL_FROM =
   process.env.CONTACT_FROM_EMAIL ?? "YoniDev Contact <onboarding@resend.dev>";
 
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.dev";
+
+export const BRAND = {
+  name: "יהונתן יגלניק",
+  nameEn: "Yonatan Yaglenik",
+  title: "Full Stack Developer",
+  titleHe: "מפתח Full Stack",
+  email: "yonidev0101@gmail.com",
+  phoneDisplay: "+972 58 322 3090",
+  whatsapp: WHATSAPP_NUMBER,
+  site: "yonidev.dev",
+  logoUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.dev"}/logo/y-logo.png`,
+} as const;
+
 export function buildWhatsAppUrl(prefillText: string): string {
   if (!WHATSAPP_NUMBER) return "";
   const encoded = encodeURIComponent(prefillText);

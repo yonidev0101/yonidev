@@ -3,6 +3,7 @@ export const runtime = "nodejs";
 import { Resend } from "resend";
 import { contactSchema } from "@/lib/contact/schema";
 import { EMAIL_TO, EMAIL_FROM } from "@/lib/contact/channels";
+import { buildInquiryEmail, buildAutoReplyEmail } from "@/lib/contact/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -22,37 +23,6 @@ function checkRateLimit(ip: string): boolean {
   timestamps.push(now);
   rateLimitMap.set(ip, timestamps);
   return true;
-}
-
-function buildHtml(data: ReturnType<typeof contactSchema.parse>): string {
-  const rows = [
-    ["Name", data.name],
-    ["Email", data.email],
-    ["Phone", data.phone || "—"],
-    ["Project Type", data.projectType],
-    ["Budget", data.budget],
-    ["Timeline", data.timeline],
-    ["Message", data.message.replace(/\n/g, "<br>")],
-  ];
-  const rowsHtml = rows
-    .map(
-      ([label, value]) =>
-        `<tr><td style="padding:8px 12px;font-weight:600;color:#0F172A;background:#F8FAFC;white-space:nowrap;border:1px solid #E2E8F0">${label}</td><td style="padding:8px 12px;color:#334155;border:1px solid #E2E8F0">${value}</td></tr>`
-    )
-    .join("");
-  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;color:#0F172A;padding:24px"><h2 style="margin-top:0">New inquiry from ${data.name}</h2><table style="border-collapse:collapse;width:100%">${rowsHtml}</table></body></html>`;
-}
-
-function buildText(data: ReturnType<typeof contactSchema.parse>): string {
-  return [
-    `Name: ${data.name}`,
-    `Email: ${data.email}`,
-    `Phone: ${data.phone || "—"}`,
-    `Project Type: ${data.projectType}`,
-    `Budget: ${data.budget}`,
-    `Timeline: ${data.timeline}`,
-    `Message:\n${data.message}`,
-  ].join("\n");
 }
 
 export async function POST(req: Request) {
@@ -87,15 +57,34 @@ export async function POST(req: Request) {
     );
   }
 
+  const inquiry = buildInquiryEmail(data);
+  const autoReply = buildAutoReplyEmail(data);
+
   try {
+    // Inquiry to Yoni — must succeed (this is the actual lead)
     await resend.emails.send({
       from: EMAIL_FROM,
       to: EMAIL_TO,
       replyTo: data.email,
-      subject: `New inquiry — ${data.projectType} from ${data.name}`,
-      html: buildHtml(data),
-      text: buildText(data),
+      subject: inquiry.subject,
+      html: inquiry.html,
+      text: inquiry.text,
     });
+
+    // Auto-reply to customer — best-effort; don't fail the request if it bounces
+    resend.emails
+      .send({
+        from: EMAIL_FROM,
+        to: data.email,
+        replyTo: EMAIL_TO,
+        subject: autoReply.subject,
+        html: autoReply.html,
+        text: autoReply.text,
+      })
+      .catch((err) => {
+        console.error("[contact] auto-reply failed:", err);
+      });
+
     return Response.json({ ok: true });
   } catch (err) {
     console.error("[contact] Resend error:", err);
