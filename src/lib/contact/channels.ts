@@ -1,7 +1,8 @@
 export const WHATSAPP_NUMBER = "972583223090"; // set before deploy, e.g. "972501234567"
 export const EMAIL_TO = process.env.CONTACT_TO_EMAIL ?? "yonidev0101@gmail.com";
+export const GMAIL_USER = process.env.GMAIL_USER ?? "yonidev0101@gmail.com";
 export const EMAIL_FROM =
-  process.env.CONTACT_FROM_EMAIL ?? "YoniDev Contact <onboarding@resend.dev>";
+  process.env.CONTACT_FROM_EMAIL ?? `YoniDev <${GMAIL_USER}>`;
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.vercel.app";

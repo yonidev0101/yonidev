@@ -1,0 +1,44 @@
+אני בונה פורטפוליו ב-Next.js ויש לי עמוד case study לכל פרויקט.
+אני צריך שתנתח את הפרויקט הזה ותחזיר לי את כל הנתונים הבאים
+בפורמט TypeScript מוכן להדבקה.
+
+המבנה שאני צריך:
+
+interface ProjectDetailContent {
+  tagline: string;          // משפט אחד, מה הפרויקט עושה
+  overview: string;         // 2-3 משפטים, תיאור כללי
+  problem: string;          // מה הבעיה שהפרויקט פותר
+  solution: string;         // איך הפתרון עובד טכנית
+  features: {
+    title: string;
+    description: string;    // 1-2 משפטים על הפיצ'ר
+  }[];                      // 3-5 פיצ'רים מרכזיים
+  highlights: string[];     // 4-6 נקודות טכניות ייחודיות (stack, patterns, decisions)
+  setup: {
+    prerequisites: string[];
+    steps: {
+      label: string;
+      command?: string;     // אם יש פקודת terminal
+      note?: string;        // הסבר אם אין command
+    }[];
+  };
+}
+
+תחזיר לי אובייקט כזה פעמיים — פעם אחת באנגלית ופעם שנייה בעברית,
+בפורמט הזה בדיוק:
+
+// ENGLISH
+const detailEn: ProjectDetailContent = { ... }
+
+// HEBREW
+const detailHe: ProjectDetailContent = { ... }
+
+הנחיות:
+- קרא את כל קבצי הפרויקט לפני שתכתוב
+- השתמש בשמות טכנולוגיות אמיתיות מה-package.json ומהקוד
+- שלבי ה-setup צריכים להיות מדויקים לפרויקט הזה (commands אמיתיים)
+- אל תמציא פיצ'רים שלא קיימים בקוד
+- הטקסט בעברית צריך להיות תרגום אמיתי, לא רק תעתיק
+
+אחרי שתקבל את הפלט, פתח את src/data/projectDetails.ts בפורטפוליו
+והחלף את הנתונים של אותו פרויקט תחת en ו-he.

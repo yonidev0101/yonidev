@@ -1,11 +1,22 @@
 export const runtime = "nodejs";
 
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { contactSchema } from "@/lib/contact/schema";
-import { EMAIL_TO, EMAIL_FROM } from "@/lib/contact/channels";
+import { EMAIL_TO, EMAIL_FROM, GMAIL_USER } from "@/lib/contact/channels";
 import { buildInquiryEmail, buildAutoReplyEmail } from "@/lib/contact/email-templates";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-init transporter so a missing env var doesn't crash module load
+let transporter: nodemailer.Transporter | null = null;
+function getTransporter(): nodemailer.Transporter | null {
+  if (transporter) return transporter;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!pass) return null;
+  transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: GMAIL_USER, pass },
+  });
+  return transporter;
+}
 
 // In-memory rate limit: max 3 requests per IP per 5 minutes
 const rateLimitMap = new Map<string, number[]>();
@@ -26,7 +37,8 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(req: Request) {
-  if (!process.env.RESEND_API_KEY) {
+  const mailer = getTransporter();
+  if (!mailer) {
     return Response.json({ ok: false, error: "Email service not configured" }, { status: 503 });
   }
 
@@ -62,18 +74,18 @@ export async function POST(req: Request) {
 
   try {
     // Inquiry to Yoni — must succeed (this is the actual lead)
-    await resend.emails.send({
+    await mailer.sendMail({
       from: EMAIL_FROM,
       to: EMAIL_TO,
-      replyTo: data.email,
+      replyTo: `${data.name} <${data.email}>`,
       subject: inquiry.subject,
       html: inquiry.html,
       text: inquiry.text,
     });
 
     // Auto-reply to customer — best-effort; don't fail the request if it bounces
-    resend.emails
-      .send({
+    mailer
+      .sendMail({
         from: EMAIL_FROM,
         to: data.email,
         replyTo: EMAIL_TO,
@@ -87,7 +99,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true });
   } catch (err) {
-    console.error("[contact] Resend error:", err);
+    console.error("[contact] Gmail SMTP error:", err);
     return Response.json({ ok: false, error: "Failed to send email" }, { status: 500 });
   }
 }

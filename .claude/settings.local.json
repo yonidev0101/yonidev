@@ -14,7 +14,12 @@
       "Bash(git commit -m 'fix: ease type assertion in ProjectDetailClient fadeUp to satisfy Framer Motion types *)",
       "Bash(vercel logs *)",
       "Bash(vercel inspect *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git commit *)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(Remove-Item *)",
+      "Bash(npm install *)",
+      "Bash(npm uninstall *)"
     ]
   }
 }
