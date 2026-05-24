@@ -1,7 +1,7 @@
 export type Locale = "en" | "he";
 
 export const LOCALES: Locale[] = ["en", "he"];
-export const DEFAULT_LOCALE: Locale = "en";
+export const DEFAULT_LOCALE: Locale = "he";
 
 export interface TranslationDict {
   nav: { home: string; about: string; services: string; projects: string; contact: string; cta: string; menu: string; };

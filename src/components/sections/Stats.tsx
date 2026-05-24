@@ -38,7 +38,7 @@ export default function Stats() {
   const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section className="py-12 bg-white border-y border-border">
+    <section className="py-12 bg-white">
       <div className="container">
         <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
           {stats.map((stat, i) => (
@@ -46,7 +46,7 @@ export default function Stats() {
               key={stat.key}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.08 }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
               className="text-center"
             >

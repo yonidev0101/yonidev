@@ -30,7 +30,7 @@ export default function Technologies() {
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.08 }}
           transition={{ duration: 0.5 }}
           className="section-eyebrow text-center mb-10"
         >
@@ -41,7 +41,7 @@ export default function Technologies() {
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, amount: 0.08 }}
         transition={{ duration: 0.6, delay: 0.15 }}
         className="relative"
         style={{ maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)" }}

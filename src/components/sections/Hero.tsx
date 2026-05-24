@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Code2, Database, Cloud } from "lucide-react";
 import { RadialBlob, OrganicShape } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
+import SideText from "@/components/shared/SideText";
+import ScrambleText from "@/components/shared/ScrambleText";
 
 const floatingCards = [
   { icon: Code2,    label: "</>",   className: "top-[18%] -start-6",   animClass: "float-card-1" },
@@ -41,6 +43,8 @@ export default function Hero() {
       <RadialBlob className="top-1/4 -start-32" size={380} opacity={0.05} />
       <OrganicShape className="-bottom-40 -end-32 w-[600px] h-[600px]" opacity={0.4} />
 
+      <SideText text="YONIDEV" side="right" />
+
       <div className="container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-6 items-center py-16 lg:py-24">
           {/* Left — Text */}
@@ -55,18 +59,38 @@ export default function Hero() {
               <span className="section-eyebrow">{t.hero.eyebrow}</span>
             </motion.div>
 
-            <motion.h1
-              variants={itemVariants}
-              className="text-5xl sm:text-6xl lg:text-7xl font-bold text-heading leading-[1.05] tracking-tight"
-            >
-              {t.hero.headingLine1}
-              <br />
-              {t.hero.headingLine2}
-              <br />
-              <span className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent">
-                {t.hero.headingLine3}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-heading leading-[1.05] tracking-tight">
+              {[
+                { content: t.hero.headingLine1, slideDelay: 0.18, scrambleDelay: 0.2 },
+                { content: t.hero.headingLine2, slideDelay: 0.3,  scrambleDelay: 0.32 },
+              ].map(({ content, slideDelay, scrambleDelay }) => (
+                <span key={content} className="block overflow-hidden">
+                  <motion.span
+                    className="block"
+                    initial={{ y: "105%" }}
+                    animate={{ y: "0%" }}
+                    transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: slideDelay }}
+                  >
+                    <ScrambleText text={content} delay={scrambleDelay} duration={1.4} />
+                  </motion.span>
+                </span>
+              ))}
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "105%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.42 }}
+                >
+                  <ScrambleText
+                    text={t.hero.headingLine3}
+                    delay={0.44}
+                    duration={1.4}
+                    className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent"
+                  />
+                </motion.span>
               </span>
-            </motion.h1>
+            </h1>
 
             <motion.p variants={itemVariants} className="text-lg text-body leading-relaxed">
               {t.hero.body}

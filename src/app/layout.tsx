@@ -43,8 +43,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      dir="ltr"
+      lang="he"
+      dir="rtl"
       suppressHydrationWarning
       className={`${plusJakarta.variable} ${heebo.variable} ${geistMono.variable} h-full`}
     >

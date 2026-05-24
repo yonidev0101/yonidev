@@ -5,6 +5,8 @@ import { Code2, Sparkles, Bot, Plug } from "lucide-react";
 import { services } from "@/data/services";
 import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
+import RevealText from "@/components/shared/RevealText";
+import SideText from "@/components/shared/SideText";
 
 const iconMap: Record<string, React.ElementType> = {
   Code2, Sparkles, Bot, Plug,
@@ -18,22 +20,37 @@ export default function Services() {
 
   return (
     <section className="relative py-24 bg-bg-soft overflow-hidden">
+      {/* blend from previous white section */}
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
       <DotGrid opacity={0.025} size={28} />
       <RadialBlob className="-top-40 -start-40" size={500} opacity={0.06} />
       <RadialBlob className="-bottom-32 -end-20" size={420} opacity={0.05} />
+      <SideText text="SERVICES" side="left" />
 
       <div className="container relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <p className="section-eyebrow mb-3">{t.services.eyebrow}</p>
-          <h2 className="section-heading mb-4">{t.services.heading}</h2>
-          <p className="section-body max-w-xl mx-auto">{t.services.body}</p>
-        </motion.div>
+        <div className="text-center mb-16">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.08 }}
+            transition={{ duration: 0.5 }}
+            className="section-eyebrow mb-3"
+          >
+            {t.services.eyebrow}
+          </motion.p>
+          <h2 className="section-heading mb-4">
+            <RevealText delay={0.05}>{t.services.heading}</RevealText>
+          </h2>
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.08 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="section-body max-w-xl mx-auto"
+          >
+            {t.services.body}
+          </motion.p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {services.map((service, i) => {
@@ -46,7 +63,7 @@ export default function Services() {
                 key={service.id}
                 initial={{ opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, amount: 0.08 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="group flex flex-col items-center text-center p-6"
               >

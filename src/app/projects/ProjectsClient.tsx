@@ -8,6 +8,7 @@ import { ExternalLink, ArrowRight, ChevronRight } from "lucide-react";
 import { projects, type Project } from "@/data/projects";
 import { RadialBlob } from "@/components/shared/BackgroundDeco";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import ScrambleText from "@/components/shared/ScrambleText";
 import type { TranslationDict } from "@/lib/i18n/translations";
 
 type Filter = "all" | Project["category"];
@@ -154,19 +155,45 @@ export default function ProjectsClient() {
         <RadialBlob className="-top-40 -end-16" size={520} opacity={0.04} />
 
         <div className="container relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="max-w-2xl"
-          >
-            <p className="section-eyebrow mb-3">{tp.eyebrow}</p>
+          <div className="max-w-2xl">
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="section-eyebrow mb-3"
+            >
+              {tp.eyebrow}
+            </motion.p>
             <h1 className="section-heading mb-4">
-              {tp.headingLine1}
-              <br />
-              <span className="text-brand-500">{tp.headingLine2}</span>
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "105%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.18 }}
+                >
+                  <ScrambleText text={tp.headingLine1} delay={0.2} duration={1.2} />
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "105%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.3 }}
+                >
+                  <ScrambleText text={tp.headingLine2} delay={0.32} duration={1.2} className="text-brand-500" />
+                </motion.span>
+              </span>
             </h1>
-            <p className="section-body mb-8 max-w-md">{tp.body}</p>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.48 }}
+              className="section-body mb-8 max-w-md"
+            >
+              {tp.body}
+            </motion.p>
 
             {/* Filter chips */}
             <motion.div
@@ -198,7 +225,7 @@ export default function ProjectsClient() {
                 </button>
               ))}
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -389,7 +416,7 @@ export default function ProjectsClient() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.08 }}
             transition={{ duration: 0.55, ease: "easeOut" }}
           >
             <p className="section-eyebrow mb-3">{tp.workshopEyebrow}</p>
@@ -403,7 +430,7 @@ export default function ProjectsClient() {
                 key={i}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, amount: 0.08 }}
                 transition={{ duration: 0.45, delay: i * 0.1, ease: "easeOut" }}
                 className="rounded-2xl border-2 border-dashed border-border p-5 bg-bg-soft"
               >

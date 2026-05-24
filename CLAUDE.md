@@ -23,14 +23,30 @@ npm run start    # serve production build
 
 ```
 src/
-  app/          # Routes (App Router). layout.tsx + page.tsx only at root so far.
+  app/          # Routes (App Router): /, /about, /services, /projects, /contact
   components/
     sections/   # Full-page sections: Hero, Stats, Services, FeaturedProjects, Process, Technologies, CTABanner
-    shared/     # Layout-level: Navbar, Footer, Logo
+    shared/     # Layout-level + animation primitives (see below)
     ui/         # shadcn primitives (button, badge, card, separator) — do not edit directly
   data/         # Static content: projects.ts, services.ts, technologies.ts
   lib/          # utils.ts (cn helper)
 ```
+
+### Shared animation components
+
+| Component | File | Use |
+|---|---|---|
+| `ScrambleText` | `shared/ScrambleText.tsx` | Character-scramble reveal for **page-load h1s** (always visible). Use `animate`, NOT `whileInView`. Pass `delay` in seconds. |
+| `RevealText` | `shared/RevealText.tsx` | Clip-path slide-up reveal for **scroll-triggered h2s**. Uses `whileInView` — only for elements not visible on load. |
+| `SideText` | `shared/SideText.tsx` | Vertical decorative text at section edges (desktop only). Uses `writing-mode: vertical-rl` + scroll parallax. |
+| `SectionReveal` | `shared/SectionReveal.tsx` | Generic fade+slide wrapper for scroll-triggered content blocks. |
+| `ScrollKineticText` | `shared/ScrollKineticText.tsx` | Two-row horizontal kinetic text driven by scroll. Intended as absolute background element inside sections. |
+
+**Animation conventions:**
+- All `whileInView` viewports use `{ once: true, amount: 0.08 }` — triggers early so content is already animating as user scrolls to it.
+- Page-load headings (h1): `ScrambleText` + `motion.span` slide (`y: "105%" → "0%"`, ease `[0.33, 1, 0.68, 1]`).
+- Scroll headings (h2): `RevealText` with staggered `delay` per line (0.05 / 0.13 for two lines).
+- Framer Motion `ease` must be a named string or `EasingFunction` — raw `number[]` arrays cause TS build errors. Exception: cubic-bezier arrays like `[0.33, 1, 0.68, 1]` are valid as they match the `BezierDefinition` type.
 
 ### Design system
 

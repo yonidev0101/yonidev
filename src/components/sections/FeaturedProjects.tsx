@@ -8,6 +8,8 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { featuredProjects } from "@/data/projects";
 import { RadialBlob, FlowingCurves } from "@/components/shared/BackgroundDeco";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import RevealText from "@/components/shared/RevealText";
+import SideText from "@/components/shared/SideText";
 
 export default function FeaturedProjects() {
   const { t, dir } = useLocale();
@@ -25,7 +27,10 @@ export default function FeaturedProjects() {
 
   return (
     <section className="relative py-24 bg-white overflow-hidden">
+      {/* blend from previous bg-soft section */}
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#F8FAFC] to-transparent pointer-events-none z-10" />
       <FlowingCurves className="start-0 bottom-10 w-[55%] h-[280px]" opacity={0.5} />
+      <SideText text="PROJECTS" side="right" />
       <RadialBlob className="-top-32 -end-20" size={460} opacity={0.05} />
       <RadialBlob className="bottom-10 start-1/3" size={320} opacity={0.04} />
 
@@ -35,15 +40,22 @@ export default function FeaturedProjects() {
           <motion.div
             initial={{ opacity: 0, x: isRTL ? 24 : -24 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.08 }}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <p className="section-eyebrow">{t.projects.eyebrow}</p>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.5 }}
+              className="section-eyebrow"
+            >
+              {t.projects.eyebrow}
+            </motion.p>
             <h2 className="section-heading">
-              {t.projects.headingLine1}
-              <br />
-              {t.projects.headingLine2}
+              <RevealText delay={0.05}>{t.projects.headingLine1}</RevealText>
+              <RevealText delay={0.13}>{t.projects.headingLine2}</RevealText>
             </h2>
             <p className="section-body max-w-sm">{t.projects.body}</p>
             <Link

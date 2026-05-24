@@ -5,17 +5,20 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useT } from "@/lib/i18n/LocaleProvider";
+import RevealText from "@/components/shared/RevealText";
 
 export default function CTABanner() {
   const t = useT();
 
   return (
-    <section className="py-16 bg-bg-soft">
+    <section className="relative py-16 bg-bg-soft overflow-hidden">
+      {/* blend from previous white section */}
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, amount: 0.08 }}
           transition={{ duration: 0.6 }}
           className="relative overflow-hidden rounded-3xl p-10 sm:p-14 md:p-16 max-w-5xl mx-auto"
           style={{
@@ -38,9 +41,8 @@ export default function CTABanner() {
 
           <div className="relative z-10 flex flex-col items-start gap-4 sm:pe-[220px]">
             <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-              {t.cta.headingLine1}
-              <br />
-              {t.cta.headingLine2}
+              <RevealText delay={0}>{t.cta.headingLine1}</RevealText>
+              <RevealText delay={0.1}>{t.cta.headingLine2}</RevealText>
             </h2>
             <p className="text-white/75 text-sm">{t.cta.body}</p>
             <Link

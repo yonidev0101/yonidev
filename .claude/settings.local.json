@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git -c http.sslVerify=false push origin main)",
+      "Bash(npx vercel *)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 npx vercel ls)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 npx vercel inspect yonidev-c9jh5vo64-yonidevs-projects.vercel.app --logs)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 npx vercel logs yonidev-c9jh5vo64-yonidevs-projects.vercel.app)",
+      "Bash(NODE_TLS_REJECT_UNAUTHORIZED=0 npx vercel build)",
+      "Bash(git commit -m 'fix: ease type assertion in ProjectDetailClient fadeUp to satisfy Framer Motion types *)",
+      "Bash(vercel logs *)",
+      "Bash(vercel inspect *)",
+      "Bash(curl *)"
     ]
   }
 }

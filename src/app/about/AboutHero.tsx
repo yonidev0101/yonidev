@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import ScrambleText from "@/components/shared/ScrambleText";
 import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
 
@@ -42,16 +43,33 @@ export default function AboutHero() {
               <span className="section-eyebrow">{h.eyebrow}</span>
             </motion.div>
 
-            <motion.h1
-              variants={item}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold text-heading leading-[1.08] tracking-tight"
-            >
-              {h.headingLine1}
-              <br />
-              <span className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent">
-                {h.headingLine2}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-heading leading-[1.08] tracking-tight">
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "105%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.2 }}
+                >
+                  <ScrambleText text={h.headingLine1} delay={0.22} duration={1.3} />
+                </motion.span>
               </span>
-            </motion.h1>
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "105%" }}
+                  animate={{ y: "0%" }}
+                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.32 }}
+                >
+                  <ScrambleText
+                    text={h.headingLine2}
+                    delay={0.34}
+                    duration={1.3}
+                    className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent"
+                  />
+                </motion.span>
+              </span>
+            </h1>
 
             <motion.p variants={item} className="text-lg text-body leading-relaxed">
               {h.body}

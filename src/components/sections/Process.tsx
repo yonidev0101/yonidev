@@ -5,6 +5,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { processSteps } from "@/data/services";
 import { RadialBlob } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
+import RevealText from "@/components/shared/RevealText";
+import SideText from "@/components/shared/SideText";
 
 export default function Process() {
   const t = useT();
@@ -19,22 +21,24 @@ export default function Process() {
     <section className="relative py-28 bg-white overflow-hidden">
       <RadialBlob className="top-40 -end-40" size={500} opacity={0.05} />
       <RadialBlob className="bottom-20 -start-32" size={420} opacity={0.04} />
+      <SideText text="PROCESS" side="left" />
 
       <div className="container relative">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="max-w-2xl mb-20"
-        >
-          <p className="section-eyebrow mb-3">{t.process.eyebrow}</p>
+        <div className="max-w-2xl mb-20">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.08 }}
+            transition={{ duration: 0.5 }}
+            className="section-eyebrow mb-3"
+          >
+            {t.process.eyebrow}
+          </motion.p>
           <h2 className="section-heading">
-            {t.process.headingLine1}
-            <br />
-            {t.process.headingLine2}
+            <RevealText delay={0.05}>{t.process.headingLine1}</RevealText>
+            <RevealText delay={0.13}>{t.process.headingLine2}</RevealText>
           </h2>
-        </motion.div>
+        </div>
 
         <div ref={containerRef} className="relative max-w-5xl mx-auto">
           <div className="absolute start-[60px] md:start-[88px] top-0 bottom-0 w-px bg-slate-200" />
