@@ -17,6 +17,8 @@ export const BRAND = {
   whatsapp: WHATSAPP_NUMBER,
   site: "yonidev.vercel.app",
   logoUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.vercel.app"}/logo/y-logo.png`,
+  parent: "STARTOP",
+  byline: "YoniDev by STARTOP",
 } as const;
 
 export function buildWhatsAppUrl(prefillText: string): string {

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useT } from "@/lib/i18n/LocaleProvider";
-import RevealText from "@/components/shared/RevealText";
 
 export default function CTABanner() {
   const t = useT();
@@ -41,8 +40,8 @@ export default function CTABanner() {
 
           <div className="relative z-10 flex flex-col items-start gap-4 sm:pe-[220px]">
             <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-              <RevealText delay={0}>{t.cta.headingLine1}</RevealText>
-              <RevealText delay={0.1}>{t.cta.headingLine2}</RevealText>
+              <span className="block">{t.cta.headingLine1}</span>
+              <span className="block">{t.cta.headingLine2}</span>
             </h2>
             <p className="text-white/75 text-sm">{t.cta.body}</p>
             <Link

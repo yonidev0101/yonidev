@@ -71,7 +71,10 @@ function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
                 <tr>
                   <td style="vertical-align:middle;text-align:right;">
                     <img src="${BRAND.logoUrl}" width="36" height="36" alt="" style="display:inline-block;vertical-align:middle;border:0;outline:none;border-radius:8px;">
-                    <span style="display:inline-block;vertical-align:middle;margin-right:10px;font-size:15px;font-weight:700;color:${C.heading};letter-spacing:-0.01em;">YoniDev</span>
+                    <span style="display:inline-block;vertical-align:middle;margin-right:10px;">
+                      <span style="display:block;font-size:15px;font-weight:700;color:${C.heading};letter-spacing:-0.01em;line-height:1.2;">YoniDev</span>
+                      <span style="display:block;font-size:10px;font-weight:600;color:${C.muted};letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;">by ${esc(BRAND.parent)}</span>
+                    </span>
                   </td>
                   <td style="vertical-align:middle;text-align:left;">
                     <span style="display:inline-block;font-size:11px;font-weight:600;color:${C.muted};letter-spacing:0.18em;text-transform:uppercase;">${esc(BRAND.site)}</span>
@@ -81,37 +84,25 @@ function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
             </td>
           </tr>
 
-          <!-- Main content: two columns — vertical YONIDEV (left) + content (right RTL) -->
+          <!-- Main content -->
           <tr>
-            <td style="padding:0;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <td dir="rtl" valign="top" style="padding:24px 36px 8px 36px;text-align:right;vertical-align:top;">
+
+              <!-- Eyebrow (dot + label) -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl">
                 <tr>
-                  <!-- Vertical side text — on the LEFT in visual order, mirrors the site's SideText -->
-                  <td width="68" valign="middle" align="center" style="width:68px;min-width:68px;padding:0;vertical-align:middle;text-align:center;">
-                    <div style="display:inline-block;writing-mode:vertical-rl;-ms-writing-mode:tb-rl;transform:rotate(180deg);-webkit-transform:rotate(180deg);font-size:64px;font-weight:800;letter-spacing:0.22em;color:${C.heading};opacity:0.07;line-height:1;text-transform:uppercase;font-family:${FONT};white-space:nowrap;">YONIDEV</div>
+                  <td style="vertical-align:middle;padding-left:8px;">
+                    <span style="display:inline-block;width:8px;height:8px;background:${C.brand};border-radius:999px;"></span>
                   </td>
-
-                  <!-- Content -->
-                  <td dir="rtl" valign="top" style="padding:24px 36px 8px 8px;text-align:right;vertical-align:top;">
-
-                    <!-- Eyebrow (dot + label) -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl">
-                      <tr>
-                        <td style="vertical-align:middle;padding-left:8px;">
-                          <span style="display:inline-block;width:8px;height:8px;background:${C.brand};border-radius:999px;"></span>
-                        </td>
-                        <td style="vertical-align:middle;">
-                          <span style="font-size:11px;font-weight:700;color:${C.brand};letter-spacing:0.18em;text-transform:uppercase;">${esc(eyebrow)}</span>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <div style="height:18px;font-size:0;line-height:0;">&nbsp;</div>
-
-                    ${bodyHtml}
+                  <td style="vertical-align:middle;">
+                    <span style="font-size:11px;font-weight:700;color:${C.brand};letter-spacing:0.18em;text-transform:uppercase;">${esc(eyebrow)}</span>
                   </td>
                 </tr>
               </table>
+
+              <div style="height:18px;font-size:0;line-height:0;">&nbsp;</div>
+
+              ${bodyHtml}
             </td>
           </tr>
 
@@ -129,6 +120,9 @@ function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
                 <a href="${SITE_URL}" style="color:${C.muted};text-decoration:none;">${esc(BRAND.site)}</a>
                 <span style="margin:0 8px;color:${C.border};">·</span>
                 <a href="mailto:${BRAND.email}" style="color:${C.muted};text-decoration:none;">${BRAND.email}</a>
+              </p>
+              <p style="margin:6px 0 0 0;font-size:10px;color:${C.muted};letter-spacing:0.18em;text-transform:uppercase;font-weight:600;">
+                ${esc(BRAND.byline)}
               </p>
             </td>
           </tr>
@@ -190,13 +184,15 @@ function paragraph(text: string): string {
 
 function pillButton(href: string, label: string): string {
   // RTL-aware pill: arrow lives in its own LTR span so bidi doesn't reorder it.
+  // Color + text-decoration must be repeated on every nested span — Gmail/Outlook
+  // re-apply default link styling otherwise (visible underline + blue text).
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="margin:0;">
       <tr>
-        <td align="center" valign="middle" style="border-radius:999px;background:${C.brand};box-shadow:0 10px 28px rgba(43,127,255,0.32);mso-padding-alt:0;">
-          <a href="${href}" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;font-family:${FONT};line-height:1;white-space:nowrap;letter-spacing:0.01em;">
-            <span style="vertical-align:middle;">${esc(label)}</span>
-            <span style="display:inline-block;vertical-align:middle;margin-right:8px;direction:ltr;unicode-bidi:isolate;font-family:Arial,sans-serif;font-weight:400;font-size:16px;line-height:1;">&#8592;</span>
+        <td align="center" valign="middle" bgcolor="${C.brand}" style="border-radius:999px;background-color:${C.brand};mso-padding-alt:0;">
+          <a href="${href}" style="display:inline-block;padding:16px 34px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:999px;font-family:${FONT};line-height:1;white-space:nowrap;letter-spacing:0.01em;mso-padding-alt:16px 34px;">
+            <span style="color:#ffffff;text-decoration:none;vertical-align:middle;">${esc(label)}</span>
+            <span style="color:#ffffff;text-decoration:none;display:inline-block;vertical-align:middle;margin-right:10px;direction:ltr;unicode-bidi:isolate;font-family:Arial,sans-serif;font-weight:400;font-size:17px;line-height:1;">&#8592;</span>
           </a>
         </td>
       </tr>
@@ -342,6 +338,7 @@ export function buildInquiryEmail(data: ContactFormData): {
     `${BRAND.name} · ${BRAND.titleHe}`,
     `${BRAND.email} · ${BRAND.phoneDisplay}`,
     `${SITE_URL}`,
+    `${BRAND.byline}`,
   ].join("\n");
 
   return {
@@ -418,6 +415,7 @@ export function buildAutoReplyEmail(data: ContactFormData): {
     `${BRAND.name} · ${BRAND.titleHe}`,
     `${BRAND.email} · ${BRAND.phoneDisplay}`,
     `${SITE_URL}`,
+    `${BRAND.byline}`,
   ].join("\n");
 
   return {
