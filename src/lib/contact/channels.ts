@@ -4,7 +4,7 @@ export const EMAIL_FROM =
   process.env.CONTACT_FROM_EMAIL ?? "YoniDev Contact <onboarding@resend.dev>";
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.dev";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.vercel.app";
 
 export const BRAND = {
   name: "יהונתן יגלניק",
@@ -14,8 +14,8 @@ export const BRAND = {
   email: "yonidev0101@gmail.com",
   phoneDisplay: "+972 58 322 3090",
   whatsapp: WHATSAPP_NUMBER,
-  site: "yonidev.dev",
-  logoUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.dev"}/logo/y-logo.png`,
+  site: "yonidev.vercel.app",
+  logoUrl: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://yonidev.vercel.app"}/logo/y-logo.png`,
 } as const;
 
 export function buildWhatsAppUrl(prefillText: string): string {
