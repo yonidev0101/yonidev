@@ -86,13 +86,13 @@ function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
             <td style="padding:0;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <!-- Vertical side text — on the LEFT in visual order -->
-                  <td width="48" valign="top" style="width:48px;padding:24px 0 0 8px;vertical-align:top;" class="email-side-col">
-                    <div style="display:inline-block;writing-mode:vertical-rl;-ms-writing-mode:tb-rl;transform:rotate(180deg);-webkit-transform:rotate(180deg);font-size:48px;font-weight:800;letter-spacing:0.2em;color:${C.heading};opacity:0.05;line-height:1;text-transform:uppercase;font-family:${FONT};">YONIDEV</div>
+                  <!-- Vertical side text — on the LEFT in visual order, mirrors the site's SideText -->
+                  <td width="68" valign="middle" align="center" style="width:68px;min-width:68px;padding:0;vertical-align:middle;text-align:center;">
+                    <div style="display:inline-block;writing-mode:vertical-rl;-ms-writing-mode:tb-rl;transform:rotate(180deg);-webkit-transform:rotate(180deg);font-size:64px;font-weight:800;letter-spacing:0.22em;color:${C.heading};opacity:0.07;line-height:1;text-transform:uppercase;font-family:${FONT};white-space:nowrap;">YONIDEV</div>
                   </td>
 
                   <!-- Content -->
-                  <td dir="rtl" valign="top" style="padding:24px 36px 8px 16px;text-align:right;vertical-align:top;">
+                  <td dir="rtl" valign="top" style="padding:24px 36px 8px 8px;text-align:right;vertical-align:top;">
 
                     <!-- Eyebrow (dot + label) -->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl">
@@ -189,11 +189,15 @@ function paragraph(text: string): string {
 }
 
 function pillButton(href: string, label: string): string {
+  // RTL-aware pill: arrow lives in its own LTR span so bidi doesn't reorder it.
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="margin:0;">
       <tr>
-        <td style="border-radius:999px;background:${C.brand};box-shadow:0 8px 24px rgba(43,127,255,0.3);">
-          <a href="${href}" style="display:inline-block;padding:13px 26px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;font-family:${FONT};">${esc(label)}</a>
+        <td align="center" valign="middle" style="border-radius:999px;background:${C.brand};box-shadow:0 10px 28px rgba(43,127,255,0.32);mso-padding-alt:0;">
+          <a href="${href}" style="display:inline-block;padding:14px 30px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px;font-family:${FONT};line-height:1;white-space:nowrap;letter-spacing:0.01em;">
+            <span style="vertical-align:middle;">${esc(label)}</span>
+            <span style="display:inline-block;vertical-align:middle;margin-right:8px;direction:ltr;unicode-bidi:isolate;font-family:Arial,sans-serif;font-weight:400;font-size:16px;line-height:1;">&#8592;</span>
+          </a>
         </td>
       </tr>
     </table>`;
@@ -310,7 +314,7 @@ export function buildInquiryEmail(data: ContactFormData): {
 
     ${spacer(28)}
 
-    ${pillButton(replyHref, `השב ל-${data.name} ←`)}
+    ${pillButton(replyHref, `השב ל-${data.name}`)}
 
     ${spacer(20)}
   `;
@@ -373,7 +377,7 @@ export function buildAutoReplyEmail(data: ContactFormData): {
 
     ${spacer(20)}
 
-    ${pillButton(waUrl, "פתח שיחה ב-WhatsApp ←")}
+    ${pillButton(waUrl, "פתח שיחה ב-WhatsApp")}
 
     ${spacer(32)}
 
