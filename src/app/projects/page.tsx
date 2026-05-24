@@ -5,9 +5,9 @@ import CTABanner from "@/components/sections/CTABanner";
 import ProjectsClient from "./ProjectsClient";
 
 export const metadata: Metadata = {
-  title: "Projects — YoniDev",
+  title: "פרויקטים — YoniDev",
   description:
-    "A curated selection of web apps, AI tools, bots, and automation systems built by YoniDev.",
+    "מבחר עבודות — אפליקציות Web, כלי AI, בוטים ואוטומציות שנבנו על ידי YoniDev.",
 };
 
 export default function ProjectsPage() {

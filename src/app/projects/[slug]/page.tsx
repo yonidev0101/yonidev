@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const project = projects.find((p) => p.slug === slug);
   if (!project) return {};
 
-  const detail = projectDetails.en[project.slug];
+  const detail = projectDetails.he?.[project.slug] ?? projectDetails.en[project.slug];
   return {
     title: `${detail?.tagline ?? slug} — YoniDev`,
     description: detail?.overview ?? "",

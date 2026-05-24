@@ -8,9 +8,9 @@ import CurrentlyBuilding from "./CurrentlyBuilding";
 import BeyondCode from "./BeyondCode";
 
 export const metadata: Metadata = {
-  title: "About — YoniDev",
+  title: "אודות — YoniDev",
   description:
-    "Full-Stack Developer from Jerusalem. Building modern, scalable web applications, AI tools, and real-world automation systems.",
+    "מפתח Full-Stack מירושלים. בונה אפליקציות web מודרניות ומתרחבות, כלי AI ומערכות אוטומציה בעולם האמיתי.",
 };
 
 export default function AboutPage() {

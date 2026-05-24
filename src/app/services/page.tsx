@@ -7,9 +7,9 @@ import ServicesHero from "./ServicesHero";
 import ServicesDetail from "./ServicesDetail";
 
 export const metadata: Metadata = {
-  title: "Services — YoniDev",
+  title: "שירותים — YoniDev",
   description:
-    "Full-stack development, AI integrations, bots, and API services by YoniDev.",
+    "פיתוח Full-Stack, שילובי AI, בוטים ו-API על ידי YoniDev.",
 };
 
 export default function ServicesPage() {

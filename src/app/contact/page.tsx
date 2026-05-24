@@ -6,8 +6,8 @@ import ContactForm from "./ContactForm";
 import ContactChannels from "./ContactChannels";
 
 export const metadata: Metadata = {
-  title: "Contact — YoniDev",
-  description: "Get in touch with YoniDev. Let's build something amazing together.",
+  title: "צור קשר — YoniDev",
+  description: "צור קשר עם YoniDev. בואו נבנה יחד משהו מדהים.",
 };
 
 export default function ContactPage() {
