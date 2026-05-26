@@ -4,9 +4,11 @@ import Image from "next/image";
 interface LogoProps {
   size?: "sm" | "md" | "lg";
   showText?: boolean;
+  /** Small caption rendered under the YoniDev wordmark, e.g. "by STARTOP". */
+  subtitle?: string;
 }
 
-export default function Logo({ size = "md", showText = true }: LogoProps) {
+export default function Logo({ size = "md", showText = true, subtitle }: LogoProps) {
   const sizes = { sm: 28, md: 36, lg: 48 };
   const px = sizes[size];
 
@@ -21,11 +23,22 @@ export default function Logo({ size = "md", showText = true }: LogoProps) {
         priority
       />
       {showText && (
-        <span
-          className="font-bold text-heading tracking-tight"
-          style={{ fontSize: size === "sm" ? 16 : size === "md" ? 20 : 26 }}
-        >
-          Yoni<span className="text-brand-500">Dev</span>
+        <span className="flex flex-col leading-tight">
+          <span
+            className="font-bold text-heading tracking-tight"
+            style={{ fontSize: size === "sm" ? 16 : size === "md" ? 20 : 26 }}
+          >
+            Yoni<span className="text-brand-500">Dev</span>
+          </span>
+          {subtitle && (
+            <span
+              className="font-semibold text-muted-text uppercase mt-0.5"
+              style={{ fontSize: 10, letterSpacing: "0.14em" }}
+              dir="ltr"
+            >
+              {subtitle}
+            </span>
+          )}
         </span>
       )}
     </Link>

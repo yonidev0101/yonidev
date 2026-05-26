@@ -157,6 +157,9 @@ function signatureHtml(): string {
             <span style="color:${C.border};margin:0 6px;">·</span>
             <a href="tel:+${BRAND.whatsapp}" style="color:${C.body};text-decoration:none;direction:ltr;display:inline-block;unicode-bidi:isolate;">${BRAND.phoneDisplay}</a>
           </div>
+          <div style="font-size:10px;font-weight:700;color:${C.brand};letter-spacing:0.22em;margin-top:10px;direction:ltr;unicode-bidi:isolate;text-transform:uppercase;">
+            Code Your Dream
+          </div>
         </td>
       </tr>
     </table>
