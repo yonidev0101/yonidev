@@ -3,16 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowRight, Code2, Database, Cloud } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { RadialBlob, OrganicShape } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
 import SideText from "@/components/shared/SideText";
 import ScrambleText from "@/components/shared/ScrambleText";
+import HeroFloatingIcon, { type FloatingIconKind } from "./HeroFloatingIcon";
 
-const floatingCards = [
-  { icon: Code2,    label: "</>",   className: "top-[18%] -start-6",   animClass: "float-card-1" },
-  { icon: Database, label: "DB",    className: "top-[28%] -end-4",     animClass: "float-card-2" },
-  { icon: Cloud,    label: "Cloud", className: "bottom-[32%] end-2",   animClass: "float-card-3" },
+const floatingCards: {
+  kind: FloatingIconKind;
+  label: string;
+  className: string;
+  animClass: string;
+  drawDelay: number;
+}[] = [
+  { kind: "code",  label: "</>",   className: "top-[18%] -start-6", animClass: "float-card-1", drawDelay: 0.65 },
+  { kind: "db",    label: "DB",    className: "top-[28%] -end-4",   animClass: "float-card-2", drawDelay: 0.85 },
+  { kind: "cloud", label: "Cloud", className: "bottom-[32%] end-2", animClass: "float-card-3", drawDelay: 1.05 },
 ];
 
 const containerVariants = {
@@ -141,12 +148,12 @@ export default function Hero() {
                 />
               </div>
 
-              {floatingCards.map(({ icon: Icon, label, className, animClass }) => (
+              {floatingCards.map(({ kind, label, className, animClass, drawDelay }) => (
                 <div
                   key={label}
                   className={`absolute ${className} ${animClass} card-base w-14 h-14 flex items-center justify-center`}
                 >
-                  <Icon size={24} className="text-brand-500" />
+                  <HeroFloatingIcon kind={kind} delay={drawDelay} />
                 </div>
               ))}
             </div>
