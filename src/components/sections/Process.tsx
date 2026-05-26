@@ -6,6 +6,7 @@ import { RadialBlob } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
 import RevealText from "@/components/shared/RevealText";
 import SideText from "@/components/shared/SideText";
+import ProcessIcon from "./ProcessIcon";
 
 export default function Process() {
   const t = useT();
@@ -45,14 +46,11 @@ export default function Process() {
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 className="grid grid-cols-[64px_1fr] md:grid-cols-[120px_1fr] gap-4 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0"
               >
-                {/* Just the number — bold, in brand color, no badge or rail decoration */}
+                {/* Scroll-drawn SVG icon — each shape strokes itself in as the step
+                    enters the viewport. The Hebrew step indicator under the description
+                    carries the number context, so the icon stands alone here. */}
                 <div className="self-center">
-                  <span
-                    className="block font-bold text-4xl md:text-6xl text-brand-500 tabular-nums leading-none"
-                    dir="ltr"
-                  >
-                    {step.number}
-                  </span>
+                  <ProcessIcon kind={step.id} />
                 </div>
 
                 <div className="self-center">
