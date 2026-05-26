@@ -38,10 +38,10 @@ export default function HeroFloatingIcon({
 }) {
   return (
     <motion.svg
-      width="28"
-      height="28"
+      width="40"
+      height="40"
       viewBox="0 0 48 48"
-      className="text-brand-500"
+      className="text-brand-500 drop-shadow-[0_4px_12px_rgba(43,127,255,0.3)]"
       initial="hidden"
       animate="visible"
       aria-hidden

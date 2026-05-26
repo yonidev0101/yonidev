@@ -151,7 +151,7 @@ export default function Hero() {
               {floatingCards.map(({ kind, label, className, animClass, drawDelay }) => (
                 <div
                   key={label}
-                  className={`absolute ${className} ${animClass} card-base w-14 h-14 flex items-center justify-center`}
+                  className={`absolute ${className} ${animClass} w-14 h-14 flex items-center justify-center`}
                 >
                   <HeroFloatingIcon kind={kind} delay={drawDelay} />
                 </div>
