@@ -6,16 +6,46 @@ import AboutHero from "./AboutHero";
 import MyStory from "./MyStory";
 import CurrentlyBuilding from "./CurrentlyBuilding";
 import BeyondCode from "./BeyondCode";
+import JsonLd from "@/lib/seo/JsonLd";
+import { SITE_URL, breadcrumbJsonLd } from "@/lib/seo/site";
+
+const title = "אודות";
+const description =
+  "יונתן יגלניק — מפתח Full-Stack מירושלים. בונה אפליקציות web מודרניות וסקיילביליות, כלי AI, בוטים ומערכות אוטומציה.";
 
 export const metadata: Metadata = {
-  title: "אודות — YoniDev",
-  description:
-    "מפתח Full-Stack מירושלים. בונה אפליקציות web מודרניות ומתרחבות, כלי AI ומערכות אוטומציה בעולם האמיתי.",
+  title,
+  description,
+  alternates: { canonical: "/about" },
+  openGraph: {
+    url: `${SITE_URL}/about`,
+    title,
+    description,
+    type: "profile",
+  },
 };
 
 export default function AboutPage() {
+  const aboutPage = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    url: `${SITE_URL}/about`,
+    name: title,
+    description,
+    mainEntity: { "@id": `${SITE_URL}/#person` },
+  };
+
   return (
     <>
+      <JsonLd
+        data={[
+          aboutPage,
+          breadcrumbJsonLd([
+            { name: "Home",  url: "/" },
+            { name: "אודות", url: "/about" },
+          ]),
+        ]}
+      />
       <Navbar />
       <main>
         <AboutHero />

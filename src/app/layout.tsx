@@ -2,6 +2,14 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Heebo } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider, localeInitScript } from "@/lib/i18n/LocaleProvider";
+import {
+  SITE,
+  SITE_URL,
+  organizationJsonLd,
+  personJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo/site";
+import JsonLd from "@/lib/seo/JsonLd";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -24,19 +32,74 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "YoniDev — Code Your Dream",
-    template: "%s · YoniDev",
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
   },
-  description:
-    "יונתן יגלניק — מפתח Full Stack המתמחה באפליקציות ווב, אינטגרציות AI, אוטומציות ובוטים. בונה פתרונות דיגיטליים מודרניים, מהירים וסקיילביליים מרעיון לפרודקשן.",
-  keywords: ["מפתח Full Stack", "פיתוח ווב", "React", "Next.js", "AI", "אוטומציה", "בוט WhatsApp", "YoniDev"],
-  authors: [{ name: "יונתן יגלניק", url: "https://yonidev.dev" }],
+  description: SITE.description,
+  applicationName: SITE.name,
+  generator: "Next.js",
+  keywords: [
+    "מפתח Full Stack",
+    "פיתוח ווב",
+    "Next.js",
+    "React",
+    "TypeScript",
+    "Node.js",
+    "AI",
+    "בינה מלאכותית",
+    "אוטומציה",
+    "בוט WhatsApp",
+    "OpenAI",
+    "Claude",
+    "Tauri",
+    "MongoDB",
+    "YoniDev",
+    "Yonatan Yaglnik",
+    "פרילנסר ירושלים",
+  ],
+  authors: [{ name: "יונתן יגלניק", url: SITE_URL }],
+  creator: "יונתן יגלניק",
+  publisher: SITE.name,
+  category: "technology",
+  formatDetection: { email: false, address: false, telephone: false },
+  alternates: {
+    canonical: "/",
+    languages: {
+      "he-IL": "/",
+      "x-default": "/",
+    },
+  },
   openGraph: {
-    title: "YoniDev — Code Your Dream",
-    description: "בונה אפליקציות ווב, אוטומציות וכלים מבוססי AI — מודרניים, מהירים וסקיילביליים.",
     type: "website",
-    locale: "he_IL",
+    siteName: SITE.name,
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    url: SITE_URL,
+    locale: SITE.locale,
+    alternateLocale: ["en_US"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    creator: "@yonidev",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
@@ -54,6 +117,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: localeInitScript }} />
+        <JsonLd data={[personJsonLd(), organizationJsonLd(), websiteJsonLd()]} />
       </head>
       <body className="min-h-full flex flex-col">
         <LocaleProvider>{children}</LocaleProvider>

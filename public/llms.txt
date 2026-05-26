@@ -1,0 +1,32 @@
+# YoniDev — Yonatan Yaglnik
+
+> Yonatan Yaglnik (YoniDev) is a Full-Stack developer from Jerusalem, Israel.
+> He builds modern web applications, AI integrations, automations, and bots —
+> taking products from idea to production. Available for freelance work
+> worldwide (remote) and in Israel.
+
+YoniDev is the personal brand and portfolio site of Yonatan Yaglnik.
+Primary site language is Hebrew (he-IL); content is also available in English.
+Contact: yonidev0101@gmail.com
+
+## Core pages
+- [Home](https://yonidev.vercel.app/): overview, services, featured projects
+- [About](https://yonidev.vercel.app/about): background, story, current work
+- [Services](https://yonidev.vercel.app/services): Full-Stack, AI, automation, bots, APIs
+- [Projects](https://yonidev.vercel.app/projects): case studies and portfolio
+- [Contact](https://yonidev.vercel.app/contact): contact form and channels
+
+## Featured projects
+- [Yoniverse OS](https://yonidev.vercel.app/projects/yoniverse): personal AI operating system spanning desktop, mobile, web, WhatsApp, smart home — orchestrated by a central AI Brain server
+- [al-hamacom702](https://yonidev.vercel.app/projects/al-hamacom): Hebrew community portal for Jerusalem neighborhoods with semantic AI search, payments, real estate, classifieds, forum
+- [AI WhatsApp Business Bot](https://yonidev.vercel.app/projects/ai-whatsapp-bot): bot that remembers business chat history and answers Hebrew questions about it using vector search + Claude/GPT
+- [Categories Game](https://yonidev.vercel.app/projects/categories-game): real-time multiplayer Hebrew word game with AI-judged answers
+- [GitExplorer](https://yonidev.vercel.app/projects/git-explorer): native desktop file explorer with full Git client (Tauri + Rust + React)
+
+## Tech stack
+Next.js, React, TypeScript, Node.js, Tauri, Rust, MongoDB, Socket.IO,
+OpenAI (GPT-4o, embeddings, Whisper), Anthropic Claude, Tailwind CSS.
+
+## Optional
+- [Full content (llms-full.txt)](https://yonidev.vercel.app/llms-full.txt)
+- [Sitemap](https://yonidev.vercel.app/sitemap.xml)

@@ -173,8 +173,10 @@ export default async function Image() {
                 "radial-gradient(circle, rgba(43,127,255,0.28) 0%, rgba(43,127,255,0) 70%)",
             }}
           />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoSrc}
+            alt=""
             width={280}
             height={280}
             style={{ display: "block" }}
