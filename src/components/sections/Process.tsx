@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { processSteps } from "@/data/services";
 import { RadialBlob } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
@@ -10,12 +9,6 @@ import SideText from "@/components/shared/SideText";
 
 export default function Process() {
   const t = useT();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start 75%", "end 60%"],
-  });
-  const lineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
     <section className="relative py-28 bg-white overflow-hidden">
@@ -40,14 +33,7 @@ export default function Process() {
           </h2>
         </div>
 
-        <div ref={containerRef} className="relative max-w-5xl mx-auto">
-          {/* Rail aligns with the horizontal center of the badge column. */}
-          <div className="absolute start-[40px] md:start-[60px] top-0 bottom-0 w-px bg-slate-200" />
-          <motion.div
-            className="absolute start-[40px] md:start-[60px] top-0 w-px bg-gradient-to-b from-brand-500 via-brand-500 to-brand-500/0"
-            style={{ height: lineHeight }}
-          />
-
+        <div className="max-w-5xl mx-auto">
           {processSteps.map((step, i) => {
             const item = t.process.items[step.id];
             return (
@@ -57,27 +43,16 @@ export default function Process() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
-                className="relative grid grid-cols-[80px_1fr] md:grid-cols-[120px_1fr] gap-4 md:gap-10 py-10 md:py-14 border-t border-slate-100 first:border-t-0 group"
+                className="grid grid-cols-[64px_1fr] md:grid-cols-[120px_1fr] gap-4 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0"
               >
-                {/* Numbered badge — replaces the giant faint number + empty dot combo.
-                    flex justify-center horizontally centers it in its column (= on the
-                    rail line); self-center on the column centers it vertically in the
-                    row, so it aligns with the title without any font-metrics math. */}
-                <div className="self-center flex justify-center">
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true, margin: "-80px" }}
-                    transition={{ duration: 0.5, delay: 0.2, ease: "backOut" }}
-                    className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white border border-slate-200 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] group-hover:border-brand-500 group-hover:bg-brand-500 group-hover:shadow-[0_8px_24px_-6px_rgba(43,127,255,0.4)] transition-all duration-300 flex items-center justify-center z-10"
+                {/* Just the number — bold, in brand color, no badge or rail decoration */}
+                <div className="self-center">
+                  <span
+                    className="block font-bold text-4xl md:text-6xl text-brand-500 tabular-nums leading-none"
+                    dir="ltr"
                   >
-                    <span
-                      className="font-bold text-lg md:text-xl text-heading group-hover:text-white transition-colors tabular-nums"
-                      dir="ltr"
-                    >
-                      {step.number}
-                    </span>
-                  </motion.div>
+                    {step.number}
+                  </span>
                 </div>
 
                 <div className="self-center">
