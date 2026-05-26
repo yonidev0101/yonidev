@@ -71,7 +71,9 @@ export default function Process() {
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.4, delay: 0.2, ease: "backOut" }}
-                    className="absolute top-1/2 -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500"
+                    // top-[45%] (not 50%) compensates for the font's cap-height ≠ line-box-center
+                    // offset — with leading-none, digits sit higher than the geometric middle.
+                    className="absolute top-[45%] -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500"
                   />
                 </div>
 
