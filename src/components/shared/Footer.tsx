@@ -128,6 +128,14 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-border-soft flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-text">
             {t.footer.copyright}
+            {/* Discreet admin entry — looks like a decorative dot, but it's a link */}
+            <Link
+              href="/admin"
+              aria-label="admin"
+              className="text-muted-text hover:text-heading transition-colors ms-1.5"
+            >
+              ·
+            </Link>
           </p>
           <p className="text-xs text-muted-text">
             {t.footer.builtWith}
