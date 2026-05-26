@@ -58,7 +58,11 @@ export default function Process() {
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 className="relative grid grid-cols-[120px_1fr] md:grid-cols-[176px_1fr] gap-6 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0 group"
               >
-                <div className="relative">
+                {/* self-center collapses this column to its content height and centers it
+                    in the row; without it the column stretched to the row height (driven by
+                    title + body in the other column) and the dot's `top-1/2` referenced the
+                    stretched height rather than the digit's own. */}
+                <div className="relative self-center">
                   <span
                     className="block font-bold text-[72px] md:text-[112px] leading-none tracking-tighter text-slate-100 group-hover:text-brand-500/15 transition-colors duration-500 select-none"
                     aria-hidden
@@ -71,9 +75,9 @@ export default function Process() {
                     whileInView={{ scale: 1, opacity: 1 }}
                     viewport={{ once: true, margin: "-80px" }}
                     transition={{ duration: 0.4, delay: 0.2, ease: "backOut" }}
-                    // top-[45%] (not 50%) compensates for the font's cap-height ≠ line-box-center
-                    // offset — with leading-none, digits sit higher than the geometric middle.
-                    className="absolute top-[45%] -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500"
+                    // top-[44%] compensates for the small ascender/descender padding in the
+                    // line box — digit visual centers sit slightly above geometric center.
+                    className="absolute top-[44%] -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500"
                   />
                 </div>
 
