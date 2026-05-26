@@ -41,9 +41,10 @@ export default function Process() {
         </div>
 
         <div ref={containerRef} className="relative max-w-5xl mx-auto">
-          <div className="absolute start-[60px] md:start-[88px] top-0 bottom-0 w-px bg-slate-200" />
+          {/* Rail aligns with the horizontal center of the badge column. */}
+          <div className="absolute start-[40px] md:start-[60px] top-0 bottom-0 w-px bg-slate-200" />
           <motion.div
-            className="absolute start-[60px] md:start-[88px] top-0 w-px bg-gradient-to-b from-brand-500 via-brand-500 to-brand-500/0"
+            className="absolute start-[40px] md:start-[60px] top-0 w-px bg-gradient-to-b from-brand-500 via-brand-500 to-brand-500/0"
             style={{ height: lineHeight }}
           />
 
@@ -56,29 +57,27 @@ export default function Process() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
-                className="relative grid grid-cols-[120px_1fr] md:grid-cols-[176px_1fr] gap-6 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0 group"
+                className="relative grid grid-cols-[80px_1fr] md:grid-cols-[120px_1fr] gap-4 md:gap-10 py-10 md:py-14 border-t border-slate-100 first:border-t-0 group"
               >
-                {/* Dot — direct child of the article so it sits at the row's vertical
-                    center (top-1/2). Both content columns also use self-center, so the
-                    digit and the title end up on the same horizontal line as the dot. */}
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.4, delay: 0.2, ease: "backOut" }}
-                  className="absolute top-1/2 -translate-y-1/2 start-[60px] md:start-[88px] -translate-x-1/2 rtl:translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-brand-500 z-10"
-                />
-
-                <div className="self-center">
-                  {/* leading-[0.78] shrinks the line box around the cap-height of the
-                      digit, so the digit's visual center lines up with the box's 50%
-                      and therefore with the dot's row-center position. */}
-                  <span
-                    className="block font-bold text-[72px] md:text-[112px] leading-[0.78] tracking-tighter text-slate-100 group-hover:text-brand-500/15 transition-colors duration-500 select-none"
-                    aria-hidden
+                {/* Numbered badge — replaces the giant faint number + empty dot combo.
+                    flex justify-center horizontally centers it in its column (= on the
+                    rail line); self-center on the column centers it vertically in the
+                    row, so it aligns with the title without any font-metrics math. */}
+                <div className="self-center flex justify-center">
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true, margin: "-80px" }}
+                    transition={{ duration: 0.5, delay: 0.2, ease: "backOut" }}
+                    className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white border border-slate-200 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08)] group-hover:border-brand-500 group-hover:bg-brand-500 group-hover:shadow-[0_8px_24px_-6px_rgba(43,127,255,0.4)] transition-all duration-300 flex items-center justify-center z-10"
                   >
-                    {step.number}
-                  </span>
+                    <span
+                      className="font-bold text-lg md:text-xl text-heading group-hover:text-white transition-colors tabular-nums"
+                      dir="ltr"
+                    >
+                      {step.number}
+                    </span>
+                  </motion.div>
                 </div>
 
                 <div className="self-center">
