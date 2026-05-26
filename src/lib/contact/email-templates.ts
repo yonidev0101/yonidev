@@ -5,7 +5,7 @@ import { BRAND, SITE_URL, buildWhatsAppUrl } from "./channels";
 // Design tokens (mirrors src/app/globals.css)
 // ─────────────────────────────────────────────
 
-const C = {
+export const C = {
   brand:     "#2B7FFF",
   brand600:  "#1d6fea",
   brand400:  "#60a5fa",
@@ -22,7 +22,7 @@ const C = {
   success:   "#22C55E",
 } as const;
 
-const FONT =
+export const FONT =
   '"Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", "Plus Jakarta Sans", Arial, sans-serif';
 
 // ─────────────────────────────────────────────
@@ -35,7 +35,7 @@ interface ShellOpts {
   bodyHtml: string;
 }
 
-function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
+export function shell({ preview, eyebrow, bodyHtml }: ShellOpts): string {
   // Outer table is LTR for layout stability across mail clients.
   // Inner content cell uses dir="rtl" for Hebrew text alignment.
   return `<!DOCTYPE html>
@@ -167,7 +167,7 @@ function signatureHtml(): string {
 // Reusable bits
 // ─────────────────────────────────────────────
 
-function heading(text: string, highlight?: string): string {
+export function heading(text: string, highlight?: string): string {
   return `
     <h1 style="margin:0;font-size:30px;font-weight:800;color:${C.heading};line-height:1.2;letter-spacing:-0.02em;font-family:${FONT};">
       ${esc(text)}${
@@ -178,11 +178,11 @@ function heading(text: string, highlight?: string): string {
     </h1>`;
 }
 
-function paragraph(text: string): string {
+export function paragraph(text: string): string {
   return `<p style="margin:0 0 14px 0;font-size:15px;color:${C.body};line-height:1.8;">${text}</p>`;
 }
 
-function pillButton(href: string, label: string): string {
+export function pillButton(href: string, label: string): string {
   // RTL-aware pill: arrow lives in its own LTR span so bidi doesn't reorder it.
   // Color + text-decoration must be repeated on every nested span — Gmail/Outlook
   // re-apply default link styling otherwise (visible underline + blue text).
@@ -199,7 +199,7 @@ function pillButton(href: string, label: string): string {
     </table>`;
 }
 
-function quoteCard(text: string): string {
+export function quoteCard(text: string): string {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" dir="rtl">
       <tr>
@@ -210,15 +210,15 @@ function quoteCard(text: string): string {
     </table>`;
 }
 
-function sectionLabel(text: string): string {
+export function sectionLabel(text: string): string {
   return `<div style="font-size:11px;font-weight:700;color:${C.muted};letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px;">${esc(text)}</div>`;
 }
 
-function spacer(h: number): string {
+export function spacer(h: number): string {
   return `<div style="height:${h}px;font-size:0;line-height:0;">&nbsp;</div>`;
 }
 
-function esc(s: string): string {
+export function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -227,7 +227,7 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function nl2br(s: string): string {
+export function nl2br(s: string): string {
   return esc(s).replace(/\n/g, "<br>");
 }
 
