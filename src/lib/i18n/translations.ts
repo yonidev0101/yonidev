@@ -360,7 +360,7 @@ export const translations: Record<Locale, TranslationDict> = {
       connectBody: "Available for freelance and full-time opportunities.",
       cta: "Let's Talk",
       copyright: "© 2026 YoniDev by STARTOP. All rights reserved.",
-      builtWith: "Built with passion ❤️",
+      builtWith: "CODE YOUR DREAM",
     },
     locale: {
       switchTo: "עברית",
@@ -720,7 +720,7 @@ export const translations: Record<Locale, TranslationDict> = {
       connectBody: "זמין לעבודות פרילנס ומשרות מלאות.",
       cta: "בוא נדבר",
       copyright: "© 2026 YoniDev by STARTOP. כל הזכויות שמורות.",
-      builtWith: "נבנה באהבה ❤️",
+      builtWith: "CODE YOUR DREAM",
     },
     locale: {
       switchTo: "EN",

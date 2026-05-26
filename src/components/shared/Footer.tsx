@@ -137,7 +137,7 @@ export default function Footer() {
               ·
             </Link>
           </p>
-          <p className="text-xs text-muted-text">
+          <p className="text-xs font-bold tracking-[0.22em] text-brand-500" dir="ltr">
             {t.footer.builtWith}
           </p>
         </div>

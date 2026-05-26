@@ -24,13 +24,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YoniDev — מפתח Full Stack",
+  title: {
+    default: "YoniDev — Code Your Dream",
+    template: "%s · YoniDev",
+  },
   description:
     "יונתן יגלניק — מפתח Full Stack המתמחה באפליקציות ווב, אינטגרציות AI, אוטומציות ובוטים. בונה פתרונות דיגיטליים מודרניים, מהירים וסקיילביליים מרעיון לפרודקשן.",
   keywords: ["מפתח Full Stack", "פיתוח ווב", "React", "Next.js", "AI", "אוטומציה", "בוט WhatsApp", "YoniDev"],
   authors: [{ name: "יונתן יגלניק", url: "https://yonidev.dev" }],
   openGraph: {
-    title: "YoniDev — מפתח Full Stack",
+    title: "YoniDev — Code Your Dream",
     description: "בונה אפליקציות ווב, אוטומציות וכלים מבוססי AI — מודרניים, מהירים וסקיילביליים.",
     type: "website",
     locale: "he_IL",

@@ -39,6 +39,13 @@ export default function CTABanner() {
           </div>
 
           <div className="relative z-10 flex flex-col items-start gap-4 sm:pe-[220px]">
+            <span
+              className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.22em] text-white/80 uppercase"
+              dir="ltr"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+              Code Your Dream
+            </span>
             <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
               <span className="block">{t.cta.headingLine1}</span>
               <span className="block">{t.cta.headingLine2}</span>
