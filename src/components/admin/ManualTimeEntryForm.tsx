@@ -31,6 +31,7 @@ export default function ManualTimeEntryForm({
     projectId: fixedProjectId ? String(fixedProjectId) : "",
     date: todayStr(),
     hours: "1",
+    minutes: "0",
     note: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -58,14 +59,15 @@ export default function ManualTimeEntryForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const projectId = fixedProjectId ?? Number(form.projectId);
-    const hours = Number(form.hours);
-    if (!projectId || !Number.isFinite(hours) || hours <= 0) return;
+    const hours = Number(form.hours) || 0;
+    const minutes = Number(form.minutes) || 0;
+    if (!projectId || !Number.isFinite(hours) || !Number.isFinite(minutes) || (hours === 0 && minutes === 0)) return;
 
     setSubmitting(true);
     // Place the entry at 09:00 of the chosen date so it sits at a reasonable moment;
     // the actual minute doesn't matter for backfilled time, only the date + duration.
     const startedAt = new Date(`${form.date}T09:00:00`);
-    const durationSeconds = Math.round(hours * 3600);
+    const durationSeconds = hours * 3600 + minutes * 60;
     const endedAt = new Date(startedAt.getTime() + durationSeconds * 1000);
 
     const res = await fetch("/api/admin/time", {
@@ -88,6 +90,7 @@ export default function ManualTimeEntryForm({
         projectId: fixedProjectId ? String(fixedProjectId) : "",
         date: todayStr(),
         hours: "1",
+        minutes: "0",
         note: "",
       });
       router.refresh();
@@ -137,16 +140,29 @@ export default function ManualTimeEntryForm({
         onChange={(e) => setForm({ ...form, date: e.target.value })}
         className={`${fixedProjectId ? "md:col-span-3" : "md:col-span-2"} border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]`}
       />
-      <input
-        type="number"
-        required
-        min="0.25"
-        step="0.25"
-        value={form.hours}
-        onChange={(e) => setForm({ ...form, hours: e.target.value })}
-        placeholder="שעות"
-        className={`${fixedProjectId ? "md:col-span-2" : "md:col-span-2"} border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px] tabular-nums`}
-      />
+      <div className={`${fixedProjectId ? "md:col-span-2" : "md:col-span-2"} flex gap-1.5`}>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          value={form.hours}
+          onChange={(e) => setForm({ ...form, hours: e.target.value })}
+          placeholder="שע׳"
+          title="שעות"
+          className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-2 py-2 text-[14px] tabular-nums min-w-0"
+        />
+        <input
+          type="number"
+          min="0"
+          max="59"
+          step="1"
+          value={form.minutes}
+          onChange={(e) => setForm({ ...form, minutes: e.target.value })}
+          placeholder="דק׳"
+          title="דקות"
+          className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-2 py-2 text-[14px] tabular-nums min-w-0"
+        />
+      </div>
       <input
         value={form.note}
         onChange={(e) => setForm({ ...form, note: e.target.value })}
