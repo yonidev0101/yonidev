@@ -9,6 +9,7 @@ import {
   relativeDayHe,
 } from "@/lib/admin/format";
 import TaskUpdateForm from "@/components/admin/TaskUpdateForm";
+import TaskDetailEditPanel from "@/components/admin/TaskDetailEditPanel";
 import TaskTimeline, { type TimelineUpdate } from "@/components/admin/TaskTimeline";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +75,18 @@ export default async function TaskDetailPage({
           >
             {TASK_STATUS_HE[task.status]}
           </span>
+          <TaskDetailEditPanel
+            task={{
+              id: task.id,
+              title: task.title,
+              description: task.description,
+              status: task.status,
+              priority: task.priority,
+              dueDate: task.dueDate,
+              nextAction: task.nextAction,
+              followUpAt: task.followUpAt,
+            }}
+          />
         </div>
 
         <p className="text-[13px] text-[#64748B] mt-2">

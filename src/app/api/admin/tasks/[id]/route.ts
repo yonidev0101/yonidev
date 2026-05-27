@@ -11,6 +11,8 @@ const patchSchema = z.object({
   status: z.enum(["todo", "in_progress", "blocked", "done"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.string().nullable().optional(),
+  nextAction: z.string().max(500).nullable().optional(),
+  followUpAt: z.string().nullable().optional(),
 });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
