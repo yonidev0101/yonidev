@@ -58,6 +58,16 @@ export const commKindEnum = pgEnum("comm_kind", [
   "decision",
 ]);
 
+export const taskUpdateKindEnum = pgEnum("task_update_kind", [
+  "progress",
+  "call",
+  "meeting",
+  "email",
+  "decision",
+  "blocker",
+  "handoff",
+]);
+
 export const invoiceStatusEnum = pgEnum("invoice_status", [
   "draft",
   "sent",
@@ -128,12 +138,45 @@ export const tasks = pgTable(
     priority: taskPriorityEnum("priority").notNull().default("medium"),
     dueDate: date("due_date"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    nextAction: text("next_action"),
+    followUpAt: date("follow_up_at"),
+    lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("tasks_project_idx").on(t.projectId),
     index("tasks_status_idx").on(t.status),
     index("tasks_due_idx").on(t.dueDate),
+    index("tasks_follow_up_idx").on(t.followUpAt),
+  ],
+);
+
+export const taskUpdates = pgTable(
+  "task_updates",
+  {
+    id: serial("id").primaryKey(),
+    taskId: integer("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    happenedAt: timestamp("happened_at", { withTimezone: true }).notNull().defaultNow(),
+    kind: taskUpdateKindEnum("kind").notNull().default("progress"),
+    summary: text("summary").notNull(),
+    details: text("details"),
+    statusBefore: taskStatusEnum("status_before"),
+    statusAfter: taskStatusEnum("status_after"),
+    nextAction: text("next_action"),
+    followUpAt: date("follow_up_at"),
+    timeEntryId: integer("time_entry_id").references(() => timeEntries.id, {
+      onDelete: "set null",
+    }),
+    communicationId: integer("communication_id").references(() => communications.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("task_updates_task_idx").on(t.taskId),
+    index("task_updates_happened_idx").on(t.happenedAt),
   ],
 );
 
@@ -244,6 +287,19 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   project: one(projects, { fields: [tasks.projectId], references: [projects.id] }),
   timeEntries: many(timeEntries),
+  updates: many(taskUpdates),
+}));
+
+export const taskUpdatesRelations = relations(taskUpdates, ({ one }) => ({
+  task: one(tasks, { fields: [taskUpdates.taskId], references: [tasks.id] }),
+  timeEntry: one(timeEntries, {
+    fields: [taskUpdates.timeEntryId],
+    references: [timeEntries.id],
+  }),
+  communication: one(communications, {
+    fields: [taskUpdates.communicationId],
+    references: [communications.id],
+  }),
 }));
 
 export const projectLinksRelations = relations(projectLinks, ({ one }) => ({
@@ -296,3 +352,5 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 export type InvoiceLine = typeof invoiceLines.$inferSelect;
 export type NewInvoiceLine = typeof invoiceLines.$inferInsert;
+export type TaskUpdate = typeof taskUpdates.$inferSelect;
+export type NewTaskUpdate = typeof taskUpdates.$inferInsert;

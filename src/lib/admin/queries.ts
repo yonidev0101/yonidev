@@ -4,6 +4,7 @@ import {
   projects,
   projectLinks,
   tasks,
+  taskUpdates,
   timeEntries,
   invoices,
   communications,
@@ -148,6 +149,61 @@ export async function getClientWithRelations(clientId: number) {
     communications: clientComms,
     invoices: clientInvoices,
     totalSeconds: clientTimeAgg[0]?.totalSec ?? 0,
+  };
+}
+
+export async function getTaskWithUpdates(taskId: number) {
+  const [row] = await db
+    .select({
+      task: tasks,
+      project: projects,
+      client: clients,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(clients, eq(clients.id, projects.clientId))
+    .where(eq(tasks.id, taskId));
+  if (!row) return null;
+
+  const [updates, timeAgg] = await Promise.all([
+    db
+      .select()
+      .from(taskUpdates)
+      .where(eq(taskUpdates.taskId, taskId))
+      .orderBy(desc(taskUpdates.happenedAt)),
+    db
+      .select({
+        totalSec: sql<number>`COALESCE(SUM(${timeEntries.durationSeconds}), 0)::int`,
+      })
+      .from(timeEntries)
+      .where(eq(timeEntries.taskId, taskId)),
+  ]);
+
+  // Fetch linked time entries to show duration in the timeline
+  const entryIds = updates
+    .map((u) => u.timeEntryId)
+    .filter((id): id is number => id != null);
+  const linkedEntries = entryIds.length
+    ? await db
+        .select({
+          id: timeEntries.id,
+          durationSeconds: timeEntries.durationSeconds,
+          startedAt: timeEntries.startedAt,
+        })
+        .from(timeEntries)
+        .where(inArray(timeEntries.id, entryIds))
+    : [];
+  const entryById = new Map(linkedEntries.map((e) => [e.id, e]));
+
+  return {
+    task: row.task,
+    project: row.project,
+    client: row.client,
+    updates: updates.map((u) => ({
+      ...u,
+      timeEntry: u.timeEntryId ? entryById.get(u.timeEntryId) ?? null : null,
+    })),
+    totalSeconds: timeAgg[0]?.totalSec ?? 0,
   };
 }
 

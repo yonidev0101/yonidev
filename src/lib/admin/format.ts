@@ -76,6 +76,51 @@ export const COMM_KIND_HE: Record<string, string> = {
   decision: "החלטה",
 };
 
+export const TASK_UPDATE_KIND_HE: Record<string, string> = {
+  progress: "התקדמות",
+  call: "שיחה",
+  meeting: "פגישה",
+  email: "מייל",
+  decision: "החלטה",
+  blocker: "חסם",
+  handoff: "מסירה",
+};
+
+export const TASK_UPDATE_KIND_ICON: Record<string, string> = {
+  progress: "⚡",
+  call: "📞",
+  meeting: "🤝",
+  email: "✉️",
+  decision: "✅",
+  blocker: "🚧",
+  handoff: "📤",
+};
+
+/** Returns a tone-bucket for coloring the update kind chip. */
+export function taskUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {
+  if (kind === "blocker") return "amber";
+  if (kind === "decision" || kind === "handoff") return "green";
+  if (kind === "call" || kind === "meeting" || kind === "email") return "blue";
+  return "slate";
+}
+
+/** "לפני 3 ימים" / "בעוד יומיים" / "היום" — for follow-up date chips. */
+export function relativeDayHe(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((d.getTime() - today.getTime()) / 86_400_000);
+  if (diffDays === 0) return "היום";
+  if (diffDays === 1) return "מחר";
+  if (diffDays === -1) return "אתמול";
+  if (diffDays === 2) return "מחרתיים";
+  if (diffDays > 0 && diffDays <= 7) return `בעוד ${diffDays} ימים`;
+  if (diffDays < 0 && diffDays >= -7) return `לפני ${Math.abs(diffDays)} ימים`;
+  return fmtDateHe(dateStr);
+}
+
 const MONTHS_HE = [
   "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
   "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
