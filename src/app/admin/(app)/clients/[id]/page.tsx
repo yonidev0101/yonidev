@@ -13,6 +13,7 @@ import ClientEditCard from "@/components/admin/ClientEditCard";
 import ProjectCreateForm from "@/components/admin/ProjectCreateForm";
 import CommunicationForm from "@/components/admin/CommunicationForm";
 import CommunicationsList from "@/components/admin/CommunicationsList";
+import TaskQuickAdd, { type QuickAddProject } from "@/components/admin/TaskQuickAdd";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,10 @@ export default async function ClientDetailPage({
   const data = await getClientWithRelations(id);
   if (!data) notFound();
   const { client, projects, communications, invoices, totalSeconds } = data;
+
+  const openProjects: QuickAddProject[] = projects
+    .filter((p) => p.status !== "done")
+    .map((p) => ({ id: p.id, name: p.name }));
 
   return (
     <div dir="rtl" className="space-y-8 max-w-5xl">
@@ -87,6 +92,14 @@ export default async function ClientDetailPage({
               </ul>
             )}
           </section>
+
+          {/* Quick add task */}
+          {openProjects.length > 0 && (
+            <section>
+              <h2 className="text-[15px] font-bold text-[#0F172A] mb-3">משימה חדשה</h2>
+              <TaskQuickAdd projects={openProjects} pickerLabel="פרויקט" />
+            </section>
+          )}
 
           {/* Communications */}
           <section>
