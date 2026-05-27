@@ -4,8 +4,6 @@ import Footer from "@/components/shared/Footer";
 import CTABanner from "@/components/sections/CTABanner";
 import AboutHero from "./AboutHero";
 import MyStory from "./MyStory";
-import CurrentlyBuilding from "./CurrentlyBuilding";
-import BeyondCode from "./BeyondCode";
 import JsonLd from "@/lib/seo/JsonLd";
 import { SITE_URL, breadcrumbJsonLd } from "@/lib/seo/site";
 
@@ -50,8 +48,6 @@ export default function AboutPage() {
       <main>
         <AboutHero />
         <MyStory />
-        <CurrentlyBuilding />
-        <BeyondCode />
         <CTABanner />
       </main>
       <Footer />

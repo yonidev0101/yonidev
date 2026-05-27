@@ -17,9 +17,9 @@ const floatingCards: {
   animClass: string;
   drawDelay: number;
 }[] = [
-  { kind: "code",  label: "</>",   className: "top-[18%] -start-6", animClass: "float-card-1", drawDelay: 0.65 },
-  { kind: "db",    label: "DB",    className: "top-[28%] -end-4",   animClass: "float-card-2", drawDelay: 0.85 },
-  { kind: "cloud", label: "Cloud", className: "bottom-[32%] end-2", animClass: "float-card-3", drawDelay: 1.05 },
+  { kind: "code",  label: "</>",   className: "top-[18%] -start-6", animClass: "float-card-1", drawDelay: 2.15 },
+  { kind: "db",    label: "DB",    className: "top-[28%] -end-4",   animClass: "float-card-2", drawDelay: 2.35 },
+  { kind: "cloud", label: "Cloud", className: "bottom-[32%] end-2", animClass: "float-card-3", drawDelay: 2.55 },
 ];
 
 const containerVariants = {
@@ -62,40 +62,26 @@ export default function Hero() {
             className="space-y-6 max-w-lg"
           >
             <motion.div variants={itemVariants} className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-500 inline-block" />
+              <span data-scrolldot="hero-eyebrow" className="w-2 h-2 rounded-full bg-brand-500 inline-block" />
               <span className="section-eyebrow">{t.hero.eyebrow}</span>
             </motion.div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-heading leading-[1.05] tracking-tight">
               {[
-                { content: t.hero.headingLine1, slideDelay: 0.18, scrambleDelay: 0.2 },
-                { content: t.hero.headingLine2, slideDelay: 0.3,  scrambleDelay: 0.32 },
-              ].map(({ content, slideDelay, scrambleDelay }) => (
-                <span key={content} className="block overflow-hidden">
-                  <motion.span
-                    className="block"
-                    initial={{ y: "105%" }}
-                    animate={{ y: "0%" }}
-                    transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: slideDelay }}
-                  >
-                    <ScrambleText text={content} delay={scrambleDelay} duration={1.4} />
-                  </motion.span>
+                { content: t.hero.headingLine1, scrambleDelay: 0.2 },
+                { content: t.hero.headingLine2, scrambleDelay: 0.32 },
+              ].map(({ content, scrambleDelay }) => (
+                <span key={content} className="block">
+                  <ScrambleText text={content} delay={scrambleDelay} duration={1.4} />
                 </span>
               ))}
-              <span className="block overflow-hidden">
-                <motion.span
-                  className="block"
-                  initial={{ y: "105%" }}
-                  animate={{ y: "0%" }}
-                  transition={{ duration: 0.78, ease: [0.33, 1, 0.68, 1], delay: 0.42 }}
-                >
-                  <ScrambleText
-                    text={t.hero.headingLine3}
-                    delay={0.44}
-                    duration={1.4}
-                    className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent"
-                  />
-                </motion.span>
+              <span className="block">
+                <ScrambleText
+                  text={t.hero.headingLine3}
+                  delay={0.44}
+                  duration={1.4}
+                  className="bg-gradient-to-r from-brand-500 to-brand-400 bg-clip-text text-transparent"
+                />
               </span>
             </h1>
 
@@ -120,8 +106,8 @@ export default function Hero() {
 
             <motion.div variants={itemVariants} className="flex items-center gap-2 pt-1">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-500" />
               </span>
               <span className="text-sm text-body">{t.hero.available}</span>
             </motion.div>
@@ -134,7 +120,7 @@ export default function Hero() {
             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
             className="relative flex items-center justify-center"
           >
-            <div className="relative w-[340px] h-[420px] sm:w-[420px] sm:h-[500px]">
+            <div data-scrolldot="hero-image" className="relative w-[340px] h-[420px] sm:w-[420px] sm:h-[500px]">
               <div className="absolute inset-[15%] rounded-full bg-brand-500/10 blur-3xl" />
 
               <div className="absolute inset-0 flex items-end justify-center float-slow">

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import CTABanner from "@/components/sections/CTABanner";
-import Process from "@/components/sections/Process";
 import ServicesHero from "./ServicesHero";
 import ServicesDetail from "./ServicesDetail";
 import JsonLd from "@/lib/seo/JsonLd";
@@ -72,7 +71,6 @@ export default function ServicesPage() {
       <main>
         <ServicesHero />
         <ServicesDetail />
-        <Process />
         <CTABanner />
       </main>
       <Footer />

@@ -65,11 +65,12 @@ export interface TranslationDict {
     workshopEyebrow: string;
     workshopHeading: string;
     workshopBody: string;
+    workshopProject1Name: string;
+    workshopProject1Desc: string;
     noProjects: string;
   };
   footer: {
-    tagline: string; navTitle: string; servicesTitle: string;
-    services: { frontend: string; backend: string; ai: string; bots: string; apis: string; };
+    tagline: string; navTitle: string; builtWithTitle: string;
     connectTitle: string; connectBody: string; cta: string; copyright: string; builtWith: string;
   };
   locale: { switchTo: string; ariaLabel: string; };
@@ -154,7 +155,7 @@ export const translations: Record<Locale, TranslationDict> = {
             "I design and build full web applications — from the interface users see to the server logic and database behind it. Every project is optimised for speed, scalability and maintainability.",
           bullets: [
             "Pixel-perfect UI with React / Next.js",
-            "Scalable backends with Node.js or Python",
+            "Scalable backends with Node.js and TypeScript",
             "Database design & cloud deployment",
           ],
           useCase:
@@ -177,10 +178,10 @@ export const translations: Record<Locale, TranslationDict> = {
           title: "Bots & Automation",
           tagline: "Automate the repetitive, scale the rest",
           description:
-            "WhatsApp and Telegram bots that understand natural language, plus workflow automations with Make, Zapier or custom code. Anything that runs in the background so you don't have to.",
+            "WhatsApp and Telegram bots that understand natural language, plus workflow automations with N8N or custom code. Anything that runs in the background so you don't have to.",
           bullets: [
             "WhatsApp / Telegram bots with NLP",
-            "Make / Zapier / n8n automation flows",
+            "N8N automation flows and custom scripts",
             "Scheduled jobs and background workers",
           ],
           useCase:
@@ -215,7 +216,7 @@ export const translations: Record<Locale, TranslationDict> = {
       headingLine1: "Your Idea.",
       headingLine2: "My Code.",
       headingLine3: "Our Result.",
-      body: "Building modern, fast and scalable web applications, automations and AI-powered tools — from idea to production.",
+      body: "Full-stack developer building Next.js apps and digital tools for businesses that want to grow and move faster.",
       ctaPrimary: "View My Work",
       ctaSecondary: "Let's Work Together",
       available: "Available for new projects",
@@ -229,20 +230,20 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     services: {
       eyebrow: "What I Do",
-      heading: "End-to-End Development",
-      body: "I build complete digital solutions with clean code, powerful functionality and great user experience.",
+      heading: "From Idea to Production",
+      body: "I build full-stack digital products tailored to your business — from the first line of code to the moment it goes live.",
       items: {
         fullstack: {
           title: "Full-Stack Development",
-          description: "End-to-end web apps and sites — from pixel-perfect UI to scalable server architecture.",
+          description: "Complete web apps built with Next.js — from pixel-perfect UI all the way to server architecture and database.",
         },
         ai: {
           title: "AI Integrations",
-          description: "LLM APIs, RAG systems and smart features built into your product seamlessly.",
+          description: "Custom AI features and tools — from integrating OpenAI & Claude APIs to building full AI-powered products from scratch.",
         },
         bots: {
           title: "Bots & Automation",
-          description: "WhatsApp & Telegram bots with natural language, plus Make / Zapier / custom code workflows.",
+          description: "WhatsApp & Telegram bots with natural language understanding, plus N8N workflows and custom automation scripts.",
         },
         apis: {
           title: "API & Integrations",
@@ -262,15 +263,15 @@ export const translations: Record<Locale, TranslationDict> = {
       items: {
         yoniverse: {
           title: "Yoniverse",
-          description: "Personal portfolio and project showcase with modern design and smooth animations.",
+          description: "A full-screen AI command center — one AI brain that manages tasks, connects to phone, email, WhatsApp, and IoT devices, keeping you focused on what to do next.",
         },
         "al-hamacom": {
           title: "Al HaMacom",
-          description: "Local business platform connecting users with services in their neighborhood.",
+          description: "A neighborhood community platform connecting local residents and businesses in one place.",
         },
         "ai-whatsapp-bot": {
-          title: "AI WhatsApp Bot",
-          description: "Smart WhatsApp bot with natural language understanding and business automation.",
+          title: "Boti",
+          description: "A smart WhatsApp bot that listens to business conversations, remembers every detail, and answers questions about them in seconds using AI.",
         },
         "categories-game": {
           title: "ארץ עיר — Categories Game",
@@ -291,19 +292,19 @@ export const translations: Record<Locale, TranslationDict> = {
       items: {
         discover: {
           title: "Discover",
-          description: "Understanding your idea, goals and requirements.",
+          description: "A quick call or WhatsApp chat to understand your idea, your goals, and what success actually looks like for you.",
         },
         design: {
-          title: "Design",
-          description: "Planning, wireframing and designing the solution.",
+          title: "Plan",
+          description: "A thorough spec — the right questions, clear requirements, and a defined scope before a single line of code is written.",
         },
         develop: {
           title: "Develop",
-          description: "Writing clean, efficient and scalable code.",
+          description: "Building with clean, structured code and AI-assisted tools like Claude Code. You get regular updates throughout so there are no surprises.",
         },
         deliver: {
           title: "Deliver",
-          description: "Testing, deploying and continuous support.",
+          description: "Full deployment, a walkthrough so you understand everything, and ongoing support after launch. Clean, documented code that's yours to keep.",
         },
       },
     },
@@ -333,31 +334,26 @@ export const translations: Record<Locale, TranslationDict> = {
       filters: { all: "All", web: "Web", ai: "AI", bot: "Bots", automation: "Automation" },
       viewLive: "View Live",
       caseStudy: "Case Study",
-      workshopEyebrow: "In the Workshop",
-      workshopHeading: "Coming Next",
-      workshopBody: "More projects are on the way.",
+      workshopEyebrow: "Up Next",
+      workshopHeading: "In the Workshop",
+      workshopBody: "Projects currently in design or early development.",
+      workshopProject1Name: "Smart Frame",
+      workshopProject1Desc: "A Raspberry Pi wall display that shows photos, reminders, and live data — responds to voice, reads sensors, and syncs with the Yoniverse brain.",
       noProjects: "No projects in this category yet.",
     },
     cta: {
-      headingLine1: "Have a project",
-      headingLine2: "in mind?",
-      body: "Let's build something amazing together.",
+      headingLine1: "Ready to build",
+      headingLine2: "something real?",
+      body: "Tell me what you need — I'll make it happen.",
       button: "Get In Touch",
     },
     footer: {
       tagline:
-        "Full Stack Developer passionate about building modern, scalable and beautiful web applications.",
+        "Full-stack developer building web apps, AI tools, bots, and automation systems.",
       navTitle: "Navigation",
-      servicesTitle: "Services",
-      services: {
-        frontend: "Frontend Development",
-        backend: "Backend Development",
-        ai: "AI Integrations",
-        bots: "Bots & Automation",
-        apis: "API Development",
-      },
+      builtWithTitle: "Built With",
       connectTitle: "Let's Connect",
-      connectBody: "Available for freelance and full-time opportunities.",
+      connectBody: "Have a project in mind? I'd love to hear about it.",
       cta: "Let's Talk",
       copyright: "© 2026 YoniDev by STARTOP. All rights reserved.",
       builtWith: "CODE YOUR DREAM",
@@ -384,7 +380,7 @@ export const translations: Record<Locale, TranslationDict> = {
         email: "Email Address",
         emailPlaceholder: "you@example.com",
         phone: "Phone",
-        phonePlaceholder: "+1 (555) 000-0000",
+        phonePlaceholder: "+972 50 000 0000",
         phoneOptional: "Optional",
         projectType: {
           label: "Project Type",
@@ -415,7 +411,7 @@ export const translations: Record<Locale, TranslationDict> = {
           generic: "This field is invalid",
         },
         success: {
-          heading: "Thanks — I'll get back to you within 24 hours",
+          heading: "Thanks — I'll get back to you within 1–2 days",
           body: "Your message has been received. Talk soon!",
           again: "Send another message",
         },
@@ -432,19 +428,19 @@ export const translations: Record<Locale, TranslationDict> = {
           copy: "Copy",
           copied: "Copied!",
         },
-        responseTime: "Usually replies within 24 hours",
+        responseTime: "Usually replies within 1–2 days",
       },
     },
     about: {
       meta: {
         title: "About — YoniDev",
-        description: "Full-Stack Developer from Jerusalem. Building modern, scalable web applications, AI tools, and real-world automation systems.",
+        description: "Full-Stack Developer. Building modern, scalable web applications, AI tools, bots, and automation systems.",
       },
       hero: {
         eyebrow: "About Me",
-        headingLine1: "Building things that",
-        headingLine2: "solve real problems",
-        body: "Full-Stack Developer from Jerusalem. I work across the whole stack — from pixel-perfect UIs to scalable server architecture — and I love the moment an idea becomes real.",
+        headingLine1: "From curiosity",
+        headingLine2: "to craft",
+        body: "Full-Stack Developer, self-taught. I work across the whole stack — from pixel-perfect UIs to scalable server architecture — and I love the moment an idea becomes real.",
         ctaPrimary: "View My Work",
         ctaSecondary: "Let's Talk",
         available: "Available for new projects",
@@ -453,22 +449,22 @@ export const translations: Record<Locale, TranslationDict> = {
       story: {
         eyebrow: "My Story",
         heading: "From curiosity to craft",
-        p1: "Hey 👋 I'm Yonatan. I got into coding because, honestly, I'm a little obsessed with the moment an idea turns into something real — you click a button, and stuff actually happens. That feeling never gets old.",
-        p2: "These days I work across the whole stack — from the pixels in your browser all the way down to the database holding everything together. I've shipped community platforms, AI tools, WhatsApp bots, browser automations, and IoT projects running on Raspberry Pis 🍓. Basically: if it has code in it, I've probably tried to break and rebuild it.",
-        p3: "What I really care about? How something is built — not just whether it works. Clean architecture, a modern stack, scalable from day one, and code that the next dev (let's be honest, usually me six months later 😅) can actually read.",
-        p4: "When I'm not coding for clients, I'm probably tinkering with something else 🛠️ — a multi-agent AI experiment, a smart photo frame on a Raspberry Pi, or another ESP32 project slowly taking over the apartment. These weird side projects always feed back into the client work. Every random experiment teaches me something I end up bringing to the next thing.",
-        pullQuote: "I keep it direct. No fluff, step-by-step.",
+        p1: "Hey 👋 I'm Yonatan. It started with a Java course — university lecture videos I had no real reason to watch. I watched most of them, then couldn't help myself and started trying things out. That's pretty much where I've been ever since.",
+        p2: "Fully self-taught, and honestly I prefer it that way — I learn best by doing. These days I work across the whole stack: from the UI in your browser all the way to the server and database behind it. Along the way I've built web apps, AI tools, WhatsApp bots, automations, and IoT projects.",
+        p3: "What I really care about? Not just whether something works — but how it's built. Clean architecture, a modern stack, and code that the next developer (let's be honest, usually me six months later 😅) can actually read.",
+        p4: "The thing about me is this genuinely doesn't feel like work. It's my hobby, my passion — the thing I naturally gravitate toward even in my free time. A new site, a game, a bot, an AI experiment, an ESP32 build — there's always something.",
+        pullQuote: "I learn best by doing.",
       },
       building: {
         eyebrow: "Currently Building",
         heading: "Beyond client work",
         statusLive: "Live",
         statusDev: "In Development",
-        statusMvp: "MVP",
+        statusMvp: "Planned",
         items: {
           "al-hamacom": {
             title: "AL-HAMACOM",
-            description: "A neighborhood platform connecting residents with local services, events, and community boards. Built for Jerusalem, starting with Ramot.",
+            description: "A neighborhood community platform connecting local residents and businesses in one place. Pre-launch.",
           },
           yoniverse: {
             title: "Yoniverse",
@@ -476,7 +472,7 @@ export const translations: Record<Locale, TranslationDict> = {
           },
           frame: {
             title: "Yoniverse Frame",
-            description: "A smart digital photo frame running on a Raspberry Pi 4, displaying curated memories in a custom React kiosk interface.",
+            description: "A smart digital photo frame on a Raspberry Pi 4 — a planned project waiting for the right moment to build.",
           },
         },
       },
@@ -484,8 +480,8 @@ export const translations: Record<Locale, TranslationDict> = {
         eyebrow: "Beyond Code",
         heading: "When I close the editor",
         items: {
-          teaching: { title: "Teaching melodica", description: "I volunteer at a youth club teaching kids melodica with a number-based notation system — 1 to 7 instead of sheet music. Watching them play their first song in 10 minutes never gets old." },
-          hardware: { title: "Tinkering with hardware", description: "ESP32 sensors, smart-home automations, Raspberry Pi setups. Half my apartment is slowly becoming a side project. If it has a chip and wires, I want to take it apart." },
+          teaching: { title: "Hardware & IoT", description: "ESP32 sensors, smart-home automations, Raspberry Pi setups. Half my apartment is slowly becoming a side project. If it has a chip and wires, I want to take it apart." },
+          hardware: { title: "Always learning something new", description: "Whether it's a new language, a different architecture, or a random rabbit hole at 2am — I'm genuinely curious about how things work and I can't stop exploring." },
         },
       },
     },
@@ -511,7 +507,7 @@ export const translations: Record<Locale, TranslationDict> = {
             "אני מעצב ובונה אפליקציות web שלמות — מהממשק שהמשתמשים רואים ועד לוגיקת השרת ומסד הנתונים מאחוריו. כל פרויקט מותאם למהירות, יכולת הרחבה ותחזוקה.",
           bullets: [
             "UI מדויק לפיקסל עם React / Next.js",
-            "Backends מתרחבים עם Node.js או Python",
+            "Backends מתרחבים עם Node.js ו-TypeScript",
             "עיצוב מסד נתונים ופריסה לענן",
           ],
           useCase:
@@ -534,10 +530,10 @@ export const translations: Record<Locale, TranslationDict> = {
           title: "בוטים ואוטומציה",
           tagline: "אוטומציה של החוזר, הרחבה של השאר",
           description:
-            "בוטים לוואטסאפ וטלגרם שמבינים שפה טבעית, בנוסף לאוטומציות זרימת עבודה עם Make, Zapier או קוד מותאם. כל מה שרץ ברקע כדי שאתה לא תצטרך.",
+            "בוטים לוואטסאפ וטלגרם שמבינים שפה טבעית, בנוסף לאוטומציות זרימת עבודה עם N8N או קוד מותאם. כל מה שרץ ברקע כדי שאתה לא תצטרך.",
           bullets: [
             "בוטים לוואטסאפ / טלגרם עם NLP",
-            "זרימות אוטומציה עם Make / Zapier / n8n",
+            "זרימות N8N וסקריפטים מותאמים",
             "עבודות מתוזמנות ו-workers ברקע",
           ],
           useCase:
@@ -572,7 +568,7 @@ export const translations: Record<Locale, TranslationDict> = {
       headingLine1: "הרעיון שלך.",
       headingLine2: "הקוד שלי.",
       headingLine3: "התוצאה שלנו.",
-      body: "בונה אפליקציות אינטרנט מודרניות, מהירות ומתרחבות, אוטומציות וכלים מבוססי AI — מהרעיון ועד הייצור.",
+      body: "מפתח Full-Stack שבונה אפליקציות Next.js וכלים דיגיטליים לעסקים שרוצים לצמוח ולהתייעל.",
       ctaPrimary: "לעבודות שלי",
       ctaSecondary: "בואו נעבוד יחד",
       available: "זמין לפרויקטים חדשים",
@@ -586,22 +582,22 @@ export const translations: Record<Locale, TranslationDict> = {
     },
     services: {
       eyebrow: "מה אני עושה",
-      heading: "פיתוח מקצה לקצה",
-      body: "אני בונה פתרונות דיגיטליים מלאים עם קוד נקי, פונקציונליות עוצמתית וחוויית משתמש מצוינת.",
+      heading: "מהרעיון לייצור",
+      body: "אני בונה מוצרים דיגיטליים מלאים המותאמים לעסק שלך — מהשורה הראשונה של קוד עד הרגע שזה עולה לאוויר.",
       items: {
         fullstack: {
           title: "פיתוח Full-Stack",
           description:
-            "אפליקציות ואתרים מקצה לקצה — מ-UI מדויק לפיקסל ועד ארכיטקטורת שרת מתרחבת.",
+            "אפליקציות Web מלאות עם Next.js — מממשק מדויק לפיקסל ועד ארכיטקטורת שרת ומסד נתונים.",
         },
         ai: {
           title: "שילובי AI",
-          description: "ממשקי LLM, מערכות RAG ופיצ'רים חכמים שמשתלבים במוצר שלך בצורה חלקה.",
+          description: "פיצ'רים וכלי AI מותאמים — משילוב OpenAI ו-Claude ועד בניית מוצרים מבוססי AI מאפס.",
         },
         bots: {
           title: "בוטים ואוטומציה",
           description:
-            "בוטים ל-WhatsApp ו-Telegram עם הבנת שפה טבעית, ותהליכי Make / Zapier וקוד מותאם.",
+            "בוטים ל-WhatsApp ו-Telegram עם הבנת שפה טבעית, תהליכי N8N וסקריפטים אוטומציה מותאמים.",
         },
         apis: {
           title: "API ואינטגרציות",
@@ -622,15 +618,15 @@ export const translations: Record<Locale, TranslationDict> = {
       items: {
         yoniverse: {
           title: "Yoniverse",
-          description: "פורטפוליו אישי ותצוגת פרויקטים עם עיצוב מודרני ואנימציות חלקות.",
+          description: "סביבת עבודה על כל המסך עם מוח AI אחד שמנהל משימות, מחובר לפלאפון, אימייל, WhatsApp ו-IoT — ממוקד, נקי ועובד בשבילך.",
         },
         "al-hamacom": {
           title: "על המקום",
-          description: "פלטפורמת עסקים מקומיים שמחברת בין משתמשים לשירותים בסביבת המגורים.",
+          description: "פלטפורמה קהילתית-שכונתית שמחברת בין תושבים ועסקים מקומיים במקום אחד.",
         },
         "ai-whatsapp-bot": {
-          title: "בוט WhatsApp חכם",
-          description: "בוט WhatsApp חכם עם הבנת שפה טבעית ואוטומציה עסקית.",
+          title: "Boti",
+          description: "בוט WhatsApp חכם שמאזין לשיחות העסקיות שלך, זוכר כל פרט, ועונה על שאלות לגביהם בשנייה עם AI.",
         },
         "categories-game": {
           title: "ארץ עיר — Categories Game",
@@ -650,20 +646,20 @@ export const translations: Record<Locale, TranslationDict> = {
       stepOf: "מתוך",
       items: {
         discover: {
-          title: "גילוי",
-          description: "הבנת הרעיון, המטרות והדרישות שלך.",
+          title: "הבנה",
+          description: "שיחה קצרה או וואטסאפ כדי להבין את הרעיון, המטרות שלך, ומה נראה לך כמו הצלחה.",
         },
         design: {
-          title: "עיצוב",
-          description: "תכנון, סקיצות ועיצוב הפתרון.",
+          title: "תכנון",
+          description: "אפיון מסודר — שאלות נכונות, דרישות ברורות והגדרת היקף לפני שמתחילים לכתוב קוד.",
         },
         develop: {
           title: "פיתוח",
-          description: "כתיבת קוד נקי, יעיל וניתן להרחבה.",
+          description: "בנייה עם קוד נקי ומסודר וכלי AI כמו Claude Code. מעדכן אותך לאורך כל הדרך בלי הפתעות.",
         },
         deliver: {
           title: "מסירה",
-          description: "בדיקות, העלאה לאוויר ותמיכה שוטפת.",
+          description: "העלאה לאוויר, הדרכה מלאה כדי שתבין הכל, ותמיכה אחרי ההשקה. קוד נקי ומתועד שנשאר אצלך.",
         },
       },
     },
@@ -693,31 +689,26 @@ export const translations: Record<Locale, TranslationDict> = {
       filters: { all: "הכל", web: "Web", ai: "AI", bot: "בוטים", automation: "אוטומציה" },
       viewLive: "לאתר החי",
       caseStudy: "קייס סטאדי",
-      workshopEyebrow: "בסדנה",
-      workshopHeading: "מה הבא",
-      workshopBody: "עוד פרויקטים בדרך.",
+      workshopEyebrow: "בתכנון",
+      workshopHeading: "בסדנה",
+      workshopBody: "פרויקטים שנמצאים כרגע בתכנון או בפיתוח מוקדם.",
+      workshopProject1Name: "מסגרת חכמה",
+      workshopProject1Desc: "תצוגת קיר מבוססת Raspberry Pi שמציגה תמונות, תזכורות ומידע חי — מגיבה לקול, קוראת חיישנים ומסונכרנת עם מוח Yoniverse.",
       noProjects: "אין פרויקטים בקטגוריה הזו עדיין.",
     },
     cta: {
-      headingLine1: "יש לך פרויקט",
-      headingLine2: "בראש?",
-      body: "בואו נבנה יחד משהו מדהים.",
+      headingLine1: "מוכן לבנות",
+      headingLine2: "משהו אמיתי?",
+      body: "תגיד לי מה אתה צריך — אני אדאג לשאר.",
       button: "צור קשר",
     },
     footer: {
       tagline:
-        "מפתח Full Stack שאוהב לבנות אפליקציות מודרניות, מתרחבות ויפות.",
+        "מפתח Full-Stack שבונה אפליקציות web, כלי AI, בוטים ומערכות אוטומציה.",
       navTitle: "ניווט",
-      servicesTitle: "שירותים",
-      services: {
-        frontend: "פיתוח Frontend",
-        backend: "פיתוח Backend",
-        ai: "שילובי AI",
-        bots: "בוטים ואוטומציה",
-        apis: "פיתוח API",
-      },
+      builtWithTitle: "נבנה עם",
       connectTitle: "בואו נתחבר",
-      connectBody: "זמין לעבודות פרילנס ומשרות מלאות.",
+      connectBody: "יש לך פרויקט? אשמח לשמוע.",
       cta: "בוא נדבר",
       copyright: "© 2026 YoniDev by STARTOP. כל הזכויות שמורות.",
       builtWith: "CODE YOUR DREAM",
@@ -775,7 +766,7 @@ export const translations: Record<Locale, TranslationDict> = {
           generic: "שדה זה אינו תקין",
         },
         success: {
-          heading: "תודה — אחזור אליך תוך 24 שעות",
+          heading: "תודה — אחזור אליך תוך 1–2 ימים",
           body: "ההודעה שלך התקבלה. נדבר בקרוב!",
           again: "שלח הודעה נוספת",
         },
@@ -792,19 +783,19 @@ export const translations: Record<Locale, TranslationDict> = {
           copy: "העתק",
           copied: "הועתק!",
         },
-        responseTime: "בדרך כלל עונה תוך 24 שעות",
+        responseTime: "בדרך כלל עונה תוך 1–2 ימים",
       },
     },
     about: {
       meta: {
         title: "אודות — YoniDev",
-        description: "מפתח Full-Stack מירושלים. בונה אפליקציות web מודרניות ומתרחבות, כלי AI ומערכות אוטומציה בעולם האמיתי.",
+        description: "מפתח Full-Stack. בונה אפליקציות web מודרניות ומתרחבות, כלי AI, בוטים ומערכות אוטומציה.",
       },
       hero: {
         eyebrow: "אודות",
-        headingLine1: "בונה דברים שפותרים",
-        headingLine2: "בעיות אמיתיות",
-        body: "מפתח Full-Stack מירושלים. אני עובד לאורך כל הסטאק — מ-UI מדויק לפיקסל ועד ארכיטקטורת שרת מתרחבת — ואני אוהב את הרגע שבו רעיון הופך לאמיתי.",
+        headingLine1: "מסקרנות",
+        headingLine2: "למקצוע",
+        body: "מפתח Full-Stack, למדתי לבד. אני עובד לאורך כל הסטאק — מ-UI מדויק לפיקסל ועד ארכיטקטורת שרת מתרחבת — ואני אוהב את הרגע שבו רעיון הופך לאמיתי.",
         ctaPrimary: "לעבודות שלי",
         ctaSecondary: "בוא נדבר",
         available: "זמין לפרויקטים חדשים",
@@ -813,22 +804,22 @@ export const translations: Record<Locale, TranslationDict> = {
       story: {
         eyebrow: "הסיפור שלי",
         heading: "מסקרנות למקצוע",
-        p1: "היי 👋 אני יהונתן. נכנסתי לקוד כי, בכנות, אני קצת אובססיבי לרגע שבו רעיון הופך למשהו אמיתי — לוחצים על כפתור, ובאמת קורה משהו. הרגע הזה אף פעם לא יתיישן.",
-        p2: "היום אני עובד על כל הסטאק — מהפיקסלים בדפדפן ועד הדאטהבייס שמחזיק את הכל. השקתי פלטפורמות קהילתיות, כלי AI, בוטים בוואטסאפ, אוטומציות לדפדפן ופרויקטי IoT שרצים על Raspberry Pi 🍓. בעיקרון, אם יש בזה קוד, כנראה ניסיתי לשבור ולבנות איתו משהו מחדש.",
-        p3: "מה שבאמת חשוב לי? איך משהו נבנה — לא רק אם זה עובד. ארכיטקטורה נקייה, סטאק מודרני, מתרחב מהיום הראשון, וקוד שהמפתח הבא (בואו נודה בזה, בדרך כלל אני בעוד חצי שנה 😅) באמת יוכל לקרוא.",
-        p4: "כשאני לא מקודד ללקוחות, אני בטח מתעסק במשהו אחר 🛠️ — ניסוי AI עם כמה agents, מסגרת תמונה חכמה על Raspberry Pi, או עוד פרויקט ESP32 שלאט-לאט משתלט לי על הדירה. ה-side projects המוזרים האלה תמיד מזינים בחזרה את העבודה ללקוחות. כל ניסוי אקראי מלמד אותי משהו שאני מביא לפעם הבאה.",
-        pullQuote: "אני שומר על זה ישיר. בלי מסביב, צעד-צעד.",
+        p1: "היי 👋 אני יהונתן. זה התחיל מקורס ג'אווה — סרטוני הרצאות מהאוניברסיטה הפתוחה שלא היה לי סיבה מיוחדת לראות. ראיתי את רובם, ואז כבר לא יכולתי לעצור את עצמי מלנסות דברים. ופחות או יותר ככה נשארתי.",
+        p2: "למדתי לבד, ובכנות מעדיף את זה כך — אני לומד הכי טוב תוך כדי עבודה. היום אני עובד על כל הסטאק: מה-UI בדפדפן ועד השרת ומסד הנתונים מאחוריו. בדרך בניתי אפליקציות Web, כלי AI, בוטים בוואטסאפ, אוטומציות ופרויקטי IoT.",
+        p3: "מה שבאמת חשוב לי? לא רק אם משהו עובד — אלא איך הוא נבנה. ארכיטקטורה נקייה, סטאק מודרני, וקוד שהמפתח הבא (בואו נודה בזה, בדרך כלל אני בעוד חצי שנה 😅) באמת יוכל לקרוא.",
+        p4: "הדבר עליי הוא שזה באמת לא מרגיש לי כמו עבודה. זה התחביב שלי, התשוקה שלי — הדבר שאני מוצא את עצמי עושה גם בזמן הפנוי. אתר חדש, משחק, בוט, ניסוי AI, פרויקט ESP32 — תמיד יש משהו.",
+        pullQuote: "אני לומד הכי טוב תוך כדי עבודה.",
       },
       building: {
         eyebrow: "במלאכה כעת",
         heading: "מעבר לעבודה ללקוחות",
         statusLive: "פעיל",
         statusDev: "בפיתוח",
-        statusMvp: "MVP",
+        statusMvp: "מתוכנן",
         items: {
           "al-hamacom": {
             title: "על המקום",
-            description: "פלטפורמה שכונתית שמחברת תושבים לשירותים מקומיים, אירועים ולוחות קהילתיים. נבנתה עבור ירושלים, מתחילה עם רמות.",
+            description: "פלטפורמה קהילתית-שכונתית שמחברת תושבים ועסקים מקומיים במקום אחד. לפני השקה.",
           },
           yoniverse: {
             title: "Yoniverse",
@@ -836,7 +827,7 @@ export const translations: Record<Locale, TranslationDict> = {
           },
           frame: {
             title: "Yoniverse Frame",
-            description: "מסגרת תמונה דיגיטלית חכמה שרצה על Raspberry Pi 4, מציגה זיכרונות נבחרים בממשק React בסגנון kiosk.",
+            description: "מסגרת תמונה דיגיטלית חכמה על Raspberry Pi 4 — פרויקט מתוכנן שמחכה לזמן הנכון לבנות.",
           },
         },
       },
@@ -844,8 +835,8 @@ export const translations: Record<Locale, TranslationDict> = {
         eyebrow: "מעבר לקוד",
         heading: "כשהעורך נסגר",
         items: {
-          teaching: { title: "מלמד מלודיקה", description: "מתנדב במועדון נוער ומלמד ילדים מלודיקה לפי שיטת מספרים — 1 עד 7 במקום תווים. לראות אותם מנגנים שיר ראשון תוך 10 דקות זה משהו שלא נמאס." },
-          hardware: { title: "מתעסק עם חומרה", description: "חיישני ESP32, אוטומציות בית חכם, פרויקטים על Raspberry Pi. חצי דירה אצלי בהדרגה הופכת ל-side project. אם יש לזה שבב וחוטים, אני רוצה לפתוח את זה." },
+          teaching: { title: "חומרה ו-IoT", description: "חיישני ESP32, אוטומציות בית חכם, פרויקטים על Raspberry Pi. חצי דירה אצלי בהדרגה הופכת ל-side project. אם יש לזה שבב וחוטים, אני רוצה לפתוח את זה." },
+          hardware: { title: "תמיד לומד משהו חדש", description: "בין אם זו שפה חדשה, ארכיטקטורה אחרת, או חור ארנבת אקראי בשתיים בלילה — אני סקרן לאמיתו לגבי איך דברים עובדים ולא מפסיק לחקור." },
         },
       },
     },

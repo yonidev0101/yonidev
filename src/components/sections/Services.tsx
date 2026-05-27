@@ -38,7 +38,7 @@ export default function Services() {
           >
             {t.services.eyebrow}
           </motion.p>
-          <h2 className="section-heading mb-4">
+          <h2 data-scrolldot="services-heading" className="section-heading mb-4">
             <RevealText delay={0.05}>{t.services.heading}</RevealText>
           </h2>
           <motion.p
@@ -52,7 +52,7 @@ export default function Services() {
           </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div data-scrolldot="services-cards" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {services.map((service, i) => {
             const Icon = iconMap[service.icon] ?? Code2;
             const delay = i * STAGGER;

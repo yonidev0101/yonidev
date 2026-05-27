@@ -13,12 +13,13 @@ export interface Project {
   liveUrl?: string;
   githubUrl?: string;
   featured: boolean;
+  locked?: boolean;
 }
 
 export const projects: Project[] = [
   {
     slug: "yoniverse",
-    stack: ["Next.js", "TypeScript", "Tailwind CSS", "Framer Motion"],
+    stack: ["Next.js", "TypeScript", "MongoDB", "OpenAI", "Rust", "Flutter"],
     category: "web",
     image: "/projects/yoniverse.png",
     featured: true,
@@ -29,12 +30,13 @@ export const projects: Project[] = [
     category: "web",
     image: "/projects/al-hamacom.png",
     featured: true,
+    locked: true,
   },
   {
     slug: "ai-whatsapp-bot",
     stack: ["Node.js", "WhatsApp API", "OpenAI", "MongoDB"],
     category: "bot",
-    image: "/projects/yoniverse.png",
+    image: "/projects/ai-whatsapp-bot.png",
     featured: true,
   },
   {

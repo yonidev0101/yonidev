@@ -6,6 +6,7 @@ import CTABanner from "@/components/sections/CTABanner";
 import { projects } from "@/data/projects";
 import { projectDetails } from "@/data/projectDetails";
 import ProjectDetailClient from "./ProjectDetailClient";
+import ProjectLocked from "./ProjectLocked";
 import JsonLd from "@/lib/seo/JsonLd";
 import {
   SITE_URL,
@@ -25,6 +26,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   if (!project) return {};
+
+  if (project.locked) {
+    return {
+      title: slug,
+      robots: { index: false },
+      alternates: { canonical: `/projects/${project.slug}` },
+    };
+  }
 
   const detail = projectDetails.he?.[project.slug] ?? projectDetails.en[project.slug];
   const title = detail?.tagline ?? slug;
@@ -63,6 +72,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   const detail = projectDetails.he?.[project.slug] ?? projectDetails.en[project.slug];
   const url    = `/projects/${project.slug}`;
+
+  if (project.locked) {
+    return (
+      <>
+        <Navbar />
+        <main>
+          <ProjectLocked slug={project.slug} stack={project.stack} />
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

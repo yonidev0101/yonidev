@@ -87,7 +87,7 @@ export default function FeaturedProjects() {
           </motion.div>
 
           {/* Fanned cards */}
-          <div className="relative h-[480px] sm:h-[520px]">
+          <div data-scrolldot="projects-cards" className="relative h-[480px] sm:h-[520px]">
             <AnimatePresence mode="popLayout">
               {featuredProjects.map((project, i) => {
                 const offset = i - current;

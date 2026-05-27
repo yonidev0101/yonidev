@@ -40,7 +40,7 @@ export default function Stats() {
   return (
     <section className="py-12 bg-white">
       <div className="container">
-        <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
+        <div ref={ref} data-scrolldot="stats" className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.key}

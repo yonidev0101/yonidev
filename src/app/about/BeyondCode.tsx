@@ -37,9 +37,7 @@ export default function BeyondCode() {
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.55, ease: "easeOut", delay: i * 0.12 }}
               >
-                <div className="w-14 h-14 rounded-2xl bg-brand-500/10 flex items-center justify-center mb-6">
-                  <Icon size={26} className="text-brand-500" strokeWidth={1.75} />
-                </div>
+                <Icon size={32} className="text-brand-500 mb-6" strokeWidth={1.5} />
                 <h3 className="text-xl font-bold text-heading mb-3">{item.title}</h3>
                 <p className="text-body leading-relaxed">{item.description}</p>
               </motion.div>

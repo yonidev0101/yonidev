@@ -172,7 +172,7 @@ export const projectDetails: Record<Locale, Record<ProjectSlug, ProjectDetailCon
     },
 
     "ai-whatsapp-bot": {
-      tagline: "An AI-powered WhatsApp bot that remembers everything said in your business chats — and answers questions about it in Hebrew.",
+      tagline: "The smart memory of your business — a WhatsApp bot that listens, remembers every detail, and answers questions in seconds.",
       overview:
         "WhatsApp Business Bot listens to private conversations between business partners, stores every message with a semantic embedding in MongoDB Atlas, and lets users query their own conversation history using natural language. It integrates with Gmail, Google Calendar, and Google Drive, and delivers real-time civil-defense (Oref/Tzofar) alerts — all from a single WhatsApp chat.",
       problem:
@@ -529,7 +529,7 @@ export const projectDetails: Record<Locale, Record<ProjectSlug, ProjectDetailCon
     },
 
     "ai-whatsapp-bot": {
-      tagline: "בוט WhatsApp מבוסס-AI שזוכר כל מה שנאמר בצ'אטים העסקיים שלך — ועונה על שאלות לגביו בעברית.",
+      tagline: "הזיכרון החכם של העסק שלך — בוט WhatsApp שמקשיב, זוכר כל פרט, ועונה על שאלות בשנייה.",
       overview:
         "WhatsApp Business Bot מקשיב לשיחות פרטיות בין שותפים עסקיים, שומר כל הודעה עם embedding סמנטי ב-MongoDB Atlas, ומאפשר לשאול שאלות על היסטוריית השיחה בשפה טבעית. הוא משתלב עם Gmail, Google Calendar ו-Google Drive, ומספק התראות פיקוד עורף (אורף / צבע אדום) בזמן אמת — הכל ישירות מתוך שיחת WhatsApp.",
       problem:

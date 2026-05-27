@@ -49,7 +49,7 @@ export default function Process() {
                 {/* Scroll-drawn SVG icon — each shape strokes itself in as the step
                     enters the viewport. The Hebrew step indicator under the description
                     carries the number context, so the icon stands alone here. */}
-                <div className="self-center">
+                <div data-scrolldot={`process-${i}`} className="self-center">
                   <ProcessIcon kind={step.id} />
                 </div>
 

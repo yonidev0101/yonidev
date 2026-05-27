@@ -425,26 +425,47 @@ export default function ProjectsClient() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-lg">
-            {[0, 1].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.45, delay: i * 0.1, ease: "easeOut" }}
-                className="rounded-2xl border-2 border-dashed border-border p-5 bg-bg-soft"
-              >
-                <div className="aspect-video rounded-xl bg-gradient-to-br from-border-soft to-brand-50 mb-4 flex items-center justify-center">
-                  <span className="text-xs text-muted-text font-semibold tracking-widest uppercase">
-                    Soon
+            {/* Real upcoming project */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              className="rounded-2xl border border-border p-5 bg-white shadow-[0_4px_20px_-8px_rgba(15,23,42,0.08)]"
+            >
+              <div className="aspect-video rounded-xl bg-gradient-to-br from-brand-50 via-violet-50 to-brand-100 mb-4 flex items-center justify-center relative overflow-hidden">
+                <span className="text-4xl">🖼️</span>
+                <span className="absolute top-2 end-2 text-[10px] font-semibold uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">
+                  WIP
+                </span>
+              </div>
+              <p className="font-bold text-heading text-sm mb-1">{tp.workshopProject1Name}</p>
+              <p className="text-xs text-body leading-relaxed mb-3">{tp.workshopProject1Desc}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["Raspberry Pi", "ESP32", "React", "AI"].map((t) => (
+                  <span key={t} className="text-[10px] font-medium bg-bg-soft border border-border px-2 py-0.5 rounded-full text-body">
+                    {t}
                   </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-2.5 w-24 bg-border rounded-full" />
-                  <div className="h-2 w-36 bg-border-soft rounded-full" />
-                </div>
-              </motion.div>
-            ))}
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Placeholder */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.08 }}
+              transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
+              className="rounded-2xl border-2 border-dashed border-border p-5 bg-bg-soft"
+            >
+              <div className="aspect-video rounded-xl bg-gradient-to-br from-border-soft to-brand-50 mb-4 flex items-center justify-center">
+                <span className="text-xs text-muted-text font-semibold tracking-widest uppercase">?</span>
+              </div>
+              <div className="space-y-2">
+                <div className="h-2.5 w-20 bg-border rounded-full" />
+                <div className="h-2 w-32 bg-border-soft rounded-full" />
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

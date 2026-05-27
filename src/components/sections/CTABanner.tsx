@@ -53,6 +53,7 @@ export default function CTABanner() {
             <p className="text-white/75 text-sm">{t.cta.body}</p>
             <Link
               href="/contact"
+              data-scrolldot="cta-button"
               className="mt-2 inline-flex items-center gap-2.5 px-7 py-4 rounded-full bg-white text-brand-600 font-semibold text-sm hover:shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-200"
             >
               {t.cta.button} <ArrowRight size={16} className="rtl:-scale-x-100" />
