@@ -33,18 +33,21 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
   const { editingId, startEdit, cancel } = useInlineEdit<number>();
 
   const today = new Date().toISOString().slice(0, 10);
+  const open = tasks.filter((t) => t.status !== "done");
+  const completed = tasks.filter((t) => t.status === "done");
+
   const grouped = {
-    overdue: tasks.filter((t) => {
+    overdue: open.filter((t) => {
       const d = actionableDate(t);
       return d && d < today;
     }),
-    today: tasks.filter((t) => actionableDate(t) === today),
-    blocked: tasks.filter((t) => t.status === "blocked" && !actionableDate(t)),
-    upcoming: tasks.filter((t) => {
+    today: open.filter((t) => actionableDate(t) === today),
+    blocked: open.filter((t) => t.status === "blocked" && !actionableDate(t)),
+    upcoming: open.filter((t) => {
       const d = actionableDate(t);
       return d && d > today;
     }),
-    unscheduled: tasks.filter((t) => !actionableDate(t) && t.status !== "blocked"),
+    unscheduled: open.filter((t) => !actionableDate(t) && t.status !== "blocked"),
   };
 
   async function del(id: number) {
@@ -177,6 +180,7 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
       {renderGroup("ממתין ללקוח", grouped.blocked, "blue")}
       {renderGroup("בקרוב", grouped.upcoming)}
       {renderGroup("ללא תאריך", grouped.unscheduled)}
+      {renderGroup("הושלמו", completed)}
     </div>
   );
 }
