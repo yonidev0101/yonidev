@@ -12,8 +12,10 @@ import {
 import ClientEditCard from "@/components/admin/ClientEditCard";
 import ProjectCreateForm from "@/components/admin/ProjectCreateForm";
 import CommunicationForm from "@/components/admin/CommunicationForm";
-import CommunicationsList from "@/components/admin/CommunicationsList";
 import TaskQuickAdd, { type QuickAddProject } from "@/components/admin/TaskQuickAdd";
+import ClientHoursChart from "@/components/admin/ClientHoursChart";
+import ClientTasksByProject from "@/components/admin/ClientTasksByProject";
+import ClientActivityFeed from "@/components/admin/ClientActivityFeed";
 
 export const dynamic = "force-dynamic";
 
@@ -28,14 +30,27 @@ export default async function ClientDetailPage({
 
   const data = await getClientWithRelations(id);
   if (!data) notFound();
-  const { client, projects, communications, invoices, totalSeconds } = data;
+  const {
+    client,
+    projects,
+    communications,
+    invoices,
+    tasks,
+    taskUpdates,
+    totalSeconds,
+    billableUninvoicedSeconds,
+    outstandingTotalIls,
+    openTaskCount,
+    weeklyHours,
+  } = data;
 
   const openProjects: QuickAddProject[] = projects
     .filter((p) => p.status !== "done")
     .map((p) => ({ id: p.id, name: p.name }));
+  const projectsForFeed = projects.map((p) => ({ id: p.id, name: p.name }));
 
   return (
-    <div dir="rtl" className="space-y-8 max-w-5xl">
+    <div dir="rtl" className="space-y-6 max-w-5xl">
       <header>
         <Link
           href="/admin/clients"
@@ -54,43 +69,30 @@ export default async function ClientDetailPage({
         {client.company && <p className="text-[#64748B] mt-1">{client.company}</p>}
       </header>
 
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="סהכ שעות" value={fmtHours(totalSeconds)} />
+        <Kpi label="לחשבונית" value={fmtHours(billableUninvoicedSeconds)} />
+        <Kpi
+          label="חשבוניות פתוחות"
+          value={fmtIls(outstandingTotalIls)}
+          tone={outstandingTotalIls > 0 ? "amber" : undefined}
+        />
+        <Kpi
+          label="משימות פתוחות"
+          value={openTaskCount.toString()}
+          tone={openTaskCount > 0 ? "blue" : undefined}
+        />
+      </div>
+
+      <ClientHoursChart data={weeklyHours} />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Projects */}
+          {/* Open tasks */}
           <section>
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-[15px] font-bold text-[#0F172A]">פרויקטים</h2>
-              <span className="text-[12px] text-[#94A3B8]">
-                סה&quot;כ {fmtHours(totalSeconds)}
-              </span>
-            </div>
-            <ProjectCreateForm clientId={client.id} defaultRate={client.defaultHourlyRateIls} />
-            {projects.length === 0 ? (
-              <p className="text-[13px] text-[#94A3B8] py-4">אין פרויקטים עדיין.</p>
-            ) : (
-              <ul className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9] mt-4 overflow-hidden">
-                {projects.map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={`/admin/projects/${p.id}`}
-                      className="flex items-center gap-4 px-5 py-4 hover:bg-[#F8FAFC] transition"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-[14px] text-[#0F172A]">{p.name}</div>
-                        {p.nextAction && (
-                          <div className="text-[12px] text-[#475569] mt-0.5">
-                            → {p.nextAction}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#64748B]">
-                        {PROJECT_STATUS_HE[p.status]}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <h2 className="text-[15px] font-bold text-[#0F172A] mb-3">משימות פתוחות</h2>
+            <ClientTasksByProject tasks={tasks} />
           </section>
 
           {/* Quick add task */}
@@ -101,16 +103,50 @@ export default async function ClientDetailPage({
             </section>
           )}
 
-          {/* Communications */}
+          {/* Unified activity feed */}
           <section>
-            <h2 className="text-[15px] font-bold text-[#0F172A] mb-3">לוג תקשורת</h2>
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-[15px] font-bold text-[#0F172A]">פעילות</h2>
+              <span className="text-[11px] text-[#94A3B8]">עדכוני משימות + תקשורת</span>
+            </div>
             <CommunicationForm clientId={client.id} projects={projects} />
-            <CommunicationsList communications={communications} projects={projects} />
+            <div className="mt-4">
+              <ClientActivityFeed
+                taskUpdates={taskUpdates}
+                communications={communications}
+                projects={projectsForFeed}
+              />
+            </div>
           </section>
         </div>
 
         <aside className="space-y-6">
           <ClientEditCard client={client} />
+
+          {/* Projects (compact) */}
+          <section className="bg-white border border-[#E2E8F0] rounded-xl p-5">
+            <h2 className="text-[13px] font-bold text-[#0F172A] mb-3">פרויקטים</h2>
+            <ProjectCreateForm clientId={client.id} defaultRate={client.defaultHourlyRateIls} />
+            {projects.length === 0 ? (
+              <p className="text-[12px] text-[#94A3B8] mt-3">אין פרויקטים עדיין.</p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {projects.map((p) => (
+                  <li key={p.id}>
+                    <Link
+                      href={`/admin/projects/${p.id}`}
+                      className="flex items-center gap-2 text-[13px] text-[#0F172A] hover:text-[#2B7FFF]"
+                    >
+                      <span className="flex-1 truncate font-medium">{p.name}</span>
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#64748B]">
+                        {PROJECT_STATUS_HE[p.status]}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {/* Invoices summary */}
           <section className="bg-white border border-[#E2E8F0] rounded-xl p-5">
@@ -169,6 +205,35 @@ export default async function ClientDetailPage({
             נוצר {fmtDateHe(client.createdAt)}
           </div>
         </aside>
+      </div>
+    </div>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "blue" | "amber";
+}) {
+  return (
+    <div className="bg-white border border-[#E2E8F0] rounded-xl p-4">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8]">
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-xl md:text-2xl font-bold tabular-nums ${
+          tone === "amber"
+            ? "text-amber-700"
+            : tone === "blue"
+              ? "text-[#2B7FFF]"
+              : "text-[#0F172A]"
+        }`}
+      >
+        {value}
       </div>
     </div>
   );

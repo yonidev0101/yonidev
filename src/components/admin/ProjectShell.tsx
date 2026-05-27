@@ -18,7 +18,6 @@ import type {
   Communication,
 } from "@/lib/db/schema";
 import {
-  TASK_STATUS_HE,
   TASK_PRIORITY_HE,
   COMM_KIND_HE,
   fmtDateHe,
@@ -90,7 +89,6 @@ function ProjectMeta({ project, client }: { project: Project; client: Client | n
     description: project.description ?? "",
     hourlyRateIls: project.hourlyRateIls ?? "",
     status: project.status,
-    nextAction: project.nextAction ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -106,7 +104,6 @@ function ProjectMeta({ project, client }: { project: Project; client: Client | n
         description: form.description || null,
         hourlyRateIls: form.hourlyRateIls === "" ? null : Number(form.hourlyRateIls),
         status: form.status,
-        nextAction: form.nextAction || null,
       }),
     });
     setSaving(false);
@@ -167,15 +164,6 @@ function ProjectMeta({ project, client }: { project: Project; client: Client | n
           </select>
         </Field>
       </div>
-      <Field label="המהלך הבא">
-        <input
-          value={form.nextAction}
-          onChange={(e) => setForm({ ...form, nextAction: e.target.value })}
-          placeholder="מה הצעד הבא? (יופיע בדשבורד)"
-          className="ipt-meta"
-        />
-      </Field>
-
       {advancedOpen ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -383,15 +371,6 @@ function TasksTab({
     }
   }
 
-  async function updateStatus(id: number, status: Task["status"]) {
-    await fetch(`/api/admin/tasks/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    onChange();
-  }
-
   async function del(id: number) {
     const ok = await confirm({
       title: "למחוק את המשימה?",
@@ -476,10 +455,15 @@ function TasksTab({
                   return (
                     <li
                       key={t.id}
-                      className="bg-white border border-[#E2E8F0] rounded-lg p-3 text-[13px] group"
+                      className="bg-white border border-[#E2E8F0] rounded-lg p-3 text-[13px] group hover:border-[#2B7FFF]/40 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="font-medium text-[#0F172A] flex-1 min-w-0">{t.title}</div>
+                        <Link
+                          href={`/admin/tasks/${t.id}`}
+                          className="font-medium text-[#0F172A] hover:text-[#2B7FFF] flex-1 min-w-0"
+                        >
+                          {t.title}
+                        </Link>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                           <button
                             onClick={() => startEdit(t.id)}
@@ -497,6 +481,11 @@ function TasksTab({
                           </button>
                         </div>
                       </div>
+                      {t.nextAction && (
+                        <div className="text-[11px] text-[#475569] mt-1.5 truncate">
+                          → {t.nextAction}
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-2 gap-2">
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
@@ -509,22 +498,11 @@ function TasksTab({
                         >
                           {TASK_PRIORITY_HE[t.priority]}
                         </span>
-                        {t.dueDate && (
-                          <span className="text-[10px] text-[#94A3B8]">{fmtDateHe(t.dueDate)}</span>
+                        {(t.followUpAt || t.dueDate) && (
+                          <span className="text-[10px] text-[#94A3B8]">
+                            {fmtDateHe(t.followUpAt ?? t.dueDate)}
+                          </span>
                         )}
-                      </div>
-                      <div className="flex items-center gap-1 mt-2">
-                        <select
-                          value={t.status}
-                          onChange={(e) => updateStatus(t.id, e.target.value as Task["status"])}
-                          className="flex-1 border border-[#E2E8F0] rounded text-[11px] bg-[#F8FAFC] px-1.5 py-1"
-                        >
-                          {Object.entries(TASK_STATUS_HE).map(([k, v]) => (
-                            <option key={k} value={k}>
-                              {v}
-                            </option>
-                          ))}
-                        </select>
                       </div>
                     </li>
                   );

@@ -104,6 +104,14 @@ export function taskUpdateKindTone(kind: string): "blue" | "amber" | "green" | "
   return "slate";
 }
 
+/** The date that drives "when do I look at this again": follow-up beats due. */
+export function actionableDate(t: {
+  followUpAt: string | null;
+  dueDate: string | null;
+}): string | null {
+  return t.followUpAt ?? t.dueDate;
+}
+
 /** "לפני 3 ימים" / "בעוד יומיים" / "היום" — for follow-up date chips. */
 export function relativeDayHe(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;

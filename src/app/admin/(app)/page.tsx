@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/admin/queries";
 import {
-  fmtDateHe,
+  actionableDate,
   fmtHours,
   fmtIls,
+  relativeDayHe,
   CLIENT_STATUS_HE,
   TASK_STATUS_HE,
 } from "@/lib/admin/format";
@@ -38,12 +39,21 @@ export default async function DashboardPage() {
           label="משימות פתוחות"
           value={data.upcomingTasks.length.toString()}
           sub={
-            data.upcomingTasks.filter((t) => t.dueDate && t.dueDate < todayStr).length
-              ? `${data.upcomingTasks.filter((t) => t.dueDate && t.dueDate < todayStr).length} באיחור`
+            data.upcomingTasks.filter((t) => {
+              const d = actionableDate(t);
+              return d && d < todayStr;
+            }).length
+              ? `${data.upcomingTasks.filter((t) => {
+                  const d = actionableDate(t);
+                  return d && d < todayStr;
+                }).length} באיחור`
               : "בזמן"
           }
           accent={
-            data.upcomingTasks.some((t) => t.dueDate && t.dueDate < todayStr)
+            data.upcomingTasks.some((t) => {
+              const d = actionableDate(t);
+              return d && d < todayStr;
+            })
               ? "red"
               : "default"
           }
@@ -61,7 +71,13 @@ export default async function DashboardPage() {
           ) : (
             <ul className="divide-y divide-[#F1F5F9]">
               {data.upcomingTasks.slice(0, 8).map((t) => {
-                const overdue = t.dueDate && t.dueDate < todayStr;
+                const d = actionableDate(t);
+                const overdue = d && d < todayStr;
+                const dateLabel = t.followUpAt
+                  ? relativeDayHe(t.followUpAt)
+                  : d
+                    ? relativeDayHe(d)
+                    : TASK_STATUS_HE[t.status];
                 return (
                   <li key={t.id} className="py-3 flex items-center gap-3">
                     <span
@@ -75,7 +91,7 @@ export default async function DashboardPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={`/admin/projects/${t.projectId}`}
+                        href={`/admin/tasks/${t.id}`}
                         className="block text-[14px] font-medium text-[#0F172A] truncate hover:text-[#2B7FFF]"
                       >
                         {t.title}
@@ -89,7 +105,7 @@ export default async function DashboardPage() {
                         overdue ? "text-red-600 font-semibold" : "text-[#64748B]"
                       }`}
                     >
-                      {t.dueDate ? fmtDateHe(t.dueDate) : TASK_STATUS_HE[t.status]}
+                      {dateLabel}
                     </span>
                   </li>
                 );
@@ -98,28 +114,45 @@ export default async function DashboardPage() {
           )}
         </Section>
 
-        {/* Next actions per project */}
+        {/* Follow-ups this week */}
         <Section
-          title="המהלך הבא לכל פרויקט"
-          link={{ href: "/admin/clients", label: "לקוחות" }}
+          title="מעקבים השבוע"
+          link={{ href: "/admin/tasks", label: "כל המשימות" }}
         >
-          {data.nextActions.length === 0 ? (
-            <Empty>הגדר &ldquo;next action&rdquo; בעמוד הפרויקט כדי שיופיע כאן.</Empty>
+          {data.followUpsThisWeek.length === 0 ? (
+            <Empty>אין מעקבים פתוחים לשבוע הקרוב.</Empty>
           ) : (
             <ul className="divide-y divide-[#F1F5F9]">
-              {data.nextActions.slice(0, 8).map((p) => (
-                <li key={p.id} className="py-3">
-                  <Link
-                    href={`/admin/projects/${p.id}`}
-                    className="block text-[13px] font-semibold text-[#0F172A] hover:text-[#2B7FFF]"
-                  >
-                    {p.clientName} · {p.name}
-                  </Link>
-                  <p className="text-[13px] text-[#475569] mt-1 leading-snug">
-                    → {p.nextAction}
-                  </p>
-                </li>
-              ))}
+              {data.followUpsThisWeek.slice(0, 8).map((t) => {
+                const overdue = t.followUpAt && t.followUpAt < todayStr;
+                return (
+                  <li key={t.id} className="py-3">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <Link
+                        href={`/admin/tasks/${t.id}`}
+                        className="text-[14px] font-medium text-[#0F172A] hover:text-[#2B7FFF] truncate flex-1 min-w-0"
+                      >
+                        {t.title}
+                      </Link>
+                      <span
+                        className={`shrink-0 text-[12px] tabular-nums ${
+                          overdue ? "text-red-600 font-semibold" : "text-[#64748B]"
+                        }`}
+                      >
+                        {relativeDayHe(t.followUpAt)}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-[#94A3B8] truncate">
+                      {t.clientName} · {t.projectName}
+                    </div>
+                    {t.nextAction && (
+                      <p className="text-[12px] text-[#475569] mt-1 leading-snug truncate">
+                        → {t.nextAction}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Section>

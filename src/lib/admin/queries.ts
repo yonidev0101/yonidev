@@ -60,6 +60,8 @@ export async function getDashboardData() {
       id: tasks.id,
       title: tasks.title,
       dueDate: tasks.dueDate,
+      followUpAt: tasks.followUpAt,
+      nextAction: tasks.nextAction,
       status: tasks.status,
       priority: tasks.priority,
       projectId: tasks.projectId,
@@ -72,23 +74,32 @@ export async function getDashboardData() {
     .where(
       and(
         inArray(tasks.status, ["todo", "in_progress", "blocked"]),
-        lte(tasks.dueDate, weekEndStr),
+        sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate}) <= ${weekEndStr}`,
       ),
     )
-    .orderBy(tasks.dueDate);
+    .orderBy(sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate})`);
 
-  // Active projects with next_action set
-  const nextActions = await db
+  // Follow-ups within the next 7 days (or overdue) — surfaces "what's coming back to me"
+  const followUpsThisWeek = await db
     .select({
-      id: projects.id,
-      name: projects.name,
-      nextAction: projects.nextAction,
+      id: tasks.id,
+      title: tasks.title,
+      nextAction: tasks.nextAction,
+      followUpAt: tasks.followUpAt,
+      projectId: tasks.projectId,
+      projectName: projects.name,
       clientName: clients.name,
     })
-    .from(projects)
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(and(eq(projects.status, "active"), sql`${projects.nextAction} IS NOT NULL`))
-    .orderBy(desc(projects.createdAt));
+    .where(
+      and(
+        inArray(tasks.status, ["todo", "in_progress", "blocked"]),
+        lte(tasks.followUpAt, weekEndStr),
+      ),
+    )
+    .orderBy(tasks.followUpAt);
 
   // Active timer
   const activeTimerRows = await db
@@ -109,7 +120,7 @@ export async function getDashboardData() {
     weekHoursSeconds: weekHours[0]?.totalSec ?? 0,
     outstandingInvoices,
     upcomingTasks,
-    nextActions,
+    followUpsThisWeek,
     activeTimer: activeTimerRows[0] ?? null,
     todayStr,
   };
@@ -124,13 +135,22 @@ export async function getClientWithRelations(clientId: number) {
     .where(eq(projects.clientId, clientId))
     .orderBy(desc(projects.createdAt));
   const projectIds = clientProjects.map((p) => p.id);
-  const [clientComms, clientInvoices, clientTimeAgg] = await Promise.all([
+
+  const [
+    clientComms,
+    clientInvoices,
+    clientTimeAgg,
+    billableAgg,
+    clientTasks,
+    recentUpdates,
+    weeklyHoursRows,
+  ] = await Promise.all([
     db
       .select()
       .from(communications)
       .where(eq(communications.clientId, clientId))
       .orderBy(desc(communications.happenedAt))
-      .limit(20),
+      .limit(50),
     db
       .select()
       .from(invoices)
@@ -142,14 +162,146 @@ export async function getClientWithRelations(clientId: number) {
           .from(timeEntries)
           .where(inArray(timeEntries.projectId, projectIds))
       : Promise.resolve([{ totalSec: 0 }]),
+    projectIds.length
+      ? db
+          .select({ totalSec: sql<number>`COALESCE(SUM(${timeEntries.durationSeconds}), 0)::int` })
+          .from(timeEntries)
+          .where(
+            and(
+              inArray(timeEntries.projectId, projectIds),
+              eq(timeEntries.billable, true),
+              isNull(timeEntries.invoicedInvoiceId),
+            ),
+          )
+      : Promise.resolve([{ totalSec: 0 }]),
+    projectIds.length
+      ? db
+          .select({
+            id: tasks.id,
+            title: tasks.title,
+            status: tasks.status,
+            priority: tasks.priority,
+            dueDate: tasks.dueDate,
+            nextAction: tasks.nextAction,
+            followUpAt: tasks.followUpAt,
+            projectId: tasks.projectId,
+            projectName: projects.name,
+          })
+          .from(tasks)
+          .leftJoin(projects, eq(projects.id, tasks.projectId))
+          .where(inArray(tasks.projectId, projectIds))
+          .orderBy(desc(tasks.createdAt))
+      : Promise.resolve(
+          [] as {
+            id: number;
+            title: string;
+            status: "todo" | "in_progress" | "blocked" | "done";
+            priority: "low" | "medium" | "high";
+            dueDate: string | null;
+            nextAction: string | null;
+            followUpAt: string | null;
+            projectId: number;
+            projectName: string | null;
+          }[],
+        ),
+    projectIds.length
+      ? db
+          .select({
+            id: taskUpdates.id,
+            taskId: taskUpdates.taskId,
+            kind: taskUpdates.kind,
+            happenedAt: taskUpdates.happenedAt,
+            summary: taskUpdates.summary,
+            details: taskUpdates.details,
+            communicationId: taskUpdates.communicationId,
+            taskTitle: tasks.title,
+            projectId: tasks.projectId,
+            projectName: projects.name,
+          })
+          .from(taskUpdates)
+          .leftJoin(tasks, eq(tasks.id, taskUpdates.taskId))
+          .leftJoin(projects, eq(projects.id, tasks.projectId))
+          .where(inArray(tasks.projectId, projectIds))
+          .orderBy(desc(taskUpdates.happenedAt))
+          .limit(50)
+      : Promise.resolve(
+          [] as {
+            id: number;
+            taskId: number;
+            kind: string;
+            happenedAt: Date;
+            summary: string;
+            details: string | null;
+            communicationId: number | null;
+            taskTitle: string | null;
+            projectId: number | null;
+            projectName: string | null;
+          }[],
+        ),
+    projectIds.length
+      ? db
+          .select({
+            weekStart: sql<string>`to_char(date_trunc('week', ${timeEntries.startedAt}), 'YYYY-MM-DD')`,
+            totalSec: sql<number>`COALESCE(SUM(${timeEntries.durationSeconds}), 0)::int`,
+          })
+          .from(timeEntries)
+          .where(
+            and(
+              inArray(timeEntries.projectId, projectIds),
+              gte(timeEntries.startedAt, weeksAgo(12)),
+            ),
+          )
+          .groupBy(sql`date_trunc('week', ${timeEntries.startedAt})`)
+      : Promise.resolve([] as { weekStart: string; totalSec: number }[]),
   ]);
+
+  const outstandingTotalIls = clientInvoices
+    .filter((inv) => inv.status === "sent")
+    .reduce((sum, inv) => sum + Number(inv.totalIls), 0);
+  const openTaskCount = clientTasks.filter((t) => t.status !== "done").length;
+
   return {
     client,
     projects: clientProjects,
     communications: clientComms,
     invoices: clientInvoices,
+    tasks: clientTasks,
+    taskUpdates: recentUpdates,
     totalSeconds: clientTimeAgg[0]?.totalSec ?? 0,
+    billableUninvoicedSeconds: billableAgg[0]?.totalSec ?? 0,
+    outstandingTotalIls,
+    openTaskCount,
+    weeklyHours: fillWeeks(weeklyHoursRows, 12),
   };
+}
+
+function weeksAgo(n: number): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - n * 7);
+  return d;
+}
+
+/** Pads weekly hours array so every week in the window has an entry, even if 0. */
+function fillWeeks(
+  rows: { weekStart: string; totalSec: number }[],
+  count: number,
+): { weekStart: string; totalSec: number }[] {
+  const byWeek = new Map(rows.map((r) => [r.weekStart, r.totalSec]));
+  const out: { weekStart: string; totalSec: number }[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Postgres date_trunc('week', ...) uses Monday as the start of the week.
+  const dow = (today.getDay() + 6) % 7; // 0 = Monday
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - dow);
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(thisMonday);
+    d.setDate(thisMonday.getDate() - i * 7);
+    const key = d.toISOString().slice(0, 10);
+    out.push({ weekStart: key, totalSec: byWeek.get(key) ?? 0 });
+  }
+  return out;
 }
 
 export async function getTaskWithUpdates(taskId: number) {

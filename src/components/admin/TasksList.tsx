@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   TASK_STATUS_HE,
   TASK_PRIORITY_HE,
+  actionableDate,
   fmtDateHe,
   relativeDayHe,
 } from "@/lib/admin/format";
@@ -25,11 +26,6 @@ export interface TaskRow {
   projectId: number;
   projectName: string | null;
   clientName: string | null;
-}
-
-/** The date that drives "when do I need to look at this again". followUpAt wins over dueDate. */
-function actionableDate(t: TaskRow): string | null {
-  return t.followUpAt ?? t.dueDate;
 }
 
 export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
