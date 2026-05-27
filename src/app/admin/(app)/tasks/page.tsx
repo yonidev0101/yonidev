@@ -23,7 +23,7 @@ export default async function TasksPage() {
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(inArray(tasks.status, ["todo", "in_progress", "blocked"]))
+    .where(inArray(tasks.status, ["todo", "in_progress", "blocked", "done"]))
     .orderBy(desc(tasks.createdAt));
 
   const activeProjects = await db
@@ -52,11 +52,16 @@ export default async function TasksPage() {
     clientName: r.clientName,
   }));
 
+  const openCount = rows.filter((r) => r.status !== "done").length;
+  const doneCount = rows.filter((r) => r.status === "done").length;
+
   return (
     <div dir="rtl" className="space-y-8 max-w-5xl">
       <header>
         <h1 className="text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight">משימות</h1>
-        <p className="text-[#64748B] text-sm mt-1">{rows.length} משימות פתוחות בכל הפרויקטים.</p>
+        <p className="text-[#64748B] text-sm mt-1">
+          {openCount} פתוחות{doneCount > 0 ? ` · ${doneCount} הושלמו` : ""} בכל הפרויקטים.
+        </p>
       </header>
 
       <TaskQuickAdd projects={projectOptions} pickerLabel="לקוח / פרויקט" />
