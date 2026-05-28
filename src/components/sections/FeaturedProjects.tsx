@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,16 @@ export default function FeaturedProjects() {
   const { t, dir } = useLocale();
   const isRTL = dir === "rtl";
   const [current, setCurrent] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const visibleCount = isDesktop ? 5 : 3;
 
   const prev = () => setCurrent((c) => (c - 1 + featuredProjects.length) % featuredProjects.length);
   const next = () => setCurrent((c) => (c + 1) % featuredProjects.length);
@@ -94,17 +104,24 @@ export default function FeaturedProjects() {
                 const normalizedOffset =
                   ((offset % featuredProjects.length) + featuredProjects.length) %
                   featuredProjects.length;
+
+                if (normalizedOffset >= visibleCount) return null;
+
+                const desktopPositions = [
+                  { x: 0,                      y: 0,  scale: 1,    rotate: -2 * stackOffsetSign, zIndex: 50, opacity: 1    },
+                  { x: 55 * stackOffsetSign,   y: 10, scale: 0.95, rotate:  1 * stackOffsetSign, zIndex: 40, opacity: 0.85 },
+                  { x: 110 * stackOffsetSign,  y: 20, scale: 0.90, rotate:  3 * stackOffsetSign, zIndex: 30, opacity: 0.65 },
+                  { x: 165 * stackOffsetSign,  y: 30, scale: 0.85, rotate:  5 * stackOffsetSign, zIndex: 20, opacity: 0.45 },
+                  { x: 220 * stackOffsetSign,  y: 40, scale: 0.80, rotate:  7 * stackOffsetSign, zIndex: 10, opacity: 0.25 },
+                ];
+                const mobilePositions = [
+                  { x: 0,                      y: 0,  scale: 1,    rotate: -2 * stackOffsetSign, zIndex: 30, opacity: 1    },
+                  { x: 95 * stackOffsetSign,   y: 14, scale: 0.96, rotate:  1 * stackOffsetSign, zIndex: 20, opacity: 0.85 },
+                  { x: 190 * stackOffsetSign,  y: 28, scale: 0.92, rotate:  3 * stackOffsetSign, zIndex: 10, opacity: 0.6  },
+                ];
+                const positions = isDesktop ? desktopPositions : mobilePositions;
+                const stackProps = positions[normalizedOffset];
                 const isCurrent = normalizedOffset === 0;
-                const isNext    = normalizedOffset === 1;
-                const isAfter   = normalizedOffset === 2;
-
-                if (!isCurrent && !isNext && !isAfter) return null;
-
-                const stackProps = isCurrent
-                  ? { x: 0,                       y: 0,  scale: 1,    rotate: -2 * stackOffsetSign, zIndex: 30, opacity: 1   }
-                  : isNext
-                  ? { x: 95 * stackOffsetSign,    y: 14, scale: 0.96, rotate:  1 * stackOffsetSign, zIndex: 20, opacity: 0.85 }
-                  : { x: 190 * stackOffsetSign,   y: 28, scale: 0.92, rotate:  3 * stackOffsetSign, zIndex: 10, opacity: 0.6  };
 
                 const item = t.projects.items[project.slug];
 
