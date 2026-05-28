@@ -1,11 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { Code2, Sparkles, Bot, Plug } from "lucide-react";
 import { services } from "@/data/services";
 import { RadialBlob, DotGrid } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
-import RevealText from "@/components/shared/RevealText";
 import SideText from "@/components/shared/SideText";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -17,6 +17,8 @@ const STAGGER = CYCLE / services.length;
 
 export default function Services() {
   const t = useT();
+  const textRef = useRef<HTMLDivElement>(null);
+  const textInView = useInView(textRef, { once: true, amount: 0.08 });
 
   return (
     <section className="relative py-24 bg-bg-soft overflow-hidden">
@@ -28,7 +30,7 @@ export default function Services() {
       <SideText text="SERVICES" side="left" />
 
       <div className="container relative">
-        <div className="text-center mb-16">
+        <div ref={textRef} className="text-center mb-16">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -39,7 +41,16 @@ export default function Services() {
             {t.services.eyebrow}
           </motion.p>
           <h2 data-scrolldot="services-heading" className="section-heading mb-4">
-            <RevealText delay={0.05}>{t.services.heading}</RevealText>
+            <span className="block overflow-hidden">
+              <motion.span
+                className="block"
+                initial={{ y: "110%" }}
+                animate={textInView ? { y: "0%" } : { y: "110%" }}
+                transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1], delay: 0.05 }}
+              >
+                {t.services.heading}
+              </motion.span>
+            </span>
           </h2>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
