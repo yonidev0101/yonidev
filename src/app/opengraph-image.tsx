@@ -6,6 +6,26 @@ export const alt = "YoniDev — Code Your Dream";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Satori (next/og) does not apply the Unicode bidi algorithm, so Hebrew
+// characters render LTR and appear reversed to RTL readers. Convert from
+// logical to visual order: tokenize into Hebrew / Latin / whitespace /
+// punctuation runs, reverse the run order, and reverse Hebrew runs internally.
+function rtl(text: string): string {
+  const tokens: Array<{ type: "he" | "lat" | "ws" | "punct"; text: string }> = [];
+  const re = /([֐-׿]+)|([A-Za-z][A-Za-z0-9\-_.]*)|(\s+)|([^֐-׿A-Za-z\s]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1]) tokens.push({ type: "he", text: m[1] });
+    else if (m[2]) tokens.push({ type: "lat", text: m[2] });
+    else if (m[3]) tokens.push({ type: "ws", text: m[3] });
+    else if (m[4]) tokens.push({ type: "punct", text: m[4] });
+  }
+  return tokens
+    .reverse()
+    .map((t) => (t.type === "he" ? t.text.split("").reverse().join("") : t.text))
+    .join("");
+}
+
 export default async function Image() {
   const [logoData, heeboRegular, heeboBold] = await Promise.all([
     readFile(join(process.cwd(), "public/logo/y-logo.png"), "base64"),
@@ -123,11 +143,10 @@ export default async function Image() {
               color: "#64748B",
               maxWidth: 620,
               fontFamily: "'Heebo', sans-serif",
-              direction: "rtl",
               textAlign: "right",
             }}
           >
-            פיתוח Full-Stack, אינטגרציות AI ואוטומציה — מרעיון לפרודקשן.
+            {rtl("פיתוח Full-Stack, אינטגרציות AI ואוטומציה — מרעיון לפרודקשן.")}
           </div>
 
           <div
@@ -140,7 +159,6 @@ export default async function Image() {
               color: "#0F172A",
               fontWeight: 600,
               fontFamily: "'Heebo', sans-serif",
-              direction: "rtl",
             }}
           >
             <div
@@ -152,7 +170,7 @@ export default async function Image() {
                 boxShadow: "0 0 0 6px rgba(34,197,94,0.18)",
               }}
             />
-            <span>פנוי לפרויקטים חדשים</span>
+            <span>{rtl("פנוי לפרויקטים חדשים")}</span>
           </div>
         </div>
 
