@@ -1,15 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { processSteps } from "@/data/services";
 import { RadialBlob } from "@/components/shared/BackgroundDeco";
 import { useT } from "@/lib/i18n/LocaleProvider";
-import RevealText from "@/components/shared/RevealText";
 import SideText from "@/components/shared/SideText";
 import ProcessIcon from "./ProcessIcon";
 
 export default function Process() {
   const t = useT();
+  const textRef = useRef<HTMLDivElement>(null);
+  const textInView = useInView(textRef, { once: true, amount: 0.08 });
 
   return (
     <section className="relative py-28 bg-white overflow-hidden">
@@ -18,7 +20,7 @@ export default function Process() {
       <SideText text="PROCESS" side="left" />
 
       <div className="container relative">
-        <div className="max-w-2xl mb-20">
+        <div ref={textRef} className="max-w-2xl mb-20">
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -29,8 +31,26 @@ export default function Process() {
             {t.process.eyebrow}
           </motion.p>
           <h2 className="section-heading">
-            <RevealText delay={0.05}>{t.process.headingLine1}</RevealText>
-            <RevealText delay={0.13}>{t.process.headingLine2}</RevealText>
+            <span className="block overflow-hidden">
+              <motion.span
+                className="block"
+                initial={{ y: "110%" }}
+                animate={textInView ? { y: "0%" } : { y: "110%" }}
+                transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1], delay: 0.05 }}
+              >
+                {t.process.headingLine1}
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden">
+              <motion.span
+                className="block"
+                initial={{ y: "110%" }}
+                animate={textInView ? { y: "0%" } : { y: "110%" }}
+                transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1], delay: 0.13 }}
+              >
+                {t.process.headingLine2}
+              </motion.span>
+            </span>
           </h2>
         </div>
 
