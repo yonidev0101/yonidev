@@ -36,7 +36,7 @@ export default function FeaturedProjects() {
   const NextIcon = isRTL ? ChevronLeft : ChevronRight;
 
   return (
-    <section className="relative py-24 bg-white overflow-hidden">
+    <section className="relative z-[1] py-24 bg-white overflow-hidden">
       {/* blend from previous bg-soft section */}
       <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#F8FAFC] to-transparent pointer-events-none z-10" />
       <FlowingCurves className="start-0 bottom-10 w-[55%] h-[280px]" opacity={0.5} />
@@ -52,7 +52,7 @@ export default function FeaturedProjects() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.08 }}
             transition={{ duration: 0.6 }}
-            className="space-y-6"
+            className="relative z-10 space-y-6"
           >
             <motion.p
               initial={{ opacity: 0, y: 12 }}
