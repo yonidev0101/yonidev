@@ -37,7 +37,7 @@ export default function ProcessIcon({ kind }: { kind: ProcessId }) {
       className="text-brand-500 w-12 h-12 md:w-16 md:h-16"
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: true, amount: 0.08 }}
       aria-hidden
     >
       {kind === "discover" && (
