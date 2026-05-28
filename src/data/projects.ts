@@ -44,14 +44,14 @@ export const projects: Project[] = [
     stack: ["Next.js", "Node.js", "Socket.IO", "OpenAI", "MongoDB"],
     category: "web",
     image: "/projects/categories-game.png",
-    featured: false,
+    featured: true,
   },
   {
     slug: "git-explorer",
     stack: ["Tauri", "React", "Rust", "TypeScript"],
     category: "web",
     image: "/projects/git-explorer.png",
-    featured: false,
+    featured: true,
   },
 ];
 
