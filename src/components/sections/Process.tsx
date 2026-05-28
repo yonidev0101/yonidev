@@ -42,7 +42,7 @@ export default function Process() {
                 key={step.number}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
+                viewport={{ once: true, amount: 0.08 }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
                 className="grid grid-cols-[64px_1fr] md:grid-cols-[120px_1fr] gap-4 md:gap-12 py-12 md:py-16 border-t border-slate-100 first:border-t-0"
               >
@@ -57,7 +57,7 @@ export default function Process() {
                   <motion.div
                     initial={{ width: 0 }}
                     whileInView={{ width: 48 }}
-                    viewport={{ once: true, margin: "-80px" }}
+                    viewport={{ once: true, amount: 0.08 }}
                     transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
                     className="h-px bg-brand-500 mb-5"
                   />

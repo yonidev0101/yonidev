@@ -7,10 +7,11 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const logoData = await readFile(
-    join(process.cwd(), "public/logo/y-logo.png"),
-    "base64"
-  );
+  const [logoData, heeboRegular, heeboBold] = await Promise.all([
+    readFile(join(process.cwd(), "public/logo/y-logo.png"), "base64"),
+    readFile(join(process.cwd(), "public/fonts/heebo-regular.ttf")),
+    readFile(join(process.cwd(), "public/fonts/heebo-bold.ttf")),
+  ]);
   const logoSrc = `data:image/png;base64,${logoData}`;
 
   return new ImageResponse(
@@ -121,9 +122,12 @@ export default async function Image() {
               lineHeight: 1.35,
               color: "#64748B",
               maxWidth: 620,
+              fontFamily: "'Heebo', sans-serif",
+              direction: "rtl",
+              textAlign: "right",
             }}
           >
-            Full-Stack engineering, AI integrations &amp; automation — from idea to production.
+            פיתוח Full-Stack, אינטגרציות AI ואוטומציה — מרעיון לפרודקשן.
           </div>
 
           <div
@@ -135,6 +139,8 @@ export default async function Image() {
               fontSize: 20,
               color: "#0F172A",
               fontWeight: 600,
+              fontFamily: "'Heebo', sans-serif",
+              direction: "rtl",
             }}
           >
             <div
@@ -146,7 +152,7 @@ export default async function Image() {
                 boxShadow: "0 0 0 6px rgba(34,197,94,0.18)",
               }}
             />
-            <span>Available for work</span>
+            <span>פנוי לפרויקטים חדשים</span>
           </div>
         </div>
 
@@ -197,6 +203,12 @@ export default async function Image() {
         />
       </div>
     ),
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        { name: "Heebo", data: heeboRegular, weight: 400, style: "normal" },
+        { name: "Heebo", data: heeboBold, weight: 700, style: "normal" },
+      ],
+    }
   );
 }
