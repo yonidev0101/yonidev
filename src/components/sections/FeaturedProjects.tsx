@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { featuredProjects } from "@/data/projects";
 import { RadialBlob, FlowingCurves } from "@/components/shared/BackgroundDeco";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import RevealText from "@/components/shared/RevealText";
 import SideText from "@/components/shared/SideText";
 
 export default function FeaturedProjects() {
@@ -16,6 +15,8 @@ export default function FeaturedProjects() {
   const isRTL = dir === "rtl";
   const [current, setCurrent] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
+  const textRef = useRef<HTMLDivElement>(null);
+  const textInView = useInView(textRef, { once: true, amount: 0.08 });
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024);
@@ -48,6 +49,7 @@ export default function FeaturedProjects() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-12 lg:gap-10 items-center">
           {/* Text */}
           <motion.div
+            ref={textRef}
             initial={{ opacity: 0, x: isRTL ? 24 : -24 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.08 }}
@@ -64,8 +66,26 @@ export default function FeaturedProjects() {
               {t.projects.eyebrow}
             </motion.p>
             <h2 className="section-heading">
-              <RevealText delay={0.05}>{t.projects.headingLine1}</RevealText>
-              <RevealText delay={0.13}>{t.projects.headingLine2}</RevealText>
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "110%" }}
+                  animate={textInView ? { y: "0%" } : { y: "110%" }}
+                  transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1], delay: 0.05 }}
+                >
+                  {t.projects.headingLine1}
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden">
+                <motion.span
+                  className="block"
+                  initial={{ y: "110%" }}
+                  animate={textInView ? { y: "0%" } : { y: "110%" }}
+                  transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1], delay: 0.13 }}
+                >
+                  {t.projects.headingLine2}
+                </motion.span>
+              </span>
             </h2>
             <p className="section-body max-w-sm">{t.projects.body}</p>
             <Link
