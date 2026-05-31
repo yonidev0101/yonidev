@@ -86,6 +86,35 @@ This version does **not** export `Github` or `Linkedin`. Use inline SVG for soci
 
 The `ease` property in Framer Motion variants must be a named string (`"easeOut"`, `"easeInOut"`) or `EasingFunction`, **not** a raw `number[]` array — that causes a TypeScript build error.
 
+## Admin dashboard (`/admin`)
+
+A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL.
+
+### Routes & shell
+- `src/app/admin/login` — public login page.
+- `src/app/admin/(app)/` — route group for the authenticated shell (`layout.tsx` → `MobileChrome` + `Sidebar`). Pages: `/admin` (dashboard), `clients`, `personal` (personal side-projects), `tasks`, `time`, `invoices`, plus `projects/[id]`, `clients/[id]`, `tasks/[id]`, `invoices/[id]`.
+- Admin pages that read the DB are server components with `export const dynamic = "force-dynamic"`; interactivity lives in `"use client"` components under `src/components/admin/`.
+
+### Auth
+- JWT session cookie `admin-session` (jose, HS256), signed with `ADMIN_SESSION_SECRET`. Login compares the submitted password to `ADMIN_PASSWORD` with `safeEqual` (constant-time) + IP rate limiting.
+- `src/middleware.ts` gates `/admin/*` and `/api/admin/*` (pages redirect to login; API returns 401). `requireAdminApi()` in `lib/auth/guard.ts` is defense-in-depth for route handlers.
+
+### Data layer (DB)
+- **Neon Postgres + Drizzle ORM.** Schema: `src/lib/db/schema.ts`. Client: `src/lib/db/client.ts` (lazy proxy — throws only on first query if `DATABASE_URL` is missing, so builds don't break).
+- Two domains: **client work** (`clients → projects → tasks / time_entries / project_links / communications / invoices`) and **personal projects** (`personal_projects → personal_tasks / personal_links / personal_time_entries` — no client, no billing).
+- Read/aggregation helpers: `src/lib/admin/queries.ts`. Hebrew date/money/status formatting + label maps: `src/lib/admin/format.ts`.
+
+### API routes (`src/app/api/admin/*`)
+- Route handlers with `export const runtime = "nodejs"`. Validate input with zod via `parseJson`; respond with `json` / `notFound` / `serverError` from `src/lib/admin/http.ts`. Client-work and personal-* resources have parallel CRUD routes.
+
+### Migrations — IMPORTANT (env quirk)
+- Generate SQL with `npm run db:generate` (writes to `drizzle/`).
+- **Do NOT use `drizzle-kit push`/`migrate` here** — they use a websocket connection that this environment's corporate proxy blocks (same self-signed-cert issue that blocks `git fetch`), so they hang.
+- Apply instead over Neon's HTTP driver: `node scripts/apply-migrations.mjs <drizzle/NNNN_name.sql>` with `DATABASE_URL` (load from `.env.local`) and `NODE_TLS_REJECT_UNAUTHORIZED=0` set. The DB was provisioned via `push`, so drizzle's `__drizzle_migrations` table is empty — apply only the new file's statements, never the full migrator. (Use the `/migrate` skill to do all of this.)
+
+### Env vars
+`DATABASE_URL`, `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD`, plus nodemailer SMTP vars for invoice sending.
+
 ## Git workflow
 
 - **`main`** — production only. Never commit directly.

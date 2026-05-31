@@ -24,7 +24,9 @@
       "PowerShell($bytes = New-Object byte[] 48; [System.Security.Cryptography.RandomNumberGenerator]::Create\\(\\).GetBytes\\($bytes\\); [Convert]::ToBase64String\\($bytes\\))",
       "PowerShell($bytes = New-Object byte[] 12; [System.Security.Cryptography.RandomNumberGenerator]::Create\\(\\).GetBytes\\($bytes\\); [Convert]::ToBase64String\\($bytes\\) -replace '[+/=]','x')",
       "Bash(npm config *)",
-      "Bash(npx drizzle-kit *)"
+      "Bash(npx drizzle-kit *)",
+      "Bash(npx tsc *)",
+      "WebSearch"
     ]
   }
 }

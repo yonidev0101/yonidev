@@ -46,7 +46,7 @@ export default function FeaturedProjects() {
       <RadialBlob className="bottom-10 start-1/3" size={320} opacity={0.04} />
 
       <div className="container relative">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-12 lg:gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.65fr] gap-12 lg:gap-10 items-center">
           {/* Text */}
           <motion.div
             ref={textRef}
@@ -129,10 +129,10 @@ export default function FeaturedProjects() {
 
                 const desktopPositions = [
                   { x: 0,                      y: 0,  scale: 1,    rotate: -2 * stackOffsetSign, zIndex: 50, opacity: 1    },
-                  { x: 55 * stackOffsetSign,   y: 10, scale: 0.95, rotate:  1 * stackOffsetSign, zIndex: 40, opacity: 0.85 },
-                  { x: 110 * stackOffsetSign,  y: 20, scale: 0.90, rotate:  3 * stackOffsetSign, zIndex: 30, opacity: 0.65 },
-                  { x: 165 * stackOffsetSign,  y: 30, scale: 0.85, rotate:  5 * stackOffsetSign, zIndex: 20, opacity: 0.45 },
-                  { x: 220 * stackOffsetSign,  y: 40, scale: 0.80, rotate:  7 * stackOffsetSign, zIndex: 10, opacity: 0.25 },
+                  { x: 70 * stackOffsetSign,   y: 10, scale: 0.95, rotate:  1 * stackOffsetSign, zIndex: 40, opacity: 0.85 },
+                  { x: 140 * stackOffsetSign,  y: 20, scale: 0.90, rotate:  3 * stackOffsetSign, zIndex: 30, opacity: 0.65 },
+                  { x: 210 * stackOffsetSign,  y: 30, scale: 0.85, rotate:  5 * stackOffsetSign, zIndex: 20, opacity: 0.45 },
+                  { x: 280 * stackOffsetSign,  y: 40, scale: 0.80, rotate:  7 * stackOffsetSign, zIndex: 10, opacity: 0.25 },
                 ];
                 const mobilePositions = [
                   { x: 0,                      y: 0,  scale: 1,    rotate: -2 * stackOffsetSign, zIndex: 30, opacity: 1    },
@@ -153,7 +153,7 @@ export default function FeaturedProjects() {
                     animate={stackProps}
                     exit={{ opacity: 0, x: -80 * stackOffsetSign }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="absolute inset-0 max-w-[320px] sm:max-w-[340px] cursor-pointer"
+                    className="absolute inset-0 max-w-[360px] sm:max-w-[400px] cursor-pointer"
                     onClick={() => (isCurrent ? undefined : next())}
                   >
                     <div className="relative h-full rounded-3xl bg-white border border-border shadow-[0_20px_50px_-15px_rgba(15,23,42,0.18)] overflow-hidden flex flex-col">
@@ -169,7 +169,7 @@ export default function FeaturedProjects() {
                           alt={item.title}
                           fill
                           className="object-cover object-top"
-                          sizes="(max-width: 768px) 100vw, 340px"
+                          sizes="(max-width: 768px) 100vw, 400px"
                         />
                       </div>
 
