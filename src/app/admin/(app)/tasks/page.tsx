@@ -2,6 +2,7 @@ import { db, tasks, projects, clients } from "@/lib/db/client";
 import { eq, desc, inArray } from "drizzle-orm";
 import TasksList, { type TaskRow } from "@/components/admin/TasksList";
 import TaskQuickAdd, { type QuickAddProject } from "@/components/admin/TaskQuickAdd";
+import { isTaskClosed } from "@/lib/admin/format";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,11 @@ export default async function TasksPage() {
       dueDate: tasks.dueDate,
       nextAction: tasks.nextAction,
       followUpAt: tasks.followUpAt,
+      waitingOn: tasks.waitingOn,
+      waitingSince: tasks.waitingSince,
+      estimateMinutes: tasks.estimateMinutes,
+      lastUpdateAt: tasks.lastUpdateAt,
+      createdAt: tasks.createdAt,
       projectId: tasks.projectId,
       projectName: projects.name,
       clientName: clients.name,
@@ -23,7 +29,16 @@ export default async function TasksPage() {
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(inArray(tasks.status, ["todo", "in_progress", "blocked", "done"]))
+    .where(
+      inArray(tasks.status, [
+        "todo",
+        "in_progress",
+        "waiting",
+        "blocked",
+        "done",
+        "canceled",
+      ]),
+    )
     .orderBy(desc(tasks.createdAt));
 
   const activeProjects = await db
@@ -47,12 +62,18 @@ export default async function TasksPage() {
     dueDate: r.dueDate,
     nextAction: r.nextAction,
     followUpAt: r.followUpAt,
+    waitingOn: r.waitingOn,
+    waitingSince: r.waitingSince,
+    estimateMinutes: r.estimateMinutes,
+    lastUpdateAt:
+      r.lastUpdateAt instanceof Date ? r.lastUpdateAt.toISOString() : r.lastUpdateAt,
+    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : r.createdAt,
     projectId: r.projectId,
     projectName: r.projectName,
     clientName: r.clientName,
   }));
 
-  const openCount = rows.filter((r) => r.status !== "done").length;
+  const openCount = rows.filter((r) => !isTaskClosed(r.status)).length;
   const doneCount = rows.filter((r) => r.status === "done").length;
 
   return (

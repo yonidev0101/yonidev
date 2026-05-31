@@ -66,9 +66,18 @@ export const PERSONAL_PROJECT_STATUS_HE: Record<string, string> = {
 export const TASK_STATUS_HE: Record<string, string> = {
   todo: "לעשות",
   in_progress: "בתהליך",
-  blocked: "תקוע",
+  waiting: "ממתין",
+  blocked: "חסום",
   done: "הושלם",
+  canceled: "בוטל",
 };
+
+/** Terminal statuses — a task in one of these is closed, not "open". */
+export const CLOSED_TASK_STATUSES = ["done", "canceled"] as const;
+
+export function isTaskClosed(status: string | null | undefined): boolean {
+  return status === "done" || status === "canceled";
+}
 
 export const TASK_PRIORITY_HE: Record<string, string> = {
   low: "נמוכה",
@@ -118,6 +127,53 @@ export function actionableDate(t: {
   dueDate: string | null;
 }): string | null {
   return t.followUpAt ?? t.dueDate;
+}
+
+/** Estimate stored as minutes, shown in the same adaptive hours/minutes format as logged time. */
+export function fmtEstimate(minutes: number | null | undefined): string {
+  if (minutes == null) return "—";
+  return fmtHours(minutes * 60);
+}
+
+const STALE_DAYS = 14;
+
+/** Whole days between a past date/timestamp and now (0 if in the future). */
+export function daysSince(d: string | Date | null | undefined): number | null {
+  if (!d) return null;
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(date.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000));
+}
+
+/**
+ * A task is "stale" when it's open and hasn't moved in {@link STALE_DAYS} days —
+ * but a parked "waiting" task with a future follow-up is intentionally idle, so it's exempt.
+ */
+export function isStaleTask(t: {
+  status: string;
+  lastUpdateAt: string | Date | null;
+  createdAt: string | Date | null;
+  followUpAt: string | null;
+}): boolean {
+  if (isTaskClosed(t.status)) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  if (t.status === "waiting" && t.followUpAt && t.followUpAt > today) return false;
+  const since = daysSince(t.lastUpdateAt ?? t.createdAt);
+  return since != null && since >= STALE_DAYS;
+}
+
+/** "כבר 5 ימים" — how long a task has been parked in "waiting", from its waitingSince date. */
+export function waitingSinceDaysHe(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
+  if (days === 0) return "מהיום";
+  if (days === 1) return "כבר יום";
+  if (days === 2) return "כבר יומיים";
+  return `כבר ${days} ימים`;
 }
 
 /** "לפני 3 ימים" / "בעוד יומיים" / "היום" — for follow-up date chips. */

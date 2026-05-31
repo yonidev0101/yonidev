@@ -9,7 +9,7 @@ const createSchema = z.object({
   projectId: z.coerce.number().int().positive(),
   title: z.string().min(1).max(300),
   description: z.string().max(5000).optional().nullable(),
-  status: z.enum(["todo", "in_progress", "blocked", "done"]).optional(),
+  status: z.enum(["todo", "in_progress", "waiting", "blocked", "done", "canceled"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.string().optional().nullable(),
 });

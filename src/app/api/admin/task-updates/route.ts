@@ -22,11 +22,17 @@ const createSchema = z.object({
   details: z.string().max(10000).nullable().optional(),
 
   // Optional status change
-  newStatus: z.enum(["todo", "in_progress", "blocked", "done"]).nullable().optional(),
+  newStatus: z
+    .enum(["todo", "in_progress", "waiting", "blocked", "done", "canceled"])
+    .nullable()
+    .optional(),
 
   // Optional next-action / follow-up updates on the task
   nextAction: z.string().max(500).nullable().optional(),
   followUpAt: z.string().nullable().optional(),
+
+  // Who/what we're parked on (only meaningful when moving to "waiting")
+  waitingOn: z.string().max(300).nullable().optional(),
 
   // Optional time entry (retroactive)
   timeMinutes: z.coerce.number().int().min(0).max(60 * 24).nullable().optional(),
@@ -140,6 +146,16 @@ export async function POST(req: Request) {
     if (statusAfter) {
       taskPatch.status = statusAfter;
       taskPatch.completedAt = statusAfter === "done" ? new Date() : null;
+      // "waiting" metadata: stamp waitingSince on entry, clear it (and waitingOn) on exit.
+      if (statusAfter === "waiting") {
+        if (statusBefore !== "waiting") {
+          taskPatch.waitingSince = new Date().toISOString().slice(0, 10);
+        }
+        if (d.waitingOn !== undefined) taskPatch.waitingOn = d.waitingOn || null;
+      } else {
+        taskPatch.waitingSince = null;
+        taskPatch.waitingOn = null;
+      }
     }
     await db.update(tasks).set(taskPatch).where(eq(tasks.id, d.taskId));
 

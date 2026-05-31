@@ -14,6 +14,8 @@ interface TaskShape {
   dueDate: string | null;
   nextAction: string | null;
   followUpAt: string | null;
+  waitingOn: string | null;
+  estimateMinutes: number | null;
 }
 
 export default function TaskDetailEditPanel({ task }: { task: TaskShape }) {
@@ -28,6 +30,8 @@ export default function TaskDetailEditPanel({ task }: { task: TaskShape }) {
     dueDate: task.dueDate ?? "",
     nextAction: task.nextAction ?? "",
     followUpAt: task.followUpAt ?? "",
+    waitingOn: task.waitingOn ?? "",
+    estimateHours: task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
   });
 
   function set(field: keyof typeof form, value: string) {
@@ -51,6 +55,10 @@ export default function TaskDetailEditPanel({ task }: { task: TaskShape }) {
         dueDate: form.dueDate || null,
         nextAction: form.nextAction.trim() || null,
         followUpAt: form.followUpAt || null,
+        waitingOn: form.status === "waiting" ? form.waitingOn.trim() || null : null,
+        estimateMinutes: form.estimateHours
+          ? Math.round(parseFloat(form.estimateHours) * 60)
+          : null,
       }),
     });
     setSaving(false);
@@ -146,6 +154,19 @@ export default function TaskDetailEditPanel({ task }: { task: TaskShape }) {
         </label>
       </div>
 
+      <label className="block sm:w-1/2">
+        <span className="block text-[11px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">אומדן (שעות)</span>
+        <input
+          type="number"
+          min={0}
+          step={0.25}
+          value={form.estimateHours}
+          onChange={(e) => set("estimateHours", e.target.value)}
+          placeholder="2"
+          className="w-full border border-[#E2E8F0] rounded-md bg-white px-3 py-2 text-[13px] tabular-nums"
+        />
+      </label>
+
       <label className="block">
         <span className="block text-[11px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">הצעד הבא</span>
         <input
@@ -155,6 +176,18 @@ export default function TaskDetailEditPanel({ task }: { task: TaskShape }) {
           className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
         />
       </label>
+
+      {form.status === "waiting" && (
+        <label className="block">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">ממתין ל…</span>
+          <input
+            value={form.waitingOn}
+            onChange={(e) => set("waitingOn", e.target.value)}
+            placeholder="דנה — תשובה על האפיון"
+            className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+          />
+        </label>
+      )}
 
       <div className="flex items-center gap-2 pt-1 border-t border-[#F1F5F9]">
         <button

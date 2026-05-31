@@ -12,6 +12,8 @@ interface TaskShape {
   status: string;
   priority: string;
   dueDate: string | null;
+  waitingOn?: string | null;
+  estimateMinutes?: number | null;
 }
 
 export default function TaskEditRow({
@@ -30,6 +32,8 @@ export default function TaskEditRow({
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate ?? "",
+    waitingOn: task.waitingOn ?? "",
+    estimateHours: task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -48,6 +52,10 @@ export default function TaskEditRow({
         status: form.status,
         priority: form.priority,
         dueDate: form.dueDate || null,
+        waitingOn: form.status === "waiting" ? form.waitingOn.trim() || null : null,
+        estimateMinutes: form.estimateHours
+          ? Math.round(parseFloat(form.estimateHours) * 60)
+          : null,
       }),
     });
     setSaving(false);
@@ -115,6 +123,29 @@ export default function TaskEditRow({
           />
         </label>
       </div>
+      <label className="block">
+        <span className="block text-[11px] text-[#94A3B8] mb-1">אומדן (שעות)</span>
+        <input
+          type="number"
+          min={0}
+          step={0.25}
+          value={form.estimateHours}
+          onChange={(e) => setForm({ ...form, estimateHours: e.target.value })}
+          placeholder="2"
+          className="w-full border border-[#E2E8F0] rounded-md bg-white px-2 py-1.5 text-[13px] tabular-nums"
+        />
+      </label>
+      {form.status === "waiting" && (
+        <label className="block">
+          <span className="block text-[11px] text-[#94A3B8] mb-1">ממתין ל…</span>
+          <input
+            value={form.waitingOn}
+            onChange={(e) => setForm({ ...form, waitingOn: e.target.value })}
+            placeholder="דנה — תשובה על האפיון"
+            className="w-full border border-[#E2E8F0] rounded-md bg-white px-2 py-1.5 text-[13px]"
+          />
+        </label>
+      )}
       <div className="flex items-center gap-2 pt-1">
         <button
           onClick={save}

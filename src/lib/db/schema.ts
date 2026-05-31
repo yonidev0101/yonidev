@@ -32,8 +32,10 @@ export const projectStatusEnum = pgEnum("project_status", [
 export const taskStatusEnum = pgEnum("task_status", [
   "todo",
   "in_progress",
+  "waiting",
   "blocked",
   "done",
+  "canceled",
 ]);
 
 export const taskPriorityEnum = pgEnum("task_priority", [
@@ -150,6 +152,11 @@ export const tasks = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     nextAction: text("next_action"),
     followUpAt: date("follow_up_at"),
+    // Up-front time estimate (minutes). Compared against logged time to sharpen quoting.
+    estimateMinutes: integer("estimate_minutes"),
+    // When status is "waiting": who/what we're parked on, and since when (powers "כבר X ימים").
+    waitingOn: text("waiting_on"),
+    waitingSince: date("waiting_since"),
     lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

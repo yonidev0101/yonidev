@@ -14,6 +14,7 @@ import {
   personalTimeEntries,
 } from "@/lib/db/client";
 import { and, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
+import { isTaskClosed } from "@/lib/admin/format";
 
 export async function getDashboardData() {
   const now = new Date();
@@ -77,7 +78,7 @@ export async function getDashboardData() {
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .where(
       and(
-        inArray(tasks.status, ["todo", "in_progress", "blocked"]),
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
         sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate}) <= ${weekEndStr}`,
       ),
     )
@@ -99,11 +100,38 @@ export async function getDashboardData() {
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .where(
       and(
-        inArray(tasks.status, ["todo", "in_progress", "blocked"]),
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
         lte(tasks.followUpAt, weekEndStr),
       ),
     )
     .orderBy(tasks.followUpAt);
+
+  // Stale: open tasks that haven't moved in 14+ days. Parked "waiting" tasks whose
+  // follow-up is still in the future are intentionally idle, so they're excluded.
+  const staleCutoff = new Date(now);
+  staleCutoff.setDate(now.getDate() - 14);
+  const staleTasks = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      lastUpdateAt: tasks.lastUpdateAt,
+      createdAt: tasks.createdAt,
+      projectId: tasks.projectId,
+      projectName: projects.name,
+      clientName: clients.name,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(clients, eq(clients.id, projects.clientId))
+    .where(
+      and(
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
+        sql`COALESCE(${tasks.lastUpdateAt}, ${tasks.createdAt}) < ${staleCutoff}`,
+        sql`NOT (${tasks.status} = 'waiting' AND ${tasks.followUpAt} IS NOT NULL AND ${tasks.followUpAt} > ${todayStr})`,
+      ),
+    )
+    .orderBy(sql`COALESCE(${tasks.lastUpdateAt}, ${tasks.createdAt})`);
 
   // Active timer
   const activeTimerRows = await db
@@ -125,6 +153,7 @@ export async function getDashboardData() {
     outstandingInvoices,
     upcomingTasks,
     followUpsThisWeek,
+    staleTasks,
     activeTimer: activeTimerRows[0] ?? null,
     todayStr,
   };
@@ -199,7 +228,7 @@ export async function getClientWithRelations(clientId: number) {
           [] as {
             id: number;
             title: string;
-            status: "todo" | "in_progress" | "blocked" | "done";
+            status: "todo" | "in_progress" | "waiting" | "blocked" | "done" | "canceled";
             priority: "low" | "medium" | "high";
             dueDate: string | null;
             nextAction: string | null;
@@ -262,7 +291,7 @@ export async function getClientWithRelations(clientId: number) {
   const outstandingTotalIls = clientInvoices
     .filter((inv) => inv.status === "sent")
     .reduce((sum, inv) => sum + Number(inv.totalIls), 0);
-  const openTaskCount = clientTasks.filter((t) => t.status !== "done").length;
+  const openTaskCount = clientTasks.filter((t) => !isTaskClosed(t.status)).length;
 
   return {
     client,
@@ -380,7 +409,7 @@ export async function getPersonalProjects() {
     db
       .select({
         projectId: personalTasks.projectId,
-        open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} <> 'done')::int`,
+        open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} NOT IN ('done', 'canceled'))::int`,
       })
       .from(personalTasks)
       .where(inArray(personalTasks.projectId, ids))

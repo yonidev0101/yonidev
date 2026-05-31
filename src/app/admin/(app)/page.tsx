@@ -5,6 +5,7 @@ import {
   fmtHours,
   fmtIls,
   relativeDayHe,
+  daysSince,
   CLIENT_STATUS_HE,
   TASK_STATUS_HE,
 } from "@/lib/admin/format";
@@ -156,6 +157,39 @@ export default async function DashboardPage() {
             </ul>
           )}
         </Section>
+
+        {/* Stale — tasks that haven't moved in 14+ days */}
+        {data.staleTasks.length > 0 && (
+          <Section
+            title="לא זז"
+            link={{ href: "/admin/tasks", label: "כל המשימות" }}
+          >
+            <ul className="divide-y divide-[#F1F5F9]">
+              {data.staleTasks.slice(0, 8).map((t) => {
+                const days = daysSince(t.lastUpdateAt ?? t.createdAt);
+                return (
+                  <li key={t.id} className="py-3 flex items-center gap-3">
+                    <span className="shrink-0">💤</span>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/admin/tasks/${t.id}`}
+                        className="block text-[14px] font-medium text-[#0F172A] truncate hover:text-[#2B7FFF]"
+                      >
+                        {t.title}
+                      </Link>
+                      <div className="text-[12px] text-[#94A3B8] truncate">
+                        {t.clientName} · {t.projectName}
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[12px] tabular-nums text-amber-700 font-semibold">
+                      {days} ימ׳
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
+        )}
 
         {/* Outstanding invoices */}
         <Section

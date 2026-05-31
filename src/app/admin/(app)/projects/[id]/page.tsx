@@ -5,6 +5,7 @@ import {
   PROJECT_STATUS_HE,
   fmtIls,
   fmtHours,
+  isTaskClosed,
 } from "@/lib/admin/format";
 import ProjectShell from "@/components/admin/ProjectShell";
 
@@ -54,7 +55,7 @@ export default async function ProjectDetailPage({
         <Stat label="סה״כ שעות" value={fmtHours(totalSec)} />
         <Stat label="תעריף" value={rate ? `${fmtIls(rate)}/שעה` : "—"} />
         <Stat label="שווי מצטבר" value={fmtIls(totalIls)} accent />
-        <Stat label="משימות פתוחות" value={data.tasks.filter((t) => t.status !== "done").length.toString()} />
+        <Stat label="משימות פתוחות" value={data.tasks.filter((t) => !isTaskClosed(t.status)).length.toString()} />
       </div>
 
       <ProjectShell project={data.project} client={data.client} tab={tab ?? "overview"}
