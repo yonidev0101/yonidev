@@ -8,6 +8,10 @@ import {
   timeEntries,
   invoices,
   communications,
+  personalProjects,
+  personalTasks,
+  personalLinks,
+  personalTimeEntries,
 } from "@/lib/db/client";
 import { and, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
 
@@ -357,6 +361,73 @@ export async function getTaskWithUpdates(taskId: number) {
     })),
     totalSeconds: timeAgg[0]?.totalSec ?? 0,
   };
+}
+
+// ── personal projects (no client, no billing) ─────────────────────────
+
+export async function getPersonalProjects() {
+  const rows = await db
+    .select()
+    .from(personalProjects)
+    .orderBy(desc(personalProjects.createdAt));
+
+  const ids = rows.map((p) => p.id);
+  if (ids.length === 0) {
+    return rows.map((p) => ({ ...p, openTaskCount: 0, totalSeconds: 0 }));
+  }
+
+  const [taskCounts, timeAgg] = await Promise.all([
+    db
+      .select({
+        projectId: personalTasks.projectId,
+        open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} <> 'done')::int`,
+      })
+      .from(personalTasks)
+      .where(inArray(personalTasks.projectId, ids))
+      .groupBy(personalTasks.projectId),
+    db
+      .select({
+        projectId: personalTimeEntries.projectId,
+        totalSec: sql<number>`COALESCE(SUM(${personalTimeEntries.durationSeconds}), 0)::int`,
+      })
+      .from(personalTimeEntries)
+      .where(inArray(personalTimeEntries.projectId, ids))
+      .groupBy(personalTimeEntries.projectId),
+  ]);
+
+  const openByProject = new Map(taskCounts.map((r) => [r.projectId, r.open]));
+  const secByProject = new Map(timeAgg.map((r) => [r.projectId, r.totalSec]));
+
+  return rows.map((p) => ({
+    ...p,
+    openTaskCount: openByProject.get(p.id) ?? 0,
+    totalSeconds: secByProject.get(p.id) ?? 0,
+  }));
+}
+
+export async function getPersonalProjectWithRelations(projectId: number) {
+  const [project] = await db
+    .select()
+    .from(personalProjects)
+    .where(eq(personalProjects.id, projectId));
+  if (!project) return null;
+
+  const [projectTasks, links, time] = await Promise.all([
+    db
+      .select()
+      .from(personalTasks)
+      .where(eq(personalTasks.projectId, projectId))
+      .orderBy(desc(personalTasks.createdAt)),
+    db.select().from(personalLinks).where(eq(personalLinks.projectId, projectId)),
+    db
+      .select()
+      .from(personalTimeEntries)
+      .where(eq(personalTimeEntries.projectId, projectId))
+      .orderBy(desc(personalTimeEntries.startedAt))
+      .limit(100),
+  ]);
+
+  return { project, tasks: projectTasks, links, timeEntries: time };
 }
 
 export async function getProjectWithRelations(projectId: number) {

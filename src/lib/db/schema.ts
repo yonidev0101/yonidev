@@ -75,6 +75,16 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
   "void",
 ]);
 
+// Personal (non-client) side projects. Richer lifecycle than client projects:
+// an idea can sit before it's active, and "shipped" / archived states matter.
+export const personalProjectStatusEnum = pgEnum("personal_project_status", [
+  "idea",
+  "active",
+  "paused",
+  "done",
+  "archived",
+]);
+
 // ── tables ────────────────────────────────────────────────────────────
 
 export const clients = pgTable("clients", {
@@ -268,6 +278,77 @@ export const invoiceLines = pgTable(
   (t) => [index("lines_invoice_idx").on(t.invoiceId)],
 );
 
+// ── personal projects (no client, no billing) ─────────────────────────
+
+export const personalProjects = pgTable("personal_projects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  status: personalProjectStatusEnum("status").notNull().default("idea"),
+  priority: taskPriorityEnum("priority").notNull().default("medium"),
+  description: text("description"),
+  nextAction: text("next_action"),
+  startDate: date("start_date"),
+  targetDate: date("target_date"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+});
+
+export const personalLinks = pgTable(
+  "personal_links",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => personalProjects.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    url: text("url").notNull(),
+    kind: linkKindEnum("kind").notNull().default("other"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("personal_links_project_idx").on(t.projectId)],
+);
+
+export const personalTasks = pgTable(
+  "personal_tasks",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => personalProjects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: taskStatusEnum("status").notNull().default("todo"),
+    priority: taskPriorityEnum("priority").notNull().default("medium"),
+    dueDate: date("due_date"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("personal_tasks_project_idx").on(t.projectId),
+    index("personal_tasks_status_idx").on(t.status),
+  ],
+);
+
+export const personalTimeEntries = pgTable(
+  "personal_time_entries",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => personalProjects.id, { onDelete: "cascade" }),
+    taskId: integer("task_id").references(() => personalTasks.id, { onDelete: "set null" }),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    durationSeconds: integer("duration_seconds"),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("personal_time_project_idx").on(t.projectId),
+    index("personal_time_started_idx").on(t.startedAt),
+  ],
+);
+
 // ── relations ─────────────────────────────────────────────────────────
 
 export const clientsRelations = relations(clients, ({ many }) => ({
@@ -334,6 +415,38 @@ export const invoiceLinesRelations = relations(invoiceLines, ({ one }) => ({
   }),
 }));
 
+export const personalProjectsRelations = relations(personalProjects, ({ many }) => ({
+  tasks: many(personalTasks),
+  links: many(personalLinks),
+  timeEntries: many(personalTimeEntries),
+}));
+
+export const personalTasksRelations = relations(personalTasks, ({ one, many }) => ({
+  project: one(personalProjects, {
+    fields: [personalTasks.projectId],
+    references: [personalProjects.id],
+  }),
+  timeEntries: many(personalTimeEntries),
+}));
+
+export const personalLinksRelations = relations(personalLinks, ({ one }) => ({
+  project: one(personalProjects, {
+    fields: [personalLinks.projectId],
+    references: [personalProjects.id],
+  }),
+}));
+
+export const personalTimeEntriesRelations = relations(personalTimeEntries, ({ one }) => ({
+  project: one(personalProjects, {
+    fields: [personalTimeEntries.projectId],
+    references: [personalProjects.id],
+  }),
+  task: one(personalTasks, {
+    fields: [personalTimeEntries.taskId],
+    references: [personalTasks.id],
+  }),
+}));
+
 // ── inferred types ────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -354,3 +467,11 @@ export type InvoiceLine = typeof invoiceLines.$inferSelect;
 export type NewInvoiceLine = typeof invoiceLines.$inferInsert;
 export type TaskUpdate = typeof taskUpdates.$inferSelect;
 export type NewTaskUpdate = typeof taskUpdates.$inferInsert;
+export type PersonalProject = typeof personalProjects.$inferSelect;
+export type NewPersonalProject = typeof personalProjects.$inferInsert;
+export type PersonalTask = typeof personalTasks.$inferSelect;
+export type NewPersonalTask = typeof personalTasks.$inferInsert;
+export type PersonalLink = typeof personalLinks.$inferSelect;
+export type NewPersonalLink = typeof personalLinks.$inferInsert;
+export type PersonalTimeEntry = typeof personalTimeEntries.$inferSelect;
+export type NewPersonalTimeEntry = typeof personalTimeEntries.$inferInsert;

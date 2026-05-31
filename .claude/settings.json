@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(npm run lint*)",
+      "Bash(npm run db:generate*)",
+      "Bash(npx tsc*)",
+      "Bash(node scripts/apply-migrations.mjs*)",
+      "Bash(git status*)",
+      "Bash(git fetch*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git rev-parse*)",
+      "Bash(git branch*)",
+      "PowerShell(npm run lint*)",
+      "PowerShell(npm run db:generate*)",
+      "PowerShell(npx tsc*)",
+      "PowerShell(git status*)",
+      "PowerShell(git fetch*)",
+      "PowerShell(git diff*)",
+      "PowerShell(git log*)",
+      "PowerShell(git show*)",
+      "PowerShell(git rev-parse*)",
+      "PowerShell(git branch*)",
+      "PowerShell(Get-NetTCPConnection*)"
+    ],
+    "deny": [
+      "Bash(npm run build*)",
+      "Bash(npm run-script build*)",
+      "Bash(next build*)",
+      "Bash(npx next build*)",
+      "PowerShell(npm run build*)",
+      "PowerShell(npm run-script build*)",
+      "PowerShell(next build*)",
+      "PowerShell(npx next build*)"
+    ]
+  }
+}

@@ -55,6 +55,14 @@ export const PROJECT_STATUS_HE: Record<string, string> = {
   done: "הושלם",
 };
 
+export const PERSONAL_PROJECT_STATUS_HE: Record<string, string> = {
+  idea: "רעיון",
+  active: "פעיל",
+  paused: "מושהה",
+  done: "הושלם",
+  archived: "בארכיון",
+};
+
 export const TASK_STATUS_HE: Record<string, string> = {
   todo: "לעשות",
   in_progress: "בתהליך",
