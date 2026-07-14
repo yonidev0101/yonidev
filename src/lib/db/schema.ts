@@ -349,6 +349,39 @@ export const personalTimeEntries = pgTable(
   ],
 );
 
+// ── email signature open tracking ─────────────────────────────────────
+// Each recipient gets a unique token embedded as a tracking-pixel URL in
+// their copy of the email signature; every pixel load is logged as an open.
+
+export const signatureRecipients = pgTable(
+  "signature_recipients",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull(),
+    token: varchar("token", { length: 64 }).notNull().unique(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("sig_recipients_email_idx").on(t.email)],
+);
+
+export const signatureOpens = pgTable(
+  "signature_opens",
+  {
+    id: serial("id").primaryKey(),
+    recipientId: integer("recipient_id")
+      .notNull()
+      .references(() => signatureRecipients.id, { onDelete: "cascade" }),
+    openedAt: timestamp("opened_at", { withTimezone: true }).notNull().defaultNow(),
+    userAgent: text("user_agent"),
+    ip: text("ip"),
+  },
+  (t) => [
+    index("sig_opens_recipient_idx").on(t.recipientId),
+    index("sig_opens_opened_idx").on(t.openedAt),
+  ],
+);
+
 // ── relations ─────────────────────────────────────────────────────────
 
 export const clientsRelations = relations(clients, ({ many }) => ({
@@ -447,6 +480,17 @@ export const personalTimeEntriesRelations = relations(personalTimeEntries, ({ on
   }),
 }));
 
+export const signatureRecipientsRelations = relations(signatureRecipients, ({ many }) => ({
+  opens: many(signatureOpens),
+}));
+
+export const signatureOpensRelations = relations(signatureOpens, ({ one }) => ({
+  recipient: one(signatureRecipients, {
+    fields: [signatureOpens.recipientId],
+    references: [signatureRecipients.id],
+  }),
+}));
+
 // ── inferred types ────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -475,3 +519,7 @@ export type PersonalLink = typeof personalLinks.$inferSelect;
 export type NewPersonalLink = typeof personalLinks.$inferInsert;
 export type PersonalTimeEntry = typeof personalTimeEntries.$inferSelect;
 export type NewPersonalTimeEntry = typeof personalTimeEntries.$inferInsert;
+export type SignatureRecipient = typeof signatureRecipients.$inferSelect;
+export type NewSignatureRecipient = typeof signatureRecipients.$inferInsert;
+export type SignatureOpen = typeof signatureOpens.$inferSelect;
+export type NewSignatureOpen = typeof signatureOpens.$inferInsert;
