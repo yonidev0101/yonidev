@@ -12,6 +12,8 @@ import {
   personalTasks,
   personalLinks,
   personalTimeEntries,
+  signatureRecipients,
+  signatureOpens,
 } from "@/lib/db/client";
 import { and, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
 
@@ -461,4 +463,38 @@ export async function getProjectWithRelations(projectId: number) {
     timeEntries: projectTime,
     communications: projectComms,
   };
+}
+
+// ── email signature open tracking ─────────────────────────────────────
+
+export async function getSignatureTracking() {
+  const [recipients, recentOpens] = await Promise.all([
+    db
+      .select({
+        id: signatureRecipients.id,
+        email: signatureRecipients.email,
+        token: signatureRecipients.token,
+        note: signatureRecipients.note,
+        createdAt: signatureRecipients.createdAt,
+        openCount: sql<number>`COUNT(${signatureOpens.id})::int`,
+        lastOpenAt: sql<string | null>`MAX(${signatureOpens.openedAt})`,
+      })
+      .from(signatureRecipients)
+      .leftJoin(signatureOpens, eq(signatureOpens.recipientId, signatureRecipients.id))
+      .groupBy(signatureRecipients.id)
+      .orderBy(desc(signatureRecipients.createdAt)),
+    db
+      .select({
+        id: signatureOpens.id,
+        openedAt: signatureOpens.openedAt,
+        userAgent: signatureOpens.userAgent,
+        recipientId: signatureOpens.recipientId,
+        email: signatureRecipients.email,
+      })
+      .from(signatureOpens)
+      .innerJoin(signatureRecipients, eq(signatureRecipients.id, signatureOpens.recipientId))
+      .orderBy(desc(signatureOpens.openedAt))
+      .limit(100),
+  ]);
+  return { recipients, recentOpens };
 }

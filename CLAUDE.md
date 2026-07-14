@@ -92,7 +92,7 @@ A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL
 
 ### Routes & shell
 - `src/app/admin/login` — public login page.
-- `src/app/admin/(app)/` — route group for the authenticated shell (`layout.tsx` → `MobileChrome` + `Sidebar`). Pages: `/admin` (dashboard), `clients`, `personal` (personal side-projects), `tasks`, `time`, `invoices`, plus `projects/[id]`, `clients/[id]`, `tasks/[id]`, `invoices/[id]`.
+- `src/app/admin/(app)/` — route group for the authenticated shell (`layout.tsx` → `MobileChrome` + `Sidebar`). Pages: `/admin` (dashboard), `clients`, `personal` (personal side-projects), `tasks`, `time`, `invoices`, `signature` (email signature + open tracking), plus `projects/[id]`, `clients/[id]`, `tasks/[id]`, `invoices/[id]`.
 - Admin pages that read the DB are server components with `export const dynamic = "force-dynamic"`; interactivity lives in `"use client"` components under `src/components/admin/`.
 
 ### Auth
@@ -106,6 +106,11 @@ A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL
 
 ### API routes (`src/app/api/admin/*`)
 - Route handlers with `export const runtime = "nodejs"`. Validate input with zod via `parseJson`; respond with `json` / `notFound` / `serverError` from `src/lib/admin/http.ts`. Client-work and personal-* resources have parallel CRUD routes.
+
+### Email signature open tracking
+- `src/lib/signature/signature.ts` — pure builder for the email-safe signature HTML (table layout, inline styles, `dir="ltr"` locked; icons from `public/signature/*.png`). Optional per-recipient tracking pixel.
+- `signature_recipients` (unique `token` per recipient) + `signature_opens` tables; **public** pixel route `src/app/api/track/open/[token]/route.ts` serves a 1x1 GIF and logs the open — it lives outside `/api/admin` on purpose so the auth middleware never blocks email clients, and it always serves the pixel even if the DB write fails.
+- Admin UI at `/admin/signature` (create tracked copies, copy rich-HTML signature to clipboard, opens dashboard); CRUD at `/api/admin/signature-recipients`.
 
 ### Migrations — IMPORTANT (env quirk)
 - Generate SQL with `npm run db:generate` (writes to `drizzle/`).
