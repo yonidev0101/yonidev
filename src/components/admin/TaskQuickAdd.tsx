@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TASK_PRIORITY_HE } from "@/lib/admin/format";
+import { DOMAIN_LABEL, routes, type Domain } from "@/lib/admin/domain";
 
 export interface QuickAddProject {
   id: number;
   name: string;
   clientName?: string | null;
+  /** Which stack the project lives in; defaults to client work. */
+  domain?: Domain;
 }
 
 type Priority = keyof typeof TASK_PRIORITY_HE;
@@ -22,21 +25,31 @@ export default function TaskQuickAdd({
   pickerLabel = "פרויקט",
   /** Button label when the form is collapsed. */
   triggerLabel = "➕ משימה חדשה",
+  /** Domain to use when the project is fixed by the caller (project pages). */
+  fixedDomain = "client",
+  /** Called after a successful create, for callers that refresh their own data. */
+  onCreated,
 }: {
   projects: QuickAddProject[];
   fixedProjectId?: number;
   defaultProjectId?: number;
   pickerLabel?: string;
   triggerLabel?: string;
+  fixedDomain?: Domain;
+  onCreated?: () => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const key = (p: QuickAddProject) => `${p.domain ?? "client"}:${p.id}`;
   const initialProjectId =
     fixedProjectId?.toString() ??
-    defaultProjectId?.toString() ??
-    (projects.length === 1 ? projects[0].id.toString() : "");
+    (defaultProjectId
+      ? `${fixedDomain}:${defaultProjectId}`
+      : projects.length === 1
+        ? key(projects[0])
+        : "");
 
   const [projectId, setProjectId] = useState(initialProjectId);
   const [title, setTitle] = useState("");
@@ -53,15 +66,21 @@ export default function TaskQuickAdd({
     setOpen(false);
   }
 
+  // The picker value is "<domain>:<id>" — a client project and a personal one
+  // can share the same numeric id, so the id alone is ambiguous.
+  const [selDomain, selId] = projectId.includes(":")
+    ? (projectId.split(":") as [Domain, string])
+    : ([fixedDomain, projectId] as [Domain, string]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !projectId) return;
     setSubmitting(true);
-    const res = await fetch("/api/admin/tasks", {
+    const res = await fetch(routes(selDomain).tasksApi, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        projectId: Number(projectId),
+        projectId: Number(selId),
         title: title.trim(),
         priority,
         dueDate: dueDate || null,
@@ -72,6 +91,7 @@ export default function TaskQuickAdd({
       toast.success("המשימה נוצרה");
       reset();
       router.refresh();
+      onCreated?.();
     } else {
       toast.error("יצירה נכשלה");
     }
@@ -80,7 +100,7 @@ export default function TaskQuickAdd({
   if (projects.length === 0 && !fixedProjectId) {
     return (
       <div className="text-[12px] text-[#94A3B8] italic">
-        אין פרויקטים פעילים — צרי פרויקט קודם.
+        אין פרויקטים פעילים — צור פרויקט קודם.
       </div>
     );
   }
@@ -110,10 +130,15 @@ export default function TaskQuickAdd({
           required
           className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
         >
-          <option value="">— בחרי {pickerLabel} —</option>
+          <option value="">— בחר {pickerLabel} —</option>
           {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.clientName ? `${p.clientName} · ${p.name}` : p.name}
+            <option key={key(p)} value={key(p)}>
+              {p.domain === "personal" ? `${DOMAIN_LABEL.personal} · ${p.name}` : null}
+              {p.domain !== "personal"
+                ? p.clientName
+                  ? `${p.clientName} · ${p.name}`
+                  : p.name
+                : null}
             </option>
           ))}
         </select>
@@ -162,7 +187,7 @@ export default function TaskQuickAdd({
           disabled={submitting || !title.trim() || !projectId}
           className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 text-white text-[13px] font-semibold px-4 py-1.5"
         >
-          {submitting ? "שומר..." : "צרי משימה"}
+          {submitting ? "שומר..." : "צור משימה"}
         </button>
         <button
           type="button"

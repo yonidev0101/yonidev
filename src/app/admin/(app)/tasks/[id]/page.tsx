@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getTaskWithUpdates } from "@/lib/admin/queries";
 import {
   TASK_STATUS_HE,
+  TASK_STATUS_TONE,
   TASK_PRIORITY_HE,
   fmtDateHe,
   fmtHours,
@@ -15,17 +16,6 @@ import TaskDetailEditPanel from "@/components/admin/TaskDetailEditPanel";
 import TaskTimeline, { type TimelineUpdate } from "@/components/admin/TaskTimeline";
 
 export const dynamic = "force-dynamic";
-
-type TaskStatus = keyof typeof TASK_STATUS_HE;
-
-const STATUS_TONE: Record<TaskStatus, string> = {
-  todo: "bg-[#F1F5F9] text-[#64748B]",
-  in_progress: "bg-[#EFF6FF] text-[#2B7FFF]",
-  waiting: "bg-[#EFF6FF] text-[#2B7FFF]",
-  blocked: "bg-amber-50 text-amber-700",
-  done: "bg-emerald-50 text-emerald-700",
-  canceled: "bg-[#F1F5F9] text-[#94A3B8] line-through",
-};
 
 export default async function TaskDetailPage({
   params,
@@ -77,7 +67,7 @@ export default async function TaskDetailPage({
             {task.title}
           </h1>
           <span
-            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${STATUS_TONE[task.status]}`}
+            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${TASK_STATUS_TONE[task.status]}`}
           >
             {TASK_STATUS_HE[task.status]}
           </span>

@@ -9,9 +9,12 @@ import {
   FONT,
 } from "@/lib/contact/email-templates";
 import { SITE_URL } from "@/lib/contact/channels";
+import { DOMAIN_LABEL, routes, type Domain } from "@/lib/admin/domain";
 
 export interface DigestTask {
   id: number;
+  /** Which stack the task lives in — decides the link target and the tag. */
+  domain: Domain;
   title: string;
   clientName: string | null;
   projectName: string | null;
@@ -42,8 +45,16 @@ function taskRowsHtml(items: DigestTask[]): string {
           (t, i) => `
         <tr>
           <td style="padding:13px 18px;text-align:right;${i > 0 ? `border-top:1px solid ${C.divider};` : ""}">
-            <a href="${SITE_URL}/admin/tasks/${t.id}" style="font-size:14px;font-weight:600;color:${C.heading};text-decoration:none;line-height:1.5;">${esc(t.title)}</a>
-            <div style="font-size:12px;color:${C.muted};margin-top:3px;">${esc([t.clientName, t.projectName].filter(Boolean).join(" · "))}</div>
+            <a href="${SITE_URL}${routes(t.domain).taskDetail(t.id)}" style="font-size:14px;font-weight:600;color:${C.heading};text-decoration:none;line-height:1.5;">${esc(t.title)}</a>
+            <div style="font-size:12px;color:${C.muted};margin-top:3px;">${esc(
+              [
+                t.domain === "personal" ? DOMAIN_LABEL.personal : null,
+                t.clientName,
+                t.projectName,
+              ]
+                .filter(Boolean)
+                .join(" · "),
+            )}</div>
           </td>
           <td style="padding:13px 18px;text-align:left;white-space:nowrap;vertical-align:middle;${i > 0 ? `border-top:1px solid ${C.divider};` : ""}">
             <span style="font-size:12px;font-weight:600;color:${t.alert ? "#DC2626" : C.bodySoft};">${esc(t.meta)}</span>
@@ -119,7 +130,13 @@ export function buildDailyDigestEmail(input: DailyDigestInput): {
           `${label} (${items.length}):`,
           ...items.map(
             (t) =>
-              `· ${t.title} — ${[t.clientName, t.projectName].filter(Boolean).join(" · ")} [${t.meta}]`,
+              `· ${t.title} — ${[
+                t.domain === "personal" ? DOMAIN_LABEL.personal : null,
+                t.clientName,
+                t.projectName,
+              ]
+                .filter(Boolean)
+                .join(" · ")} [${t.meta}]`,
           ),
           ``,
         ];

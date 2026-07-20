@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   TASK_STATUS_HE,
   TASK_PRIORITY_HE,
+  TASK_PRIORITY_DOT,
   actionableDate,
   fmtDateHe,
   relativeDayHe,
@@ -15,12 +16,14 @@ import {
   isStaleTask,
   daysSince,
 } from "@/lib/admin/format";
+import { DOMAIN_LABEL, DOMAIN_TONE, routes, type Domain } from "@/lib/admin/domain";
 import { useInlineEdit } from "@/lib/admin/useInlineEdit";
 import TaskEditRow from "./TaskEditRow";
 import { confirm } from "./ConfirmDialog";
 
 export interface TaskRow {
   id: number;
+  domain: Domain;
   title: string;
   description: string | null;
   status: string;
@@ -38,7 +41,19 @@ export interface TaskRow {
   clientName: string | null;
 }
 
-export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
+const FILTERS: { key: Domain | "all"; label: string }[] = [
+  { key: "all", label: "הכל" },
+  { key: "personal", label: "אישי" },
+  { key: "client", label: "לקוחות" },
+];
+
+export default function TasksList({
+  tasks,
+  kind = "all",
+}: {
+  tasks: TaskRow[];
+  kind?: Domain | "all";
+}) {
   const router = useRouter();
   const { editingId, startEdit, cancel } = useInlineEdit<number>();
   const [parkedOpen, setParkedOpen] = useState(false);
@@ -75,14 +90,14 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
     unscheduled: regular.filter((t) => !actionableDate(t)),
   };
 
-  async function del(id: number) {
+  async function del(t: TaskRow) {
     const ok = await confirm({
       title: "למחוק את המשימה?",
       confirmLabel: "מחק",
       destructive: true,
     });
     if (!ok) return;
-    const res = await fetch(`/api/admin/tasks/${id}`, { method: "DELETE" });
+    const res = await fetch(`${routes(t.domain).tasksApi}/${t.id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("נמחק");
       router.refresh();
@@ -111,24 +126,21 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
         : null;
     return (
       <li key={t.id} className="px-5 py-3 flex items-start gap-3">
-        <span
-          className={`mt-2 w-2 h-2 rounded-full shrink-0 ${
-            t.priority === "high"
-              ? "bg-red-500"
-              : t.priority === "medium"
-                ? "bg-amber-500"
-                : "bg-[#94A3B8]"
-          }`}
-        />
+        <span className={`mt-2 w-2 h-2 rounded-full shrink-0 ${TASK_PRIORITY_DOT[t.priority]}`} />
         <div className="flex-1 min-w-0">
           <Link
-            href={`/admin/tasks/${t.id}`}
+            href={routes(t.domain).taskDetail(t.id)}
             className="block text-[14px] font-medium text-[#0F172A] hover:text-[#2B7FFF] truncate"
           >
             {t.title}
           </Link>
-          <div className="text-[11px] text-[#94A3B8] truncate">
-            {t.clientName} · {t.projectName}
+          <div className="text-[11px] text-[#94A3B8] truncate flex items-center gap-1.5">
+            <span
+              className={`text-[9px] font-bold uppercase tracking-wider px-1.5 rounded ${DOMAIN_TONE[t.domain]}`}
+            >
+              {DOMAIN_LABEL[t.domain]}
+            </span>
+            {[t.clientName, t.projectName].filter(Boolean).join(" · ")}
           </div>
           {waitingLine && (
             <div className="text-[12px] text-[#2B7FFF] mt-1 truncate">⏳ {waitingLine}</div>
@@ -174,7 +186,7 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
             ✎
           </button>
           <button
-            onClick={() => del(t.id)}
+            onClick={() => del(t)}
             className="text-[12px] text-[#94A3B8] hover:text-red-600"
             aria-label="מחק"
           >
@@ -213,12 +225,34 @@ export default function TasksList({ tasks }: { tasks: TaskRow[] }) {
     );
   }
 
+  const filterBar = (
+    <div className="inline-flex items-center gap-1 bg-[#F1F5F9] rounded-full p-1">
+      {FILTERS.map((f) => (
+        <Link
+          key={f.key}
+          href={f.key === "all" ? "/admin/tasks" : `/admin/tasks?kind=${f.key}`}
+          className={`text-[12px] font-semibold px-3 py-1 rounded-full transition ${
+            kind === f.key ? "bg-white text-[#0F172A] shadow-sm" : "text-[#64748B] hover:text-[#0F172A]"
+          }`}
+        >
+          {f.label}
+        </Link>
+      ))}
+    </div>
+  );
+
   if (tasks.length === 0) {
-    return <p className="text-center text-[#94A3B8] py-12">כל המשימות סגורות. כל הכבוד.</p>;
+    return (
+      <div className="space-y-6">
+        {filterBar}
+        <p className="text-center text-[#94A3B8] py-12">כל המשימות סגורות. כל הכבוד.</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
+      {filterBar}
       {renderGroup("באיחור", grouped.overdue, "red")}
       {renderGroup("היום", grouped.today, "amber")}
       {renderGroup("חסום", blocked, "amber")}

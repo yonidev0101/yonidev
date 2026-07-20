@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { z } from "zod";
-import { db, personalTimeEntries, personalProjects } from "@/lib/db/client";
+import { db, personalTimeEntries, personalProjects, personalTasks } from "@/lib/db/client";
 import { eq, isNull, and } from "drizzle-orm";
 import { json, parseJson, serverError } from "@/lib/admin/http";
 
@@ -18,12 +18,15 @@ async function getActiveJoined() {
     .select({
       id: personalTimeEntries.id,
       projectId: personalTimeEntries.projectId,
+      taskId: personalTimeEntries.taskId,
+      taskTitle: personalTasks.title,
       startedAt: personalTimeEntries.startedAt,
       note: personalTimeEntries.note,
       projectName: personalProjects.name,
     })
     .from(personalTimeEntries)
     .leftJoin(personalProjects, eq(personalProjects.id, personalTimeEntries.projectId))
+    .leftJoin(personalTasks, eq(personalTasks.id, personalTimeEntries.taskId))
     .where(isNull(personalTimeEntries.endedAt))
     .limit(1);
   return rows[0] ?? null;

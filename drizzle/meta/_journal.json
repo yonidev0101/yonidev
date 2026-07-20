@@ -43,6 +43,13 @@
       "when": 1780257086262,
       "tag": "0005_conscious_vulcan",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784569649141,
+      "tag": "0006_chilly_moira_mactaggert",
+      "breakpoints": true
     }
   ]
 }

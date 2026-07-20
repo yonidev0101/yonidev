@@ -21,6 +21,19 @@ export function fmtDateTimeHe(d: string | Date | null | undefined): string {
   }).format(date);
 }
 
+/** Clock time only, pinned to Israel time (the server runs in UTC). */
+export function fmtTimeHe(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("he-IL", {
+    timeZone: "Asia/Jerusalem",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 export function fmtIls(n: number | string | null | undefined): string {
   if (n == null) return "—";
   const num = typeof n === "string" ? Number(n) : n;
@@ -73,6 +86,35 @@ export const TASK_STATUS_HE: Record<string, string> = {
 };
 
 /** Terminal statuses — a task in one of these is closed, not "open". */
+/**
+ * The one place task-status colours are defined. Every chip in the admin reads
+ * from here — a status must never look different depending on which page it's on.
+ */
+export const TASK_STATUS_TONE: Record<string, string> = {
+  todo: "bg-[#F1F5F9] text-[#64748B]",
+  in_progress: "bg-[#EFF6FF] text-[#2B7FFF]",
+  waiting: "bg-[#EFF6FF] text-[#2B7FFF]",
+  blocked: "bg-amber-50 text-amber-700",
+  done: "bg-emerald-50 text-emerald-700",
+  canceled: "bg-[#F1F5F9] text-[#94A3B8] line-through",
+};
+
+/** Priority dot colour — shared by every task list and card. */
+export const TASK_PRIORITY_DOT: Record<string, string> = {
+  high: "bg-red-500",
+  medium: "bg-amber-500",
+  low: "bg-[#94A3B8]",
+};
+
+/** Running-timer display: m:ss under an hour, h:mm:ss above it. */
+export function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export const CLOSED_TASK_STATUSES = ["done", "canceled"] as const;
 
 export function isTaskClosed(status: string | null | undefined): boolean {
@@ -112,6 +154,53 @@ export const TASK_UPDATE_KIND_ICON: Record<string, string> = {
   blocker: "🚧",
   handoff: "📤",
 };
+
+/** Solo-dev update kinds for personal tasks (see personalUpdateKindEnum). */
+export const PERSONAL_UPDATE_KIND_HE: Record<string, string> = {
+  progress: "התקדמות",
+  decision: "החלטה",
+  blocker: "חסם",
+  commit: "קומיט",
+  research: "מחקר",
+  bug: "באג",
+  note: "הערה",
+};
+
+export const PERSONAL_UPDATE_KIND_ICON: Record<string, string> = {
+  progress: "⚡",
+  decision: "✅",
+  blocker: "🚧",
+  commit: "🔀",
+  research: "🔍",
+  bug: "🐞",
+  note: "📝",
+};
+
+export function personalUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {
+  if (kind === "blocker" || kind === "bug") return "amber";
+  if (kind === "decision") return "green";
+  if (kind === "commit" || kind === "research") return "blue";
+  return "slate";
+}
+
+/** Short SHA for display — commits are stored full-length but read better truncated. */
+export function shortSha(sha: string | null | undefined): string | null {
+  if (!sha) return null;
+  return sha.trim().slice(0, 7);
+}
+
+/**
+ * Builds a commit URL from a repo link when the user only typed a SHA.
+ * Handles GitHub web URLs and the git@ SSH form; returns null for anything else.
+ */
+export function commitUrlFromRepo(repoUrl: string | null | undefined, sha: string): string | null {
+  if (!repoUrl) return null;
+  const clean = repoUrl.trim().replace(/\.git$/, "").replace(/\/$/, "");
+  const ssh = clean.match(/^git@github\.com:(.+)$/);
+  const base = ssh ? `https://github.com/${ssh[1]}` : clean;
+  if (!/^https:\/\/github\.com\//.test(base)) return null;
+  return `${base}/commit/${sha.trim()}`;
+}
 
 /** Returns a tone-bucket for coloring the update kind chip. */
 export function taskUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {

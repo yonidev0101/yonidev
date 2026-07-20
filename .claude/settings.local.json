@@ -26,7 +26,8 @@
       "Bash(npm config *)",
       "Bash(npx drizzle-kit *)",
       "Bash(npx tsc *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cd *)"
     ]
   }
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { confirm } from "./ConfirmDialog";
+import TaskQuickAdd from "./TaskQuickAdd";
 import type {
   PersonalProject,
   PersonalTask,
@@ -59,7 +60,14 @@ export default function PersonalProjectShell(props: Props) {
 
       {tab === "overview" && <OverviewTab {...props} />}
       {tab === "tasks" && <TasksTab project={project} tasks={props.tasks} onChange={refresh} />}
-      {tab === "time" && <TimeTab project={project} entries={props.timeEntries} onChange={refresh} />}
+      {tab === "time" && (
+        <TimeTab
+          project={project}
+          entries={props.timeEntries}
+          tasks={props.tasks}
+          onChange={refresh}
+        />
+      )}
       {tab === "links" && <LinksTab project={project} links={props.links} onChange={refresh} />}
     </div>
   );
@@ -284,7 +292,9 @@ function OverviewTab({ project, tasks, timeEntries }: Props) {
           <ul className="space-y-2">
             {openTasks.map((t) => (
               <li key={t.id} className="text-[13px] text-[#0F172A] flex items-baseline justify-between gap-2">
-                <span className="truncate">{t.title}</span>
+                <Link href={`/admin/personal/tasks/${t.id}`} className="truncate hover:text-[#2B7FFF]">
+                  {t.title}
+                </Link>
                 {t.dueDate && (
                   <span className="text-[11px] text-[#94A3B8] shrink-0">{fmtDateHe(t.dueDate)}</span>
                 )}
@@ -358,34 +368,6 @@ function TasksTab({
   tasks: PersonalTask[];
   onChange: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    priority: "medium" as PersonalTask["priority"],
-    dueDate: "",
-  });
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await fetch("/api/admin/personal-tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        projectId: project.id,
-        title: form.title,
-        priority: form.priority,
-        dueDate: form.dueDate || null,
-      }),
-    });
-    if (res.ok) {
-      setForm({ title: "", priority: "medium", dueDate: "" });
-      setOpen(false);
-      onChange();
-    } else {
-      toast.error("יצירה נכשלה");
-    }
-  }
-
   async function setStatus(id: number, status: PersonalTask["status"]) {
     const res = await fetch(`/api/admin/personal-tasks/${id}`, {
       method: "PATCH",
@@ -410,51 +392,13 @@ function TasksTab({
 
   return (
     <div className="space-y-4">
-      {open ? (
-        <form
-          onSubmit={add}
-          className="bg-white border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3"
-        >
-          <input
-            autoFocus
-            required
-            placeholder="תיאור המשימה"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="md:col-span-6 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-          />
-          <select
-            value={form.priority}
-            onChange={(e) => setForm({ ...form, priority: e.target.value as PersonalTask["priority"] })}
-            className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-          >
-            <option value="low">עדיפות נמוכה</option>
-            <option value="medium">עדיפות רגילה</option>
-            <option value="high">עדיפות גבוהה</option>
-          </select>
-          <input
-            type="date"
-            value={form.dueDate}
-            onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-            className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-          />
-          <div className="md:col-span-2 flex gap-2">
-            <button className="flex-1 rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] text-white text-[13px] font-semibold px-3 py-2">
-              הוסף
-            </button>
-            <button type="button" onClick={() => setOpen(false)} className="text-[13px] text-[#64748B] px-2">
-              ביטול
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button
-          onClick={() => setOpen(true)}
-          className="text-[13px] font-semibold text-[#2B7FFF] hover:underline"
-        >
-          + משימה חדשה
-        </button>
-      )}
+      {/* Same add-flow as everywhere else in the admin — one form, one behaviour. */}
+      <TaskQuickAdd
+        projects={[]}
+        fixedProjectId={project.id}
+        fixedDomain="personal"
+        onCreated={onChange}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {TASK_COLS.map((col) => {
@@ -471,7 +415,12 @@ function TasksTab({
                     className="bg-white border border-[#E2E8F0] rounded-lg p-3 text-[13px] group hover:border-[#2B7FFF]/40 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-medium text-[#0F172A] flex-1 min-w-0">{t.title}</span>
+                      <Link
+                        href={`/admin/personal/tasks/${t.id}`}
+                        className="font-medium text-[#0F172A] hover:text-[#2B7FFF] flex-1 min-w-0"
+                      >
+                        {t.title}
+                      </Link>
                       <button
                         onClick={() => del(t.id)}
                         className="text-[11px] text-[#94A3B8] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
@@ -480,6 +429,11 @@ function TasksTab({
                         ✕
                       </button>
                     </div>
+                    {t.nextAction && (
+                      <div className="text-[11px] text-[#64748B] mt-1 truncate">
+                        → {t.nextAction}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mt-2 gap-2">
                       <span
                         className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
@@ -531,16 +485,22 @@ function formatElapsed(seconds: number): string {
 function TimeTab({
   project,
   entries,
+  tasks,
   onChange,
 }: {
   project: PersonalProject;
   entries: PersonalTimeEntry[];
+  tasks: PersonalTask[];
   onChange: () => void;
 }) {
   const [active, setActive] = useState<{ id: number; projectId: number; startedAt: string } | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [note, setNote] = useState("");
+  const [taskId, setTaskId] = useState("");
   const [manual, setManual] = useState({ date: "", hours: "", note: "" });
+
+  const openTasks = tasks.filter((t) => t.status !== "done" && t.status !== "canceled");
+  const taskTitleById = new Map(tasks.map((t) => [t.id, t.title]));
 
   // Load the active personal timer once on mount.
   useEffect(() => {
@@ -574,12 +534,17 @@ function TimeTab({
     const res = await fetch("/api/admin/personal-time/timer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: project.id, note: note || null }),
+      body: JSON.stringify({
+        projectId: project.id,
+        taskId: taskId ? Number(taskId) : null,
+        note: note || null,
+      }),
     });
     if (res.ok) {
       const json = await res.json();
       setActive({ id: json.entry.id, projectId: project.id, startedAt: json.entry.startedAt });
       setNote("");
+      setTaskId("");
       toast.success("הטיימר התחיל");
       onChange();
     } else {
@@ -664,6 +629,20 @@ function TimeTab({
         </div>
       ) : (
         <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex items-center gap-3 flex-wrap">
+          {openTasks.length > 0 && (
+            <select
+              value={taskId}
+              onChange={(e) => setTaskId(e.target.value)}
+              className="min-w-[160px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+            >
+              <option value="">— ללא משימה —</option>
+              {openTasks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
+          )}
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -730,8 +709,17 @@ function TimeTab({
               <li key={e.id} className="px-5 py-3 flex items-center gap-3 group">
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] text-[#0F172A] truncate">
-                    {e.note || <span className="text-[#94A3B8]">— ללא הערה —</span>}
+                    {e.taskId && taskTitleById.get(e.taskId) ? (
+                      taskTitleById.get(e.taskId)
+                    ) : e.note ? (
+                      e.note
+                    ) : (
+                      <span className="text-[#94A3B8]">— ללא הערה —</span>
+                    )}
                   </div>
+                  {e.taskId && e.note && (
+                    <div className="text-[12px] text-[#64748B] truncate">{e.note}</div>
+                  )}
                   <div className="text-[11px] text-[#94A3B8]">{fmtDateTimeHe(e.startedAt)}</div>
                 </div>
                 <span className="text-[13px] font-semibold tabular-nums text-[#0F172A]">

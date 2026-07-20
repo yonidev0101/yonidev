@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TASK_STATUS_HE, TASK_PRIORITY_HE } from "@/lib/admin/format";
+import { routes, type Domain } from "@/lib/admin/domain";
 
 interface TaskShape {
   id: number;
+  /** Defaults to client work for the call sites that only ever hold client tasks. */
+  domain?: Domain;
   title: string;
   description: string | null;
   status: string;
@@ -43,7 +46,8 @@ export default function TaskEditRow({
       return;
     }
     setSaving(true);
-    const res = await fetch(`/api/admin/tasks/${task.id}`, {
+    const domain = task.domain ?? "client";
+    const res = await fetch(`${routes(domain).tasksApi}/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -52,7 +56,10 @@ export default function TaskEditRow({
         status: form.status,
         priority: form.priority,
         dueDate: form.dueDate || null,
-        waitingOn: form.status === "waiting" ? form.waitingOn.trim() || null : null,
+        // waitingOn only exists on client tasks for now.
+        ...(domain === "client"
+          ? { waitingOn: form.status === "waiting" ? form.waitingOn.trim() || null : null }
+          : {}),
         estimateMinutes: form.estimateHours
           ? Math.round(parseFloat(form.estimateHours) * 60)
           : null,

@@ -36,22 +36,25 @@ export async function GET(req: Request) {
       .filter((t) => t.followUpAt && t.followUpAt <= today)
       .map((t) => ({
         id: t.id,
+        domain: t.domain,
         title: t.title,
         clientName: t.clientName,
         projectName: t.projectName,
         meta: relativeDayHe(t.followUpAt) ?? "היום",
         alert: !!t.followUpAt && t.followUpAt < today,
       }));
-    const followUpIds = new Set(followUps.map((t) => t.id));
+    // Keyed by domain too — a client task and a personal task can share an id.
+    const followUpKeys = new Set(followUps.map((t) => `${t.domain}:${t.id}`));
 
     // Overdue tasks not already surfaced as a follow-up.
     const overdueTasks: DigestTask[] = data.upcomingTasks
       .filter((t) => {
         const d = actionableDate(t);
-        return d && d < today && !followUpIds.has(t.id);
+        return d && d < today && !followUpKeys.has(`${t.domain}:${t.id}`);
       })
       .map((t) => ({
         id: t.id,
+        domain: t.domain,
         title: t.title,
         clientName: t.clientName,
         projectName: t.projectName,
@@ -61,6 +64,7 @@ export async function GET(req: Request) {
 
     const staleTasks: DigestTask[] = data.staleTasks.map((t) => ({
       id: t.id,
+      domain: t.domain,
       title: t.title,
       clientName: t.clientName,
       projectName: t.projectName,
