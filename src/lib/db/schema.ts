@@ -32,8 +32,10 @@ export const projectStatusEnum = pgEnum("project_status", [
 export const taskStatusEnum = pgEnum("task_status", [
   "todo",
   "in_progress",
+  "waiting",
   "blocked",
   "done",
+  "canceled",
 ]);
 
 export const taskPriorityEnum = pgEnum("task_priority", [
@@ -83,6 +85,18 @@ export const personalProjectStatusEnum = pgEnum("personal_project_status", [
   "paused",
   "done",
   "archived",
+]);
+
+// Solo-dev flavoured update kinds — the client-work equivalent (taskUpdateKindEnum)
+// is about calls/meetings/handoffs, which don't exist on personal projects.
+export const personalUpdateKindEnum = pgEnum("personal_update_kind", [
+  "progress",
+  "decision",
+  "blocker",
+  "commit",
+  "research",
+  "bug",
+  "note",
 ]);
 
 // ── tables ────────────────────────────────────────────────────────────
@@ -150,6 +164,11 @@ export const tasks = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
     nextAction: text("next_action"),
     followUpAt: date("follow_up_at"),
+    // Up-front time estimate (minutes). Compared against logged time to sharpen quoting.
+    estimateMinutes: integer("estimate_minutes"),
+    // When status is "waiting": who/what we're parked on, and since when (powers "כבר X ימים").
+    waitingOn: text("waiting_on"),
+    waitingSince: date("waiting_since"),
     lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -321,11 +340,46 @@ export const personalTasks = pgTable(
     priority: taskPriorityEnum("priority").notNull().default("medium"),
     dueDate: date("due_date"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    // Up-front estimate (minutes), compared against logged time to calibrate future guesses.
+    estimateMinutes: integer("estimate_minutes"),
+    nextAction: text("next_action"),
+    // Definition of done — what has to be true before this can be closed.
+    acceptance: text("acceptance"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("personal_tasks_project_idx").on(t.projectId),
     index("personal_tasks_status_idx").on(t.status),
+  ],
+);
+
+/** Work journal for a personal task: what happened, when, and against which commit. */
+export const personalTaskUpdates = pgTable(
+  "personal_task_updates",
+  {
+    id: serial("id").primaryKey(),
+    taskId: integer("task_id")
+      .notNull()
+      .references(() => personalTasks.id, { onDelete: "cascade" }),
+    happenedAt: timestamp("happened_at", { withTimezone: true }).notNull().defaultNow(),
+    kind: personalUpdateKindEnum("kind").notNull().default("progress"),
+    summary: text("summary").notNull(),
+    details: text("details"),
+    statusBefore: taskStatusEnum("status_before"),
+    statusAfter: taskStatusEnum("status_after"),
+    nextAction: text("next_action"),
+    commitSha: text("commit_sha"),
+    commitUrl: text("commit_url"),
+    timeEntryId: integer("time_entry_id").references(() => personalTimeEntries.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("personal_task_updates_task_idx").on(t.taskId),
+    index("personal_task_updates_happened_idx").on(t.happenedAt),
   ],
 );
 
@@ -427,6 +481,18 @@ export const personalTasksRelations = relations(personalTasks, ({ one, many }) =
     references: [personalProjects.id],
   }),
   timeEntries: many(personalTimeEntries),
+  updates: many(personalTaskUpdates),
+}));
+
+export const personalTaskUpdatesRelations = relations(personalTaskUpdates, ({ one }) => ({
+  task: one(personalTasks, {
+    fields: [personalTaskUpdates.taskId],
+    references: [personalTasks.id],
+  }),
+  timeEntry: one(personalTimeEntries, {
+    fields: [personalTaskUpdates.timeEntryId],
+    references: [personalTimeEntries.id],
+  }),
 }));
 
 export const personalLinksRelations = relations(personalLinks, ({ one }) => ({
@@ -475,3 +541,5 @@ export type PersonalLink = typeof personalLinks.$inferSelect;
 export type NewPersonalLink = typeof personalLinks.$inferInsert;
 export type PersonalTimeEntry = typeof personalTimeEntries.$inferSelect;
 export type NewPersonalTimeEntry = typeof personalTimeEntries.$inferInsert;
+export type PersonalTaskUpdate = typeof personalTaskUpdates.$inferSelect;
+export type NewPersonalTaskUpdate = typeof personalTaskUpdates.$inferInsert;

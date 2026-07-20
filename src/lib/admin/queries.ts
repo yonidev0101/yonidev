@@ -12,8 +12,10 @@ import {
   personalTasks,
   personalLinks,
   personalTimeEntries,
+  personalTaskUpdates,
 } from "@/lib/db/client";
 import { and, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
+import { isTaskClosed } from "@/lib/admin/format";
 
 export async function getDashboardData() {
   const now = new Date();
@@ -77,7 +79,7 @@ export async function getDashboardData() {
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .where(
       and(
-        inArray(tasks.status, ["todo", "in_progress", "blocked"]),
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
         sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate}) <= ${weekEndStr}`,
       ),
     )
@@ -99,17 +101,46 @@ export async function getDashboardData() {
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .where(
       and(
-        inArray(tasks.status, ["todo", "in_progress", "blocked"]),
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
         lte(tasks.followUpAt, weekEndStr),
       ),
     )
     .orderBy(tasks.followUpAt);
+
+  // Stale: open tasks that haven't moved in 14+ days. Parked "waiting" tasks whose
+  // follow-up is still in the future are intentionally idle, so they're excluded.
+  const staleCutoff = new Date(now);
+  staleCutoff.setDate(now.getDate() - 14);
+  const staleTasks = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      lastUpdateAt: tasks.lastUpdateAt,
+      createdAt: tasks.createdAt,
+      projectId: tasks.projectId,
+      projectName: projects.name,
+      clientName: clients.name,
+    })
+    .from(tasks)
+    .leftJoin(projects, eq(projects.id, tasks.projectId))
+    .leftJoin(clients, eq(clients.id, projects.clientId))
+    .where(
+      and(
+        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
+        sql`COALESCE(${tasks.lastUpdateAt}, ${tasks.createdAt}) < ${staleCutoff}`,
+        sql`NOT (${tasks.status} = 'waiting' AND ${tasks.followUpAt} IS NOT NULL AND ${tasks.followUpAt} > ${todayStr})`,
+      ),
+    )
+    .orderBy(sql`COALESCE(${tasks.lastUpdateAt}, ${tasks.createdAt})`);
 
   // Active timer
   const activeTimerRows = await db
     .select({
       id: timeEntries.id,
       startedAt: timeEntries.startedAt,
+      projectId: timeEntries.projectId,
+      taskId: timeEntries.taskId,
       projectName: projects.name,
       clientName: clients.name,
     })
@@ -119,13 +150,139 @@ export async function getDashboardData() {
     .where(isNull(timeEntries.endedAt))
     .limit(1);
 
+  // ── personal side ───────────────────────────────────────────────────
+  // The dashboard answers "what's going on", and personal projects are part of
+  // that answer. Everything below mirrors the client queries above.
+
+  const [
+    personalWeekHours,
+    personalUpcoming,
+    personalStale,
+    personalActiveTimerRows,
+    activePersonalProjects,
+  ] = await Promise.all([
+    db
+      .select({
+        totalSec: sql<number>`COALESCE(SUM(${personalTimeEntries.durationSeconds}), 0)::int`,
+      })
+      .from(personalTimeEntries)
+      .where(gte(personalTimeEntries.startedAt, weekStart)),
+    db
+      .select({
+        id: personalTasks.id,
+        title: personalTasks.title,
+        dueDate: personalTasks.dueDate,
+        nextAction: personalTasks.nextAction,
+        status: personalTasks.status,
+        priority: personalTasks.priority,
+        projectId: personalTasks.projectId,
+        projectName: personalProjects.name,
+      })
+      .from(personalTasks)
+      .leftJoin(personalProjects, eq(personalProjects.id, personalTasks.projectId))
+      .where(
+        and(
+          inArray(personalTasks.status, ["todo", "in_progress", "waiting", "blocked"]),
+          lte(personalTasks.dueDate, weekEndStr),
+        ),
+      )
+      .orderBy(personalTasks.dueDate),
+    db
+      .select({
+        id: personalTasks.id,
+        title: personalTasks.title,
+        status: personalTasks.status,
+        lastUpdateAt: personalTasks.lastUpdateAt,
+        createdAt: personalTasks.createdAt,
+        projectId: personalTasks.projectId,
+        projectName: personalProjects.name,
+      })
+      .from(personalTasks)
+      .leftJoin(personalProjects, eq(personalProjects.id, personalTasks.projectId))
+      .where(
+        and(
+          inArray(personalTasks.status, ["todo", "in_progress", "waiting", "blocked"]),
+          sql`COALESCE(${personalTasks.lastUpdateAt}, ${personalTasks.createdAt}) < ${staleCutoff}`,
+        ),
+      )
+      .orderBy(sql`COALESCE(${personalTasks.lastUpdateAt}, ${personalTasks.createdAt})`),
+    db
+      .select({
+        id: personalTimeEntries.id,
+        startedAt: personalTimeEntries.startedAt,
+        projectId: personalTimeEntries.projectId,
+        taskId: personalTimeEntries.taskId,
+        projectName: personalProjects.name,
+      })
+      .from(personalTimeEntries)
+      .leftJoin(personalProjects, eq(personalProjects.id, personalTimeEntries.projectId))
+      .where(isNull(personalTimeEntries.endedAt))
+      .limit(1),
+    db
+      .select({
+        id: personalProjects.id,
+        name: personalProjects.name,
+        status: personalProjects.status,
+        priority: personalProjects.priority,
+        nextAction: personalProjects.nextAction,
+        targetDate: personalProjects.targetDate,
+      })
+      .from(personalProjects)
+      .where(inArray(personalProjects.status, ["active", "idea", "paused"]))
+      .orderBy(desc(personalProjects.createdAt)),
+  ]);
+
+  // Open-task counts per personal project, for the dashboard cards.
+  const personalIds = activePersonalProjects.map((p) => p.id);
+  const personalOpenCounts = personalIds.length
+    ? await db
+        .select({
+          projectId: personalTasks.projectId,
+          open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} NOT IN ('done','canceled'))::int`,
+        })
+        .from(personalTasks)
+        .where(inArray(personalTasks.projectId, personalIds))
+        .groupBy(personalTasks.projectId)
+    : [];
+  const openByProject = new Map(personalOpenCounts.map((r) => [r.projectId, r.open]));
+
+  const clientWeekSeconds = weekHours[0]?.totalSec ?? 0;
+  const personalWeekSeconds = personalWeekHours[0]?.totalSec ?? 0;
+
   return {
     activeClients,
-    weekHoursSeconds: weekHours[0]?.totalSec ?? 0,
+    weekHoursSeconds: clientWeekSeconds + personalWeekSeconds,
+    weekHoursClientSeconds: clientWeekSeconds,
+    weekHoursPersonalSeconds: personalWeekSeconds,
     outstandingInvoices,
-    upcomingTasks,
-    followUpsThisWeek,
-    activeTimer: activeTimerRows[0] ?? null,
+    // Tasks are merged across domains — the dashboard shows one to-do reality.
+    upcomingTasks: [
+      ...upcomingTasks.map((t) => ({ ...t, domain: "client" as const })),
+      ...personalUpcoming.map((t) => ({
+        ...t,
+        domain: "personal" as const,
+        clientName: null,
+        followUpAt: null,
+      })),
+    ],
+    // Follow-ups stay client-only: personal tasks have no follow-up model yet.
+    followUpsThisWeek: followUpsThisWeek.map((t) => ({ ...t, domain: "client" as const })),
+    staleTasks: [
+      ...staleTasks.map((t) => ({ ...t, domain: "client" as const })),
+      ...personalStale.map((t) => ({ ...t, domain: "personal" as const, clientName: null })),
+    ],
+    activeTimers: [
+      ...activeTimerRows.map((t) => ({ ...t, domain: "client" as const })),
+      ...personalActiveTimerRows.map((t) => ({
+        ...t,
+        domain: "personal" as const,
+        clientName: null,
+      })),
+    ],
+    personalProjects: activePersonalProjects.map((p) => ({
+      ...p,
+      openTasks: openByProject.get(p.id) ?? 0,
+    })),
     todayStr,
   };
 }
@@ -199,7 +356,7 @@ export async function getClientWithRelations(clientId: number) {
           [] as {
             id: number;
             title: string;
-            status: "todo" | "in_progress" | "blocked" | "done";
+            status: "todo" | "in_progress" | "waiting" | "blocked" | "done" | "canceled";
             priority: "low" | "medium" | "high";
             dueDate: string | null;
             nextAction: string | null;
@@ -262,7 +419,7 @@ export async function getClientWithRelations(clientId: number) {
   const outstandingTotalIls = clientInvoices
     .filter((inv) => inv.status === "sent")
     .reduce((sum, inv) => sum + Number(inv.totalIls), 0);
-  const openTaskCount = clientTasks.filter((t) => t.status !== "done").length;
+  const openTaskCount = clientTasks.filter((t) => !isTaskClosed(t.status)).length;
 
   return {
     client,
@@ -365,6 +522,55 @@ export async function getTaskWithUpdates(taskId: number) {
 
 // ── personal projects (no client, no billing) ─────────────────────────
 
+/**
+ * Everything the personal-task work desk needs: the task, its project, the repo
+ * link (so a bare SHA can be turned into a commit URL), the journal, and time.
+ */
+export async function getPersonalTaskWithUpdates(taskId: number) {
+  const [row] = await db
+    .select({ task: personalTasks, project: personalProjects })
+    .from(personalTasks)
+    .leftJoin(personalProjects, eq(personalProjects.id, personalTasks.projectId))
+    .where(eq(personalTasks.id, taskId));
+  if (!row) return null;
+
+  const [updates, sessions, repoLinks] = await Promise.all([
+    db
+      .select()
+      .from(personalTaskUpdates)
+      .where(eq(personalTaskUpdates.taskId, taskId))
+      .orderBy(desc(personalTaskUpdates.happenedAt)),
+    db
+      .select()
+      .from(personalTimeEntries)
+      .where(eq(personalTimeEntries.taskId, taskId))
+      .orderBy(desc(personalTimeEntries.startedAt)),
+    db
+      .select({ url: personalLinks.url })
+      .from(personalLinks)
+      .where(
+        and(
+          eq(personalLinks.projectId, row.task.projectId),
+          eq(personalLinks.kind, "github"),
+        ),
+      )
+      .limit(1),
+  ]);
+
+  const totalSeconds = sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
+  const activeSession = sessions.find((s) => !s.endedAt) ?? null;
+
+  return {
+    task: row.task,
+    project: row.project,
+    repoUrl: repoLinks[0]?.url ?? null,
+    updates,
+    sessions,
+    activeSession,
+    totalSeconds,
+  };
+}
+
 export async function getPersonalProjects() {
   const rows = await db
     .select()
@@ -380,7 +586,7 @@ export async function getPersonalProjects() {
     db
       .select({
         projectId: personalTasks.projectId,
-        open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} <> 'done')::int`,
+        open: sql<number>`COUNT(*) FILTER (WHERE ${personalTasks.status} NOT IN ('done', 'canceled'))::int`,
       })
       .from(personalTasks)
       .where(inArray(personalTasks.projectId, ids))

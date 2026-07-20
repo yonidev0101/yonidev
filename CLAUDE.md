@@ -113,7 +113,7 @@ A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL
 - Apply instead over Neon's HTTP driver: `node scripts/apply-migrations.mjs <drizzle/NNNN_name.sql>` with `DATABASE_URL` (load from `.env.local`) and `NODE_TLS_REJECT_UNAUTHORIZED=0` set. The DB was provisioned via `push`, so drizzle's `__drizzle_migrations` table is empty — apply only the new file's statements, never the full migrator. (Use the `/migrate` skill to do all of this.)
 
 ### Env vars
-`DATABASE_URL`, `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD`, plus nodemailer SMTP vars for invoice sending.
+`DATABASE_URL`, `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD`, plus nodemailer SMTP vars for invoice sending. `CRON_SECRET` (set in Vercel) guards the daily-digest cron route (`/api/cron/daily-digest`, scheduled in `vercel.json`); Vercel auto-injects it as a `Bearer` token.
 
 ## Git workflow
 

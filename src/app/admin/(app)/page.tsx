@@ -4,10 +4,21 @@ import {
   actionableDate,
   fmtHours,
   fmtIls,
+  fmtTimeHe,
+  fmtDateHe,
   relativeDayHe,
+  daysSince,
   CLIENT_STATUS_HE,
   TASK_STATUS_HE,
+  PERSONAL_PROJECT_STATUS_HE,
 } from "@/lib/admin/format";
+import {
+  DOMAIN_ACCENT,
+  DOMAIN_LABEL,
+  DOMAIN_TONE,
+  routes,
+  type Domain,
+} from "@/lib/admin/domain";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +35,51 @@ export default async function DashboardPage() {
         <p className="text-[#64748B] text-sm mt-1">סקירה מהירה של מה שקורה עכשיו.</p>
       </header>
 
+      {/* What's running right now — the first thing you should see. */}
+      {data.activeTimers.length > 0 && (
+        <div className="space-y-2">
+          {data.activeTimers.map((t) => (
+            <Link
+              key={`${t.domain}-${t.id}`}
+              href={
+                t.taskId
+                  ? routes(t.domain).taskDetail(t.taskId)
+                  : routes(t.domain).projectDetail(t.projectId)
+              }
+              className={`flex items-center gap-3 rounded-xl border px-5 py-3 transition hover:brightness-[0.98] ${
+                t.domain === "personal"
+                  ? "bg-[#F5F3FF] border-[#DDD6FE]"
+                  : "bg-[#EFF6FF] border-[#BFDBFE]"
+              }`}
+            >
+              <span
+                className="w-2 h-2 rounded-full animate-pulse shrink-0"
+                style={{ background: DOMAIN_ACCENT[t.domain] }}
+              />
+              <span className="text-[13px] font-semibold text-[#0F172A]">עובד עכשיו</span>
+              <span className="text-[13px] text-[#475569] truncate flex-1 min-w-0">
+                {[t.clientName, t.projectName].filter(Boolean).join(" · ")}
+              </span>
+              <span className="text-[12px] text-[#64748B] tabular-nums shrink-0">
+                מ-{fmtTimeHe(t.startedAt)}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Kpi label="לקוחות פעילים" value={data.activeClients.length.toString()} />
-        <Kpi label="שעות בשבוע" value={fmtHours(data.weekHoursSeconds)} />
+        <Kpi
+          label="שעות בשבוע"
+          value={fmtHours(data.weekHoursSeconds)}
+          sub={
+            data.weekHoursPersonalSeconds > 0
+              ? `${fmtHours(data.weekHoursPersonalSeconds)} אישי`
+              : undefined
+          }
+        />
         <Kpi
           label="חשבוניות פתוחות"
           value={data.outstandingInvoices.length.toString()}
@@ -79,7 +131,7 @@ export default async function DashboardPage() {
                     ? relativeDayHe(d)
                     : TASK_STATUS_HE[t.status];
                 return (
-                  <li key={t.id} className="py-3 flex items-center gap-3">
+                  <li key={`${t.domain}-${t.id}`} className="py-3 flex items-center gap-3">
                     <span
                       className={`shrink-0 w-2 h-2 rounded-full ${
                         overdue
@@ -91,13 +143,14 @@ export default async function DashboardPage() {
                     />
                     <div className="flex-1 min-w-0">
                       <Link
-                        href={`/admin/tasks/${t.id}`}
+                        href={routes(t.domain).taskDetail(t.id)}
                         className="block text-[14px] font-medium text-[#0F172A] truncate hover:text-[#2B7FFF]"
                       >
                         {t.title}
                       </Link>
-                      <div className="text-[12px] text-[#94A3B8] truncate">
-                        {t.clientName} · {t.projectName}
+                      <div className="text-[12px] text-[#94A3B8] truncate flex items-center gap-1.5">
+                        <DomainBadge domain={t.domain} />
+                        {[t.clientName, t.projectName].filter(Boolean).join(" · ")}
                       </div>
                     </div>
                     <span
@@ -114,6 +167,49 @@ export default async function DashboardPage() {
           )}
         </Section>
 
+        {/* Personal projects — the side work, visible instead of hidden behind a nav item. */}
+        {data.personalProjects.length > 0 && (
+          <Section
+            title="פרויקטים אישיים"
+            link={{ href: "/admin/personal", label: "כל הפרויקטים" }}
+          >
+            <ul className="divide-y divide-[#F1F5F9]">
+              {data.personalProjects.slice(0, 6).map((p) => (
+                <li key={p.id} className="py-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <Link
+                      href={routes("personal").projectDetail(p.id)}
+                      className="text-[14px] font-medium text-[#0F172A] hover:text-[#2B7FFF] truncate flex-1 min-w-0"
+                    >
+                      {p.name}
+                    </Link>
+                    <span className="shrink-0 text-[12px] text-[#64748B] tabular-nums">
+                      {p.openTasks > 0 ? `${p.openTasks} משימות` : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-1.5 rounded ${DOMAIN_TONE.personal}`}
+                    >
+                      {PERSONAL_PROJECT_STATUS_HE[p.status]}
+                    </span>
+                    {p.targetDate && (
+                      <span className="text-[11px] text-[#94A3B8]">
+                        יעד {relativeDayHe(p.targetDate) ?? fmtDateHe(p.targetDate)}
+                      </span>
+                    )}
+                  </div>
+                  {p.nextAction && (
+                    <p className="text-[12px] text-[#475569] mt-1 leading-snug truncate">
+                      → {p.nextAction}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
         {/* Follow-ups this week */}
         <Section
           title="מעקבים השבוע"
@@ -126,10 +222,10 @@ export default async function DashboardPage() {
               {data.followUpsThisWeek.slice(0, 8).map((t) => {
                 const overdue = t.followUpAt && t.followUpAt < todayStr;
                 return (
-                  <li key={t.id} className="py-3">
+                  <li key={`${t.domain}-${t.id}`} className="py-3">
                     <div className="flex items-baseline justify-between gap-3">
                       <Link
-                        href={`/admin/tasks/${t.id}`}
+                        href={routes(t.domain).taskDetail(t.id)}
                         className="text-[14px] font-medium text-[#0F172A] hover:text-[#2B7FFF] truncate flex-1 min-w-0"
                       >
                         {t.title}
@@ -143,7 +239,7 @@ export default async function DashboardPage() {
                       </span>
                     </div>
                     <div className="text-[11px] text-[#94A3B8] truncate">
-                      {t.clientName} · {t.projectName}
+                      {[t.clientName, t.projectName].filter(Boolean).join(" · ")}
                     </div>
                     {t.nextAction && (
                       <p className="text-[12px] text-[#475569] mt-1 leading-snug truncate">
@@ -156,6 +252,40 @@ export default async function DashboardPage() {
             </ul>
           )}
         </Section>
+
+        {/* Stale — tasks that haven't moved in 14+ days */}
+        {data.staleTasks.length > 0 && (
+          <Section
+            title="לא זז"
+            link={{ href: "/admin/tasks", label: "כל המשימות" }}
+          >
+            <ul className="divide-y divide-[#F1F5F9]">
+              {data.staleTasks.slice(0, 8).map((t) => {
+                const days = daysSince(t.lastUpdateAt ?? t.createdAt);
+                return (
+                  <li key={`${t.domain}-${t.id}`} className="py-3 flex items-center gap-3">
+                    <span className="shrink-0">💤</span>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={routes(t.domain).taskDetail(t.id)}
+                        className="block text-[14px] font-medium text-[#0F172A] truncate hover:text-[#2B7FFF]"
+                      >
+                        {t.title}
+                      </Link>
+                      <div className="text-[12px] text-[#94A3B8] truncate flex items-center gap-1.5">
+                        <DomainBadge domain={t.domain} />
+                        {[t.clientName, t.projectName].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[12px] tabular-nums text-amber-700 font-semibold">
+                      {days} ימ׳
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </Section>
+        )}
 
         {/* Outstanding invoices */}
         <Section
@@ -224,6 +354,17 @@ export default async function DashboardPage() {
         </Section>
       </div>
     </div>
+  );
+}
+
+/** Tiny "client / personal" tag, so merged lists stay readable at a glance. */
+function DomainBadge({ domain }: { domain: Domain }) {
+  return (
+    <span
+      className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 rounded ${DOMAIN_TONE[domain]}`}
+    >
+      {DOMAIN_LABEL[domain]}
+    </span>
   );
 }
 

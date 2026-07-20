@@ -9,9 +9,11 @@ const createSchema = z.object({
   projectId: z.coerce.number().int().positive(),
   title: z.string().min(1).max(300),
   description: z.string().max(5000).optional().nullable(),
-  status: z.enum(["todo", "in_progress", "blocked", "done"]).optional(),
+  status: z.enum(["todo", "in_progress", "waiting", "blocked", "done", "canceled"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.string().optional().nullable(),
+  estimateMinutes: z.coerce.number().int().min(0).optional().nullable(),
+  acceptance: z.string().max(5000).optional().nullable(),
 });
 
 export async function GET(req: Request) {
@@ -40,6 +42,8 @@ export async function POST(req: Request) {
         status,
         priority: parsed.data.priority ?? "medium",
         dueDate: parsed.data.dueDate || null,
+        estimateMinutes: parsed.data.estimateMinutes ?? null,
+        acceptance: parsed.data.acceptance ?? null,
         completedAt: status === "done" ? new Date() : null,
       })
       .returning();

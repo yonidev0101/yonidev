@@ -22,7 +22,7 @@ const KIND_ORDER: UpdateKind[] = [
   "handoff",
 ];
 
-const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "blocked", "done"];
+const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "waiting", "blocked", "done"];
 
 export default function TaskUpdateForm({
   taskId,
@@ -44,6 +44,7 @@ export default function TaskUpdateForm({
 
   const [setStatus, setSetStatus] = useState(false);
   const [newStatus, setNewStatus] = useState<TaskStatus>(currentStatus);
+  const [waitingOn, setWaitingOn] = useState("");
 
   const [setNext, setSetNext] = useState(false);
   const [nextAction, setNextAction] = useState("");
@@ -62,6 +63,7 @@ export default function TaskUpdateForm({
     setDetails("");
     setSetStatus(false);
     setNewStatus(currentStatus);
+    setWaitingOn("");
     setSetNext(false);
     setNextAction("");
     setSetFollow(false);
@@ -85,6 +87,8 @@ export default function TaskUpdateForm({
         summary: summary.trim(),
         details: details.trim() || null,
         newStatus: setStatus ? newStatus : null,
+        waitingOn:
+          setStatus && newStatus === "waiting" ? waitingOn.trim() || null : undefined,
         nextAction: setNext ? nextAction.trim() || null : undefined,
         followUpAt: setFollow ? followUpAt || null : undefined,
         timeMinutes: logTime && timeMinutes ? Number(timeMinutes) : null,
@@ -169,6 +173,18 @@ export default function TaskUpdateForm({
             ))}
           </select>
         </OptionalRow>
+
+        {setStatus && newStatus === "waiting" && (
+          <div className="flex items-center gap-3 ps-7">
+            <span className="text-[#0F172A] font-medium min-w-[170px]">ממתין ל…</span>
+            <input
+              value={waitingOn}
+              onChange={(e) => setWaitingOn(e.target.value)}
+              placeholder="דנה — תשובה על האפיון"
+              className="flex-1 border border-[#E2E8F0] rounded-md bg-white px-2 py-1 text-[13px]"
+            />
+          </div>
+        )}
 
         <OptionalRow
           checked={setNext}

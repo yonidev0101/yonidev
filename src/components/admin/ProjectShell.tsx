@@ -256,7 +256,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // ── Overview tab ──
 
 function OverviewTab({ project, tasks, communications, timeEntries }: Props) {
-  const openTasks = tasks.filter((t) => t.status !== "done").slice(0, 5);
+  const openTasks = tasks
+    .filter((t) => t.status !== "done" && t.status !== "canceled")
+    .slice(0, 5);
   const recentTime = timeEntries.slice(0, 5);
   const recentComms = communications.slice(0, 5);
 
@@ -331,8 +333,10 @@ function OverviewTab({ project, tasks, communications, timeEntries }: Props) {
 const TASK_COLS: { key: Task["status"]; label: string }[] = [
   { key: "todo", label: "לעשות" },
   { key: "in_progress", label: "בתהליך" },
-  { key: "blocked", label: "תקוע" },
+  { key: "waiting", label: "ממתין" },
+  { key: "blocked", label: "חסום" },
   { key: "done", label: "הושלם" },
+  { key: "canceled", label: "בוטל" },
 ];
 
 function TasksTab({

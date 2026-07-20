@@ -2,61 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-
-interface ActiveTimer {
-  id: number;
-  projectId: number;
-  projectName: string;
-  clientName: string;
-  startedAt: string;
-}
-
-function formatElapsed(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}h`;
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
+import { formatElapsed } from "@/lib/admin/format";
+import { DOMAIN_ACCENT, routes } from "@/lib/admin/domain";
+import { useLiveTimer, useElapsed } from "@/lib/admin/useLiveTimer";
 
 export default function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
-  const [active, setActive] = useState<ActiveTimer | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (cancelled) return;
-      try {
-        const res = await fetch("/api/admin/time/timer", { cache: "no-store" });
-        if (cancelled) return;
-        if (!res.ok) {
-          setActive(null);
-          return;
-        }
-        const json = await res.json();
-        if (!cancelled) setActive(json.active ?? null);
-      } catch {
-        // ignore
-      }
-    };
-    run();
-    const id = setInterval(run, 30_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!active) return;
-    const startMs = new Date(active.startedAt).getTime();
-    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [active]);
+  // Same hook the sidebar uses, so mobile can never show a different picture —
+  // including personal timers, which this bar used to be blind to.
+  const { active } = useLiveTimer();
+  const running = active[0] ?? null;
+  const elapsed = useElapsed(running?.startedAt ?? null);
 
   return (
     <header
@@ -85,12 +40,23 @@ export default function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void })
       </Link>
 
       <div className="w-[110px] flex justify-end">
-        {active ? (
+        {running ? (
           <Link
-            href={`/admin/projects/${active.projectId}`}
-            className="inline-flex items-center gap-1.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-full px-2.5 py-1"
+            href={
+              running.taskId
+                ? routes(running.domain).taskDetail(running.taskId)
+                : routes(running.domain).projectDetail(running.projectId)
+            }
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${
+              running.domain === "personal"
+                ? "bg-[#F5F3FF] border-[#DDD6FE]"
+                : "bg-[#EFF6FF] border-[#BFDBFE]"
+            }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2B7FFF] animate-pulse" />
+            <span
+              className="w-1.5 h-1.5 rounded-full animate-pulse"
+              style={{ background: DOMAIN_ACCENT[running.domain] }}
+            />
             <span
               className="font-mono text-[12px] font-bold text-[#0F172A] tabular-nums"
               dir="ltr"

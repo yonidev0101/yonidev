@@ -29,6 +29,27 @@
       "when": 1780249700024,
       "tag": "0003_organic_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780254533714,
+      "tag": "0004_black_the_spike",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780257086262,
+      "tag": "0005_conscious_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784569649141,
+      "tag": "0006_chilly_moira_mactaggert",
+      "breakpoints": true
     }
   ]
 }

@@ -3,25 +3,19 @@ import { notFound } from "next/navigation";
 import { getTaskWithUpdates } from "@/lib/admin/queries";
 import {
   TASK_STATUS_HE,
+  TASK_STATUS_TONE,
   TASK_PRIORITY_HE,
   fmtDateHe,
   fmtHours,
+  fmtEstimate,
   relativeDayHe,
+  waitingSinceDaysHe,
 } from "@/lib/admin/format";
 import TaskUpdateForm from "@/components/admin/TaskUpdateForm";
 import TaskDetailEditPanel from "@/components/admin/TaskDetailEditPanel";
 import TaskTimeline, { type TimelineUpdate } from "@/components/admin/TaskTimeline";
 
 export const dynamic = "force-dynamic";
-
-type TaskStatus = keyof typeof TASK_STATUS_HE;
-
-const STATUS_TONE: Record<TaskStatus, string> = {
-  todo: "bg-[#F1F5F9] text-[#64748B]",
-  in_progress: "bg-[#EFF6FF] text-[#2B7FFF]",
-  blocked: "bg-amber-50 text-amber-700",
-  done: "bg-emerald-50 text-emerald-700",
-};
 
 export default async function TaskDetailPage({
   params,
@@ -39,6 +33,8 @@ export default async function TaskDetailPage({
   const followUpLabel = relativeDayHe(task.followUpAt);
   const isOverdue =
     task.followUpAt && task.followUpAt < new Date().toISOString().slice(0, 10);
+  const estSeconds = task.estimateMinutes != null ? task.estimateMinutes * 60 : null;
+  const overBudget = estSeconds != null && totalSeconds > estSeconds;
 
   const timelineUpdates: TimelineUpdate[] = updates.map((u) => ({
     id: u.id,
@@ -71,7 +67,7 @@ export default async function TaskDetailPage({
             {task.title}
           </h1>
           <span
-            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${STATUS_TONE[task.status]}`}
+            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${TASK_STATUS_TONE[task.status]}`}
           >
             {TASK_STATUS_HE[task.status]}
           </span>
@@ -85,6 +81,8 @@ export default async function TaskDetailPage({
               dueDate: task.dueDate,
               nextAction: task.nextAction,
               followUpAt: task.followUpAt,
+              waitingOn: task.waitingOn,
+              estimateMinutes: task.estimateMinutes,
             }}
           />
         </div>
@@ -112,6 +110,22 @@ export default async function TaskDetailPage({
 
       {/* Status strip */}
       <section className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9]">
+        {task.status === "waiting" && (
+          <div className="px-5 py-4 bg-[#EFF6FF]">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#2B7FFF] mb-1">
+              ממתין
+            </div>
+            <div className="text-[15px] text-[#0F172A] font-medium">
+              ⏳ {task.waitingOn ? `ממתין ל${task.waitingOn}` : "ממתין לתשובה"}
+              {waitingSinceDaysHe(task.waitingSince) && (
+                <span className="text-[13px] text-[#64748B] font-normal">
+                  {" · "}
+                  {waitingSinceDaysHe(task.waitingSince)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
         {task.nextAction ? (
           <div className="px-5 py-4">
             <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
@@ -125,7 +139,7 @@ export default async function TaskDetailPage({
           </div>
         )}
 
-        <div className="px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
+        <div className="px-5 py-3 grid grid-cols-2 sm:grid-cols-5 gap-3 text-[12px]">
           <Stat label="עדיפות" value={TASK_PRIORITY_HE[task.priority]} />
           <Stat
             label="מעקב"
@@ -133,7 +147,12 @@ export default async function TaskDetailPage({
             tone={isOverdue ? "red" : undefined}
           />
           <Stat label="דד-ליין" value={task.dueDate ? fmtDateHe(task.dueDate) : "—"} />
-          <Stat label="זמן רשום" value={fmtHours(totalSeconds)} />
+          <Stat label="אומדן" value={fmtEstimate(task.estimateMinutes)} />
+          <Stat
+            label="זמן רשום"
+            value={fmtHours(totalSeconds)}
+            tone={overBudget ? "red" : undefined}
+          />
         </div>
       </section>
 

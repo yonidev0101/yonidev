@@ -1,15 +1,17 @@
 import Link from "next/link";
 import {
   TASK_STATUS_HE,
+  TASK_STATUS_TONE,
   actionableDate,
   fmtDateHe,
   relativeDayHe,
+  isTaskClosed,
 } from "@/lib/admin/format";
 
 export interface ClientTaskRow {
   id: number;
   title: string;
-  status: "todo" | "in_progress" | "blocked" | "done";
+  status: "todo" | "in_progress" | "waiting" | "blocked" | "done" | "canceled";
   priority: "low" | "medium" | "high";
   dueDate: string | null;
   nextAction: string | null;
@@ -18,18 +20,11 @@ export interface ClientTaskRow {
   projectName: string | null;
 }
 
-const STATUS_TONE: Record<string, string> = {
-  todo: "bg-[#F1F5F9] text-[#64748B]",
-  in_progress: "bg-[#EFF6FF] text-[#2B7FFF]",
-  blocked: "bg-amber-50 text-amber-700",
-  done: "bg-emerald-50 text-emerald-700",
-};
-
 /**
  * Open tasks for a client, grouped by project, each row links to /admin/tasks/[id].
  */
 export default function ClientTasksByProject({ tasks }: { tasks: ClientTaskRow[] }) {
-  const open = tasks.filter((t) => t.status !== "done");
+  const open = tasks.filter((t) => !isTaskClosed(t.status));
   if (open.length === 0) {
     return (
       <p className="text-[13px] text-[#94A3B8] py-6 text-center">
@@ -102,7 +97,7 @@ export default function ClientTasksByProject({ tasks }: { tasks: ClientTaskRow[]
                     )}
                   </div>
                   <span
-                    className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${STATUS_TONE[t.status]}`}
+                    className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${TASK_STATUS_TONE[t.status]}`}
                   >
                     {TASK_STATUS_HE[t.status]}
                   </span>

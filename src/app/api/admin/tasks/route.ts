@@ -9,9 +9,11 @@ const createSchema = z.object({
   projectId: z.coerce.number().int().positive(),
   title: z.string().min(1).max(300),
   description: z.string().max(5000).optional().nullable(),
-  status: z.enum(["todo", "in_progress", "blocked", "done"]).optional(),
+  status: z.enum(["todo", "in_progress", "waiting", "blocked", "done", "canceled"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.string().optional().nullable(),
+  waitingOn: z.string().max(300).optional().nullable(),
+  estimateMinutes: z.coerce.number().int().min(0).max(60 * 1000).optional().nullable(),
 });
 
 export async function GET(req: Request) {
@@ -30,15 +32,20 @@ export async function POST(req: Request) {
   const parsed = await parseJson(req, createSchema);
   if (!parsed.ok) return parsed.res;
   try {
+    const status = parsed.data.status ?? "todo";
     const [created] = await db
       .insert(tasks)
       .values({
         projectId: parsed.data.projectId,
         title: parsed.data.title,
         description: parsed.data.description ?? null,
-        status: parsed.data.status ?? "todo",
+        status,
         priority: parsed.data.priority ?? "medium",
         dueDate: parsed.data.dueDate || null,
+        estimateMinutes: parsed.data.estimateMinutes ?? null,
+        waitingOn: status === "waiting" ? parsed.data.waitingOn || null : null,
+        waitingSince:
+          status === "waiting" ? new Date().toISOString().slice(0, 10) : null,
       })
       .returning();
     return json({ ok: true, task: created }, { status: 201 });

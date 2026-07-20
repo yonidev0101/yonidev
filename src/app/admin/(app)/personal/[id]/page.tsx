@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPersonalProjectWithRelations } from "@/lib/admin/queries";
-import { PERSONAL_PROJECT_STATUS_HE, fmtHours, fmtDateHe } from "@/lib/admin/format";
+import { PERSONAL_PROJECT_STATUS_HE, fmtHours, fmtDateHe, isTaskClosed } from "@/lib/admin/format";
 import PersonalProjectShell from "@/components/admin/PersonalProjectShell";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function PersonalProjectDetailPage({
   if (!data) notFound();
 
   const totalSec = data.timeEntries.reduce((sum, t) => sum + (t.durationSeconds ?? 0), 0);
-  const openTasks = data.tasks.filter((t) => t.status !== "done").length;
+  const openTasks = data.tasks.filter((t) => !isTaskClosed(t.status)).length;
 
   return (
     <div dir="rtl" className="space-y-6 max-w-5xl">

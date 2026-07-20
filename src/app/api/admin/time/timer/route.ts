@@ -1,12 +1,13 @@
 export const runtime = "nodejs";
 
 import { z } from "zod";
-import { db, timeEntries, projects, clients } from "@/lib/db/client";
+import { db, timeEntries, projects, clients, tasks } from "@/lib/db/client";
 import { eq, isNull, and } from "drizzle-orm";
 import { json, parseJson, serverError } from "@/lib/admin/http";
 
 const startSchema = z.object({
   projectId: z.coerce.number().int().positive(),
+  taskId: z.coerce.number().int().positive().optional().nullable(),
   note: z.string().max(2000).optional().nullable(),
 });
 
@@ -15,6 +16,8 @@ async function getActiveJoined() {
     .select({
       id: timeEntries.id,
       projectId: timeEntries.projectId,
+      taskId: timeEntries.taskId,
+      taskTitle: tasks.title,
       startedAt: timeEntries.startedAt,
       projectName: projects.name,
       clientName: clients.name,
@@ -22,6 +25,7 @@ async function getActiveJoined() {
     .from(timeEntries)
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
+    .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
     .where(isNull(timeEntries.endedAt))
     .limit(1);
   return rows[0] ?? null;
@@ -57,6 +61,7 @@ export async function POST(req: Request) {
       .insert(timeEntries)
       .values({
         projectId: parsed.data.projectId,
+        taskId: parsed.data.taskId ?? null,
         startedAt: now,
         note: parsed.data.note ?? null,
         billable: true,

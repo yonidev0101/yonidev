@@ -21,6 +21,19 @@ export function fmtDateTimeHe(d: string | Date | null | undefined): string {
   }).format(date);
 }
 
+/** Clock time only, pinned to Israel time (the server runs in UTC). */
+export function fmtTimeHe(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("he-IL", {
+    timeZone: "Asia/Jerusalem",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 export function fmtIls(n: number | string | null | undefined): string {
   if (n == null) return "—";
   const num = typeof n === "string" ? Number(n) : n;
@@ -66,9 +79,47 @@ export const PERSONAL_PROJECT_STATUS_HE: Record<string, string> = {
 export const TASK_STATUS_HE: Record<string, string> = {
   todo: "לעשות",
   in_progress: "בתהליך",
-  blocked: "תקוע",
+  waiting: "ממתין",
+  blocked: "חסום",
   done: "הושלם",
+  canceled: "בוטל",
 };
+
+/** Terminal statuses — a task in one of these is closed, not "open". */
+/**
+ * The one place task-status colours are defined. Every chip in the admin reads
+ * from here — a status must never look different depending on which page it's on.
+ */
+export const TASK_STATUS_TONE: Record<string, string> = {
+  todo: "bg-[#F1F5F9] text-[#64748B]",
+  in_progress: "bg-[#EFF6FF] text-[#2B7FFF]",
+  waiting: "bg-[#EFF6FF] text-[#2B7FFF]",
+  blocked: "bg-amber-50 text-amber-700",
+  done: "bg-emerald-50 text-emerald-700",
+  canceled: "bg-[#F1F5F9] text-[#94A3B8] line-through",
+};
+
+/** Priority dot colour — shared by every task list and card. */
+export const TASK_PRIORITY_DOT: Record<string, string> = {
+  high: "bg-red-500",
+  medium: "bg-amber-500",
+  low: "bg-[#94A3B8]",
+};
+
+/** Running-timer display: m:ss under an hour, h:mm:ss above it. */
+export function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+export const CLOSED_TASK_STATUSES = ["done", "canceled"] as const;
+
+export function isTaskClosed(status: string | null | undefined): boolean {
+  return status === "done" || status === "canceled";
+}
 
 export const TASK_PRIORITY_HE: Record<string, string> = {
   low: "נמוכה",
@@ -104,6 +155,53 @@ export const TASK_UPDATE_KIND_ICON: Record<string, string> = {
   handoff: "📤",
 };
 
+/** Solo-dev update kinds for personal tasks (see personalUpdateKindEnum). */
+export const PERSONAL_UPDATE_KIND_HE: Record<string, string> = {
+  progress: "התקדמות",
+  decision: "החלטה",
+  blocker: "חסם",
+  commit: "קומיט",
+  research: "מחקר",
+  bug: "באג",
+  note: "הערה",
+};
+
+export const PERSONAL_UPDATE_KIND_ICON: Record<string, string> = {
+  progress: "⚡",
+  decision: "✅",
+  blocker: "🚧",
+  commit: "🔀",
+  research: "🔍",
+  bug: "🐞",
+  note: "📝",
+};
+
+export function personalUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {
+  if (kind === "blocker" || kind === "bug") return "amber";
+  if (kind === "decision") return "green";
+  if (kind === "commit" || kind === "research") return "blue";
+  return "slate";
+}
+
+/** Short SHA for display — commits are stored full-length but read better truncated. */
+export function shortSha(sha: string | null | undefined): string | null {
+  if (!sha) return null;
+  return sha.trim().slice(0, 7);
+}
+
+/**
+ * Builds a commit URL from a repo link when the user only typed a SHA.
+ * Handles GitHub web URLs and the git@ SSH form; returns null for anything else.
+ */
+export function commitUrlFromRepo(repoUrl: string | null | undefined, sha: string): string | null {
+  if (!repoUrl) return null;
+  const clean = repoUrl.trim().replace(/\.git$/, "").replace(/\/$/, "");
+  const ssh = clean.match(/^git@github\.com:(.+)$/);
+  const base = ssh ? `https://github.com/${ssh[1]}` : clean;
+  if (!/^https:\/\/github\.com\//.test(base)) return null;
+  return `${base}/commit/${sha.trim()}`;
+}
+
 /** Returns a tone-bucket for coloring the update kind chip. */
 export function taskUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {
   if (kind === "blocker") return "amber";
@@ -118,6 +216,53 @@ export function actionableDate(t: {
   dueDate: string | null;
 }): string | null {
   return t.followUpAt ?? t.dueDate;
+}
+
+/** Estimate stored as minutes, shown in the same adaptive hours/minutes format as logged time. */
+export function fmtEstimate(minutes: number | null | undefined): string {
+  if (minutes == null) return "—";
+  return fmtHours(minutes * 60);
+}
+
+const STALE_DAYS = 14;
+
+/** Whole days between a past date/timestamp and now (0 if in the future). */
+export function daysSince(d: string | Date | null | undefined): number | null {
+  if (!d) return null;
+  const date = typeof d === "string" ? new Date(d) : d;
+  if (isNaN(date.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000));
+}
+
+/**
+ * A task is "stale" when it's open and hasn't moved in {@link STALE_DAYS} days —
+ * but a parked "waiting" task with a future follow-up is intentionally idle, so it's exempt.
+ */
+export function isStaleTask(t: {
+  status: string;
+  lastUpdateAt: string | Date | null;
+  createdAt: string | Date | null;
+  followUpAt: string | null;
+}): boolean {
+  if (isTaskClosed(t.status)) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  if (t.status === "waiting" && t.followUpAt && t.followUpAt > today) return false;
+  const since = daysSince(t.lastUpdateAt ?? t.createdAt);
+  return since != null && since >= STALE_DAYS;
+}
+
+/** "כבר 5 ימים" — how long a task has been parked in "waiting", from its waitingSince date. */
+export function waitingSinceDaysHe(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.max(0, Math.round((today.getTime() - d.getTime()) / 86_400_000));
+  if (days === 0) return "מהיום";
+  if (days === 1) return "כבר יום";
+  if (days === 2) return "כבר יומיים";
+  return `כבר ${days} ימים`;
 }
 
 /** "לפני 3 ימים" / "בעוד יומיים" / "היום" — for follow-up date chips. */

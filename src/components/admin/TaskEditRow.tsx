@@ -4,14 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TASK_STATUS_HE, TASK_PRIORITY_HE } from "@/lib/admin/format";
+import { routes, type Domain } from "@/lib/admin/domain";
 
 interface TaskShape {
   id: number;
+  /** Defaults to client work for the call sites that only ever hold client tasks. */
+  domain?: Domain;
   title: string;
   description: string | null;
   status: string;
   priority: string;
   dueDate: string | null;
+  waitingOn?: string | null;
+  estimateMinutes?: number | null;
 }
 
 export default function TaskEditRow({
@@ -30,6 +35,8 @@ export default function TaskEditRow({
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate ?? "",
+    waitingOn: task.waitingOn ?? "",
+    estimateHours: task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -39,7 +46,8 @@ export default function TaskEditRow({
       return;
     }
     setSaving(true);
-    const res = await fetch(`/api/admin/tasks/${task.id}`, {
+    const domain = task.domain ?? "client";
+    const res = await fetch(`${routes(domain).tasksApi}/${task.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -48,6 +56,13 @@ export default function TaskEditRow({
         status: form.status,
         priority: form.priority,
         dueDate: form.dueDate || null,
+        // waitingOn only exists on client tasks for now.
+        ...(domain === "client"
+          ? { waitingOn: form.status === "waiting" ? form.waitingOn.trim() || null : null }
+          : {}),
+        estimateMinutes: form.estimateHours
+          ? Math.round(parseFloat(form.estimateHours) * 60)
+          : null,
       }),
     });
     setSaving(false);
@@ -115,6 +130,29 @@ export default function TaskEditRow({
           />
         </label>
       </div>
+      <label className="block">
+        <span className="block text-[11px] text-[#94A3B8] mb-1">אומדן (שעות)</span>
+        <input
+          type="number"
+          min={0}
+          step={0.25}
+          value={form.estimateHours}
+          onChange={(e) => setForm({ ...form, estimateHours: e.target.value })}
+          placeholder="2"
+          className="w-full border border-[#E2E8F0] rounded-md bg-white px-2 py-1.5 text-[13px] tabular-nums"
+        />
+      </label>
+      {form.status === "waiting" && (
+        <label className="block">
+          <span className="block text-[11px] text-[#94A3B8] mb-1">ממתין ל…</span>
+          <input
+            value={form.waitingOn}
+            onChange={(e) => setForm({ ...form, waitingOn: e.target.value })}
+            placeholder="דנה — תשובה על האפיון"
+            className="w-full border border-[#E2E8F0] rounded-md bg-white px-2 py-1.5 text-[13px]"
+          />
+        </label>
+      )}
       <div className="flex items-center gap-2 pt-1">
         <button
           onClick={save}
