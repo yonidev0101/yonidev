@@ -121,6 +121,34 @@ export function isTaskClosed(status: string | null | undefined): boolean {
   return status === "done" || status === "canceled";
 }
 
+// ── personal task list: 5 statuses, grouped into 3 clean sections ──────
+// Everything open (todo / in_progress / blocked / legacy waiting) shows by
+// default under "פעילות"; done and canceled collapse away so the eye only ever
+// lands on active work, without losing the ability to cancel or reopen.
+
+/** Which collapsible section a personal task belongs to on the project list. */
+export function personalTaskSection(status: string): "active" | "done" | "canceled" {
+  if (status === "done") return "done";
+  if (status === "canceled") return "canceled";
+  return "active";
+}
+
+/** Sort weight inside "פעילות": working first, then blocked/parked, then todo. */
+export function personalActiveRank(status: string): number {
+  if (status === "in_progress") return 0;
+  if (status === "blocked" || status === "waiting") return 1;
+  return 2; // todo
+}
+
+/** Status choices offered when editing a personal task (legacy "waiting" folded into "blocked"). */
+export const PERSONAL_TASK_STATUS_ORDER = [
+  "todo",
+  "in_progress",
+  "blocked",
+  "done",
+  "canceled",
+] as const;
+
 export const TASK_PRIORITY_HE: Record<string, string> = {
   low: "נמוכה",
   medium: "רגילה",
@@ -176,6 +204,14 @@ export const PERSONAL_UPDATE_KIND_ICON: Record<string, string> = {
   note: "📝",
 };
 
+/**
+ * The kinds actually offered in the journal composer — trimmed from 7 to 4 to
+ * cut clutter. Legacy entries (commit/research/blocker) still render via the full
+ * maps above; commits now live in the dedicated commit field, and "חסום" is a task
+ * state rather than a journal kind.
+ */
+export const PERSONAL_ACTIVE_UPDATE_KINDS = ["progress", "decision", "bug", "note"] as const;
+
 export function personalUpdateKindTone(kind: string): "blue" | "amber" | "green" | "slate" {
   if (kind === "blocker" || kind === "bug") return "amber";
   if (kind === "decision") return "green";
@@ -189,17 +225,39 @@ export function shortSha(sha: string | null | undefined): string | null {
   return sha.trim().slice(0, 7);
 }
 
+/** Normalises a repo link (web or git@ SSH) to its https base, or null if not GitHub. */
+export function githubBaseFromRepo(repoUrl: string | null | undefined): string | null {
+  if (!repoUrl) return null;
+  const clean = repoUrl.trim().replace(/\.git$/, "").replace(/\/$/, "");
+  const ssh = clean.match(/^git@github\.com:(.+)$/);
+  const base = ssh ? `https://github.com/${ssh[1]}` : clean;
+  return /^https:\/\/github\.com\//.test(base) ? base : null;
+}
+
 /**
  * Builds a commit URL from a repo link when the user only typed a SHA.
  * Handles GitHub web URLs and the git@ SSH form; returns null for anything else.
  */
 export function commitUrlFromRepo(repoUrl: string | null | undefined, sha: string): string | null {
-  if (!repoUrl) return null;
-  const clean = repoUrl.trim().replace(/\.git$/, "").replace(/\/$/, "");
-  const ssh = clean.match(/^git@github\.com:(.+)$/);
-  const base = ssh ? `https://github.com/${ssh[1]}` : clean;
-  if (!/^https:\/\/github\.com\//.test(base)) return null;
-  return `${base}/commit/${sha.trim()}`;
+  const base = githubBaseFromRepo(repoUrl);
+  return base ? `${base}/commit/${sha.trim()}` : null;
+}
+
+/** Link to a branch's tree view on GitHub. */
+export function branchUrlFromRepo(repoUrl: string | null | undefined, branch: string): string | null {
+  const base = githubBaseFromRepo(repoUrl);
+  const b = branch.trim();
+  return base && b ? `${base}/tree/${encodeURIComponent(b)}` : null;
+}
+
+/** Link that opens a "new pull request" / compare view for a branch on GitHub. */
+export function pullRequestUrlFromRepo(
+  repoUrl: string | null | undefined,
+  branch: string,
+): string | null {
+  const base = githubBaseFromRepo(repoUrl);
+  const b = branch.trim();
+  return base && b ? `${base}/pull/new/${encodeURIComponent(b)}` : null;
 }
 
 /** Returns a tone-bucket for coloring the update kind chip. */

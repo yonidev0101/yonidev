@@ -345,6 +345,8 @@ export const personalTasks = pgTable(
     nextAction: text("next_action"),
     // Definition of done — what has to be true before this can be closed.
     acceptance: text("acceptance"),
+    // Git branch this task's work lives on — powers the branch/PR link in the git panel.
+    branchName: text("branch_name"),
     startedAt: timestamp("started_at", { withTimezone: true }),
     lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -353,6 +355,26 @@ export const personalTasks = pgTable(
     index("personal_tasks_project_idx").on(t.projectId),
     index("personal_tasks_status_idx").on(t.status),
   ],
+);
+
+/**
+ * Lightweight checklist inside a personal task. Steps are flat (no status, no
+ * timer) — just "break the feature into concrete moves and tick them off".
+ * Completing every step does NOT auto-close the task; that stays a manual status move.
+ */
+export const personalTaskSteps = pgTable(
+  "personal_task_steps",
+  {
+    id: serial("id").primaryKey(),
+    taskId: integer("task_id")
+      .notNull()
+      .references(() => personalTasks.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    done: boolean("done").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("personal_task_steps_task_idx").on(t.taskId)],
 );
 
 /** Work journal for a personal task: what happened, when, and against which commit. */
@@ -482,6 +504,14 @@ export const personalTasksRelations = relations(personalTasks, ({ one, many }) =
   }),
   timeEntries: many(personalTimeEntries),
   updates: many(personalTaskUpdates),
+  steps: many(personalTaskSteps),
+}));
+
+export const personalTaskStepsRelations = relations(personalTaskSteps, ({ one }) => ({
+  task: one(personalTasks, {
+    fields: [personalTaskSteps.taskId],
+    references: [personalTasks.id],
+  }),
 }));
 
 export const personalTaskUpdatesRelations = relations(personalTaskUpdates, ({ one }) => ({
@@ -543,3 +573,5 @@ export type PersonalTimeEntry = typeof personalTimeEntries.$inferSelect;
 export type NewPersonalTimeEntry = typeof personalTimeEntries.$inferInsert;
 export type PersonalTaskUpdate = typeof personalTaskUpdates.$inferSelect;
 export type NewPersonalTaskUpdate = typeof personalTaskUpdates.$inferInsert;
+export type PersonalTaskStep = typeof personalTaskSteps.$inferSelect;
+export type NewPersonalTaskStep = typeof personalTaskSteps.$inferInsert;

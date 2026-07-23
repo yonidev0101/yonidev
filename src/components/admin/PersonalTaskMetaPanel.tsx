@@ -33,7 +33,7 @@ export default function PersonalTaskMetaPanel({
     description: task.description ?? "",
     priority: task.priority,
     dueDate: task.dueDate ?? "",
-    estimateMinutes: task.estimateMinutes != null ? String(task.estimateMinutes) : "",
+    estimateHours: task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
     acceptance: task.acceptance ?? "",
     nextAction: task.nextAction ?? "",
   });
@@ -48,7 +48,9 @@ export default function PersonalTaskMetaPanel({
         description: form.description || null,
         priority: form.priority,
         dueDate: form.dueDate || null,
-        estimateMinutes: form.estimateMinutes ? Number(form.estimateMinutes) : null,
+        estimateMinutes: form.estimateHours
+          ? Math.round(parseFloat(form.estimateHours) * 60)
+          : null,
         acceptance: form.acceptance || null,
         nextAction: form.nextAction || null,
       }),
@@ -147,13 +149,14 @@ export default function PersonalTaskMetaPanel({
               <option value="high">גבוהה</option>
             </select>
           </Field>
-          <Field label="אומדן (דקות)">
+          <Field label="אומדן (שעות)">
             <input
               type="number"
               min="0"
-              step="15"
-              value={form.estimateMinutes}
-              onChange={(e) => setForm({ ...form, estimateMinutes: e.target.value })}
+              step="0.25"
+              placeholder="2"
+              value={form.estimateHours}
+              onChange={(e) => setForm({ ...form, estimateHours: e.target.value })}
               className="ipt-task tabular-nums"
             />
           </Field>

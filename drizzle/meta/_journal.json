@@ -50,6 +50,13 @@
       "when": 1784569649141,
       "tag": "0006_chilly_moira_mactaggert",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784812412469,
+      "tag": "0007_even_squirrel_girl",
+      "breakpoints": true
     }
   ]
 }

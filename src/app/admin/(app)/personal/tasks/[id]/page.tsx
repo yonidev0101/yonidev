@@ -17,6 +17,10 @@ import PersonalTaskTimeline, {
   type TimelineSession,
 } from "@/components/admin/PersonalTaskTimeline";
 import PersonalTaskMetaPanel from "@/components/admin/PersonalTaskMetaPanel";
+import PersonalTaskChecklist from "@/components/admin/PersonalTaskChecklist";
+import PersonalTaskGitPanel, {
+  type GitCommit,
+} from "@/components/admin/PersonalTaskGitPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +39,7 @@ export default async function PersonalTaskDetailPage({
 
   const data = await getPersonalTaskWithUpdates(id);
   if (!data) notFound();
-  const { task, project, repoUrl, updates, sessions, activeSession, totalSeconds } = data;
+  const { task, project, repoUrl, updates, sessions, activeSession, steps, totalSeconds } = data;
 
   const estSeconds = task.estimateMinutes != null ? task.estimateMinutes * 60 : null;
   const overBudget = estSeconds != null && totalSeconds > estSeconds;
@@ -61,10 +65,27 @@ export default async function PersonalTaskDetailPage({
     note: s.note,
   }));
 
-  const commitCount = updates.filter((u) => u.commitSha).length;
+  // Commits for the git panel are the journal entries that carry a SHA.
+  const commits: GitCommit[] = updates
+    .filter((u) => u.commitSha)
+    .map((u) => ({
+      id: u.id,
+      sha: u.commitSha as string,
+      url: u.commitUrl,
+      summary: u.summary,
+      happenedAt: iso(u.happenedAt),
+    }));
+
+  const checklistSteps = steps.map((s) => ({
+    id: s.id,
+    title: s.title,
+    done: s.done,
+    sortOrder: s.sortOrder,
+  }));
 
   return (
-    <div dir="rtl" className="space-y-6 max-w-3xl">
+    <div dir="rtl" className="space-y-5 max-w-3xl">
+      {/* ── Header: title, status, edit ── */}
       <header>
         <Link
           href={`/admin/personal/${task.projectId}?tab=tasks`}
@@ -97,14 +118,9 @@ export default async function PersonalTaskDetailPage({
             projectId={task.projectId}
           />
         </div>
-
-        {task.description && (
-          <p className="text-[14px] text-[#475569] mt-3 whitespace-pre-wrap leading-relaxed">
-            {task.description}
-          </p>
-        )}
       </header>
 
+      {/* ── 1. Now / focus: the session control + next step ── */}
       <PersonalTaskSession
         taskId={task.id}
         projectId={task.projectId}
@@ -114,57 +130,84 @@ export default async function PersonalTaskDetailPage({
         }
       />
 
-      <section className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9]">
-        {task.acceptance && (
-          <div className="px-5 py-4">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
-              הגדרת סיום
-            </div>
-            <p className="text-[14px] text-[#0F172A] whitespace-pre-wrap leading-relaxed">
-              {task.acceptance}
-            </p>
+      {task.nextAction ? (
+        <div className="rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] px-5 py-3">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#2B7FFF] mb-0.5">
+            הצעד הבא
           </div>
-        )}
-
-        {task.nextAction ? (
-          <div className="px-5 py-4">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
-              הצעד הבא
-            </div>
-            <div className="text-[15px] text-[#0F172A] font-medium">→ {task.nextAction}</div>
-          </div>
-        ) : (
-          <div className="px-5 py-4 text-[13px] text-[#94A3B8]">
-            אין צעד הבא מוגדר — רשום עדכון כדי לקבוע אותו.
-          </div>
-        )}
-
-        <div className="px-5 py-3 grid grid-cols-2 sm:grid-cols-5 gap-3 text-[12px]">
-          <Stat label="עדיפות" value={TASK_PRIORITY_HE[task.priority]} />
-          <Stat label="אומדן" value={fmtEstimate(task.estimateMinutes)} />
-          <Stat label="זמן בפועל" value={fmtHours(totalSeconds)} tone={overBudget ? "red" : undefined} />
-          <Stat label="סשנים" value={String(sessions.length)} />
-          <Stat label="קומיטים" value={String(commitCount)} />
+          <div className="text-[15px] text-[#0F172A] font-medium">→ {task.nextAction}</div>
         </div>
-
-        <div className="px-5 py-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-[12px]">
-          <Stat label="נוצרה" value={fmtDateHe(task.createdAt)} />
-          <Stat
-            label="התחלת עבודה"
-            value={task.startedAt ? fmtDateTimeHe(task.startedAt) : "—"}
-          />
-          <Stat label="דד-ליין" value={task.dueDate ? fmtDateHe(task.dueDate) : "—"} />
+      ) : (
+        <div className="rounded-xl border border-dashed border-[#E2E8F0] px-5 py-3 text-[13px] text-[#94A3B8]">
+          אין צעד הבא מוגדר — רשום עדכון בלוג כדי לקבוע אותו.
         </div>
+      )}
+
+      {/* ── stats strip ── */}
+      <section className="bg-white border border-[#E2E8F0] rounded-xl px-5 py-3 grid grid-cols-3 sm:grid-cols-6 gap-3 text-[12px]">
+        <Stat label="עדיפות" value={TASK_PRIORITY_HE[task.priority]} />
+        <Stat label="אומדן" value={fmtEstimate(task.estimateMinutes)} />
+        <Stat label="בפועל" value={fmtHours(totalSeconds)} tone={overBudget ? "red" : undefined} />
+        <Stat label="סשנים" value={String(sessions.length)} />
+        <Stat label="קומיטים" value={String(commits.length)} />
+        <Stat label="דד-ליין" value={task.dueDate ? fmtDateHe(task.dueDate) : "—"} />
       </section>
 
-      <PersonalTaskUpdateForm
-        taskId={task.id}
-        currentStatus={task.status as TaskStatus}
-        hasRepo={!!repoUrl}
-      />
+      {/* ── 2. Spec: what & why + definition of done ── */}
+      {(task.description || task.acceptance) && (
+        <section className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9]">
+          {task.description && (
+            <div className="px-5 py-4">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
+                אפיון — מה צריך ולמה
+              </div>
+              <p className="text-[14px] text-[#0F172A] whitespace-pre-wrap leading-relaxed">
+                {task.description}
+              </p>
+            </div>
+          )}
+          {task.acceptance && (
+            <div className="px-5 py-4">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
+                הגדרת סיום — מתי זה גמור
+              </div>
+              <p className="text-[14px] text-[#0F172A] whitespace-pre-wrap leading-relaxed">
+                {task.acceptance}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
-      <section>
-        <h2 className="text-[13px] font-bold text-[#0F172A] mb-3">יומן המשימה</h2>
+      {/* ── 3. Checklist ── */}
+      <section className="bg-white border border-[#E2E8F0] rounded-xl px-5 py-4">
+        <PersonalTaskChecklist taskId={task.id} steps={checklistSteps} />
+      </section>
+
+      {/* ── 4. Git ── */}
+      <section className="bg-white border border-[#E2E8F0] rounded-xl px-5 py-4">
+        <PersonalTaskGitPanel
+          taskId={task.id}
+          branchName={task.branchName}
+          repoUrl={repoUrl}
+          commits={commits}
+        />
+      </section>
+
+      {/* ── 5. Log / journal — the centre of gravity ── */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-[13px] font-bold text-[#0F172A]">לוג התקדמות</h2>
+          <span className="text-[11px] text-[#94A3B8]">
+            נוצרה {fmtDateHe(task.createdAt)}
+            {task.startedAt ? ` · התחלה ${fmtDateTimeHe(task.startedAt)}` : ""}
+          </span>
+        </div>
+        <PersonalTaskUpdateForm
+          taskId={task.id}
+          currentStatus={task.status as TaskStatus}
+          hasRepo={!!repoUrl}
+        />
         <PersonalTaskTimeline
           updates={timelineUpdates}
           sessions={timelineSessions}

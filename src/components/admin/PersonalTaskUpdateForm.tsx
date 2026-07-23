@@ -6,23 +6,17 @@ import { toast } from "sonner";
 import {
   PERSONAL_UPDATE_KIND_HE,
   PERSONAL_UPDATE_KIND_ICON,
+  PERSONAL_ACTIVE_UPDATE_KINDS,
+  PERSONAL_TASK_STATUS_ORDER,
   TASK_STATUS_HE,
 } from "@/lib/admin/format";
 
 type UpdateKind = keyof typeof PERSONAL_UPDATE_KIND_HE;
 type TaskStatus = keyof typeof TASK_STATUS_HE;
 
-const KIND_ORDER: UpdateKind[] = [
-  "progress",
-  "commit",
-  "decision",
-  "blocker",
-  "bug",
-  "research",
-  "note",
-];
+const KIND_ORDER: readonly UpdateKind[] = PERSONAL_ACTIVE_UPDATE_KINDS;
 
-const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "waiting", "blocked", "done"];
+const STATUS_ORDER: readonly TaskStatus[] = PERSONAL_TASK_STATUS_ORDER;
 
 /** Journal composer — one entry answers "what happened, and what changed because of it". */
 export default function PersonalTaskUpdateForm({

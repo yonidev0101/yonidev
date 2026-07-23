@@ -49,7 +49,7 @@ export default async function PersonalProjectDetailPage({
 
       <PersonalProjectShell
         project={data.project}
-        tab={tab ?? "overview"}
+        tab={tab ?? "tasks"}
         tasks={data.tasks}
         links={data.links}
         timeEntries={data.timeEntries}
