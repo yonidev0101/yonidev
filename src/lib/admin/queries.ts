@@ -13,8 +13,9 @@ import {
   personalLinks,
   personalTimeEntries,
   personalTaskUpdates,
+  personalTaskSteps,
 } from "@/lib/db/client";
-import { and, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
 import { isTaskClosed } from "@/lib/admin/format";
 
 export async function getDashboardData() {
@@ -61,7 +62,9 @@ export async function getDashboardData() {
   const todayStr = today.toISOString().slice(0, 10);
   const weekEndStr = weekEnd.toISOString().slice(0, 10);
 
-  const upcomingTasks = await db
+  // All open client tasks — INCLUDING ones with no date. Ordering happens in JS
+  // (by overdue → status → priority) so date-less work is never dropped.
+  const clientOpenTasks = await db
     .select({
       id: tasks.id,
       title: tasks.title,
@@ -77,13 +80,9 @@ export async function getDashboardData() {
     .from(tasks)
     .leftJoin(projects, eq(projects.id, tasks.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(
-      and(
-        inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]),
-        sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate}) <= ${weekEndStr}`,
-      ),
-    )
-    .orderBy(sql`COALESCE(${tasks.followUpAt}, ${tasks.dueDate})`);
+    .where(inArray(tasks.status, ["todo", "in_progress", "waiting", "blocked"]))
+    .orderBy(desc(tasks.createdAt))
+    .limit(200);
 
   // Follow-ups within the next 7 days (or overdue) — surfaces "what's coming back to me"
   const followUpsThisWeek = await db
@@ -156,7 +155,8 @@ export async function getDashboardData() {
 
   const [
     personalWeekHours,
-    personalUpcoming,
+    personalOpenTasks,
+    personalStepCounts,
     personalStale,
     personalActiveTimerRows,
     activePersonalProjects,
@@ -167,6 +167,7 @@ export async function getDashboardData() {
       })
       .from(personalTimeEntries)
       .where(gte(personalTimeEntries.startedAt, weekStart)),
+    // All open personal tasks (date-less included) — this is the main daily driver.
     db
       .select({
         id: personalTasks.id,
@@ -180,13 +181,20 @@ export async function getDashboardData() {
       })
       .from(personalTasks)
       .leftJoin(personalProjects, eq(personalProjects.id, personalTasks.projectId))
-      .where(
-        and(
-          inArray(personalTasks.status, ["todo", "in_progress", "waiting", "blocked"]),
-          lte(personalTasks.dueDate, weekEndStr),
-        ),
-      )
-      .orderBy(personalTasks.dueDate),
+      .where(inArray(personalTasks.status, ["todo", "in_progress", "waiting", "blocked"]))
+      .orderBy(desc(personalTasks.createdAt))
+      .limit(200),
+    // Checklist progress for open personal tasks, so the list can show "✔ 3/7".
+    db
+      .select({
+        taskId: personalTaskSteps.taskId,
+        total: sql<number>`COUNT(*)::int`,
+        done: sql<number>`COUNT(*) FILTER (WHERE ${personalTaskSteps.done})::int`,
+      })
+      .from(personalTaskSteps)
+      .innerJoin(personalTasks, eq(personalTasks.id, personalTaskSteps.taskId))
+      .where(inArray(personalTasks.status, ["todo", "in_progress", "waiting", "blocked"]))
+      .groupBy(personalTaskSteps.taskId),
     db
       .select({
         id: personalTasks.id,
@@ -249,22 +257,55 @@ export async function getDashboardData() {
   const clientWeekSeconds = weekHours[0]?.totalSec ?? 0;
   const personalWeekSeconds = personalWeekHours[0]?.totalSec ?? 0;
 
+  // ── unified open-work list (client + personal), prioritized in JS so date-less
+  //    tasks are ranked, not dropped: overdue → in-progress/blocked → priority. ──
+  const stepsByTask = new Map(personalStepCounts.map((r) => [r.taskId, r]));
+  const openTasksMerged = [
+    ...clientOpenTasks.map((t) => ({
+      ...t,
+      domain: "client" as const,
+      stepsDone: 0,
+      stepsTotal: 0,
+    })),
+    ...personalOpenTasks.map((t) => ({
+      ...t,
+      domain: "personal" as const,
+      clientName: null,
+      followUpAt: null as string | null,
+      stepsDone: stepsByTask.get(t.id)?.done ?? 0,
+      stepsTotal: stepsByTask.get(t.id)?.total ?? 0,
+    })),
+  ];
+
+  const statusRank = (s: string) =>
+    s === "in_progress" ? 0 : s === "blocked" || s === "waiting" ? 1 : 2;
+  const prioRank = (p: string) => (p === "high" ? 3 : p === "medium" ? 2 : 1);
+  const actionable = (t: { followUpAt: string | null; dueDate: string | null }) =>
+    t.followUpAt ?? t.dueDate;
+  const isOverdue = (t: { followUpAt: string | null; dueDate: string | null }) => {
+    const d = actionable(t);
+    return !!d && d < todayStr;
+  };
+
+  openTasksMerged.sort((a, b) => {
+    const o = (isOverdue(b) ? 1 : 0) - (isOverdue(a) ? 1 : 0);
+    if (o !== 0) return o;
+    const s = statusRank(a.status) - statusRank(b.status);
+    if (s !== 0) return s;
+    return prioRank(b.priority) - prioRank(a.priority);
+  });
+
   return {
     activeClients,
     weekHoursSeconds: clientWeekSeconds + personalWeekSeconds,
     weekHoursClientSeconds: clientWeekSeconds,
     weekHoursPersonalSeconds: personalWeekSeconds,
     outstandingInvoices,
-    // Tasks are merged across domains — the dashboard shows one to-do reality.
-    upcomingTasks: [
-      ...upcomingTasks.map((t) => ({ ...t, domain: "client" as const })),
-      ...personalUpcoming.map((t) => ({
-        ...t,
-        domain: "personal" as const,
-        clientName: null,
-        followUpAt: null,
-      })),
-    ],
+    // One prioritized to-do reality across both domains; top slice for the panel,
+    // full counts for the KPI card.
+    openTasks: openTasksMerged.slice(0, 12),
+    openTaskCount: openTasksMerged.length,
+    overdueCount: openTasksMerged.filter(isOverdue).length,
     // Follow-ups stay client-only: personal tasks have no follow-up model yet.
     followUpsThisWeek: followUpsThisWeek.map((t) => ({ ...t, domain: "client" as const })),
     staleTasks: [
@@ -534,7 +575,7 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
     .where(eq(personalTasks.id, taskId));
   if (!row) return null;
 
-  const [updates, sessions, repoLinks] = await Promise.all([
+  const [updates, sessions, repoLinks, steps] = await Promise.all([
     db
       .select()
       .from(personalTaskUpdates)
@@ -555,6 +596,11 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
         ),
       )
       .limit(1),
+    db
+      .select()
+      .from(personalTaskSteps)
+      .where(eq(personalTaskSteps.taskId, taskId))
+      .orderBy(asc(personalTaskSteps.sortOrder), asc(personalTaskSteps.id)),
   ]);
 
   const totalSeconds = sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
@@ -567,6 +613,7 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
     updates,
     sessions,
     activeSession,
+    steps,
     totalSeconds,
   };
 }
@@ -618,7 +665,7 @@ export async function getPersonalProjectWithRelations(projectId: number) {
     .where(eq(personalProjects.id, projectId));
   if (!project) return null;
 
-  const [projectTasks, links, time] = await Promise.all([
+  const [projectTasks, links, time, stepCounts] = await Promise.all([
     db
       .select()
       .from(personalTasks)
@@ -631,9 +678,27 @@ export async function getPersonalProjectWithRelations(projectId: number) {
       .where(eq(personalTimeEntries.projectId, projectId))
       .orderBy(desc(personalTimeEntries.startedAt))
       .limit(100),
+    // Checklist progress per task, so the list can show "✔ 3/7" without N queries.
+    db
+      .select({
+        taskId: personalTaskSteps.taskId,
+        total: sql<number>`COUNT(*)::int`,
+        done: sql<number>`COUNT(*) FILTER (WHERE ${personalTaskSteps.done})::int`,
+      })
+      .from(personalTaskSteps)
+      .innerJoin(personalTasks, eq(personalTasks.id, personalTaskSteps.taskId))
+      .where(eq(personalTasks.projectId, projectId))
+      .groupBy(personalTaskSteps.taskId),
   ]);
 
-  return { project, tasks: projectTasks, links, timeEntries: time };
+  const stepsByTask = new Map(stepCounts.map((r) => [r.taskId, r]));
+  const tasksWithSteps = projectTasks.map((t) => ({
+    ...t,
+    stepsTotal: stepsByTask.get(t.id)?.total ?? 0,
+    stepsDone: stepsByTask.get(t.id)?.done ?? 0,
+  }));
+
+  return { project, tasks: tasksWithSteps, links, timeEntries: time };
 }
 
 export async function getProjectWithRelations(projectId: number) {

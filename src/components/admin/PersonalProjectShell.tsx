@@ -12,19 +12,31 @@ import type {
   PersonalLink,
   PersonalTimeEntry,
 } from "@/lib/db/schema";
-import { TASK_PRIORITY_HE, fmtDateHe, fmtDateTimeHe, fmtHours } from "@/lib/admin/format";
+import {
+  TASK_PRIORITY_HE,
+  TASK_STATUS_HE,
+  TASK_STATUS_TONE,
+  TASK_PRIORITY_DOT,
+  PERSONAL_TASK_STATUS_ORDER,
+  personalTaskSection,
+  personalActiveRank,
+  fmtDateHe,
+  fmtDateTimeHe,
+  fmtHours,
+} from "@/lib/admin/format";
+
+/** Task rows carry checklist progress from the query, for the "✔ 3/7" badge. */
+type TaskRow = PersonalTask & { stepsTotal: number; stepsDone: number };
 
 const TABS: { key: string; label: string }[] = [
-  { key: "overview", label: "סקירה" },
   { key: "tasks", label: "משימות" },
-  { key: "time", label: "שעות" },
-  { key: "links", label: "קישורים" },
+  { key: "time", label: "זמן" },
 ];
 
 type Props = {
   project: PersonalProject;
   tab: string;
-  tasks: PersonalTask[];
+  tasks: TaskRow[];
   links: PersonalLink[];
   timeEntries: PersonalTimeEntry[];
 };
@@ -33,14 +45,15 @@ export default function PersonalProjectShell(props: Props) {
   const { project, tab } = props;
   const router = useRouter();
   const refresh = () => router.refresh();
+  const activeTab = tab === "time" ? "time" : "tasks";
 
   return (
     <div className="space-y-5">
-      <ProjectMeta project={project} />
+      <ProjectMeta project={project} links={props.links} onChange={refresh} />
 
       <nav className="flex items-center gap-1 border-b border-[#E2E8F0]" dir="rtl">
         {TABS.map((t) => {
-          const active = tab === t.key;
+          const active = activeTab === t.key;
           return (
             <Link
               key={t.key}
@@ -58,9 +71,10 @@ export default function PersonalProjectShell(props: Props) {
         })}
       </nav>
 
-      {tab === "overview" && <OverviewTab {...props} />}
-      {tab === "tasks" && <TasksTab project={project} tasks={props.tasks} onChange={refresh} />}
-      {tab === "time" && (
+      {activeTab === "tasks" && (
+        <TasksTab project={project} tasks={props.tasks} onChange={refresh} />
+      )}
+      {activeTab === "time" && (
         <TimeTab
           project={project}
           entries={props.timeEntries}
@@ -68,27 +82,32 @@ export default function PersonalProjectShell(props: Props) {
           onChange={refresh}
         />
       )}
-      {tab === "links" && <LinksTab project={project} links={props.links} onChange={refresh} />}
     </div>
   );
 }
 
-// ── Meta (edit name / status / priority / next action / dates / description / delete) ──
+// ── Meta (edit name / status / priority / next action / dates / description / links / delete) ──
 
-function ProjectMeta({ project }: { project: PersonalProject }) {
+function ProjectMeta({
+  project,
+  links,
+  onChange,
+}: {
+  project: PersonalProject;
+  links: PersonalLink[];
+  onChange: () => void;
+}) {
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: project.name,
-    status: project.status,
-    priority: project.priority,
-    nextAction: project.nextAction ?? "",
-    description: project.description ?? "",
-    startDate: project.startDate ?? "",
-    targetDate: project.targetDate ?? "",
-  });
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState(formFrom(project));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  function openEdit() {
+    // Seed the form from the freshest project data whenever edit opens.
+    setForm(formFrom(project));
+    setEditing(true);
+  }
 
   async function save() {
     setSaving(true);
@@ -108,6 +127,7 @@ function ProjectMeta({ project }: { project: PersonalProject }) {
     setSaving(false);
     if (res.ok) {
       toast.success("הפרויקט עודכן");
+      setEditing(false);
       router.refresh();
     } else {
       toast.error("עדכון נכשל");
@@ -134,8 +154,75 @@ function ProjectMeta({ project }: { project: PersonalProject }) {
     }
   }
 
+  // ── Display mode (default) — a clean read view, edit behind a button. ──
+  if (!editing) {
+    return (
+      <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4" dir="rtl">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
+              הצעד הבא
+            </div>
+            {project.nextAction ? (
+              <p className="text-[15px] font-medium text-[#0F172A]">→ {project.nextAction}</p>
+            ) : (
+              <p className="text-[13px] text-[#94A3B8]">אין צעד הבא מוגדר</p>
+            )}
+          </div>
+          <button
+            onClick={openEdit}
+            className="shrink-0 text-[12px] font-semibold text-[#94A3B8] hover:text-[#2B7FFF]"
+          >
+            ✎ ערוך פרטים
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-[13px] border-t border-[#F1F5F9] pt-3">
+          <MetaItem k="עדיפות" v={TASK_PRIORITY_HE[project.priority]} />
+          {project.startDate && <MetaItem k="התחלה" v={fmtDateHe(project.startDate)} />}
+          {project.targetDate && <MetaItem k="יעד" v={fmtDateHe(project.targetDate)} />}
+        </div>
+
+        {project.description && (
+          <p className="text-[13px] text-[#475569] whitespace-pre-wrap leading-relaxed border-t border-[#F1F5F9] pt-3">
+            {project.description}
+          </p>
+        )}
+
+        {links.length > 0 && (
+          <div className="flex items-center flex-wrap gap-2 border-t border-[#F1F5F9] pt-3">
+            {links.map((l) => (
+              <a
+                key={l.id}
+                href={l.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-1.5 text-[12px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-full px-2.5 py-1 text-[#2B7FFF] hover:border-[#2B7FFF]/40"
+              >
+                {l.label}
+                <span className="text-[10px] text-[#94A3B8] uppercase">{l.kind}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Edit mode ──
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4" dir="rtl">
+    <div className="bg-white border border-[#2B7FFF]/30 ring-1 ring-[#2B7FFF]/10 rounded-xl p-5 space-y-4" dir="rtl">
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] font-bold text-[#0F172A]">עריכת פרטי הפרויקט</span>
+        <button
+          onClick={() => setEditing(false)}
+          className="text-[13px] text-[#94A3B8] hover:text-[#0F172A]"
+          aria-label="סגור"
+        >
+          ✕
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Field label="שם הפרויקט">
           <input
@@ -179,53 +266,55 @@ function ProjectMeta({ project }: { project: PersonalProject }) {
         />
       </Field>
 
-      {advancedOpen ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="תאריך התחלה">
-              <input
-                type="date"
-                value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                className="ipt-meta"
-              />
-            </Field>
-            <Field label="תאריך יעד">
-              <input
-                type="date"
-                value={form.targetDate}
-                onChange={(e) => setForm({ ...form, targetDate: e.target.value })}
-                className="ipt-meta"
-              />
-            </Field>
-          </div>
-          <Field label="תיאור / הערות">
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              rows={3}
-              className="ipt-meta resize-y"
-            />
-          </Field>
-        </>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setAdvancedOpen(true)}
-          className="text-[12px] text-[#94A3B8] hover:text-[#0F172A]"
-        >
-          הצג עוד הגדרות
-        </button>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label="תאריך התחלה">
+          <input
+            type="date"
+            value={form.startDate}
+            onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+            className="ipt-meta"
+          />
+        </Field>
+        <Field label="תאריך יעד">
+          <input
+            type="date"
+            value={form.targetDate}
+            onChange={(e) => setForm({ ...form, targetDate: e.target.value })}
+            className="ipt-meta"
+          />
+        </Field>
+      </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 text-white text-[13px] font-semibold px-5 py-2"
-        >
-          {saving ? "שומר..." : "שמור"}
-        </button>
+      <Field label="תיאור / הערות">
+        <textarea
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          rows={3}
+          className="ipt-meta resize-y"
+        />
+      </Field>
+
+      {/* Links are managed here, in edit mode. */}
+      <Field label="קישורים">
+        <LinksInline projectId={project.id} links={links} onChange={onChange} />
+      </Field>
+
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#F1F5F9]">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={save}
+            disabled={saving}
+            className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 text-white text-[13px] font-semibold px-5 py-2"
+          >
+            {saving ? "שומר..." : "שמור"}
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="text-[13px] text-[#64748B] hover:text-[#0F172A] px-2"
+          >
+            ביטול
+          </button>
+        </div>
         <button
           onClick={del}
           disabled={deleting}
@@ -256,6 +345,27 @@ function ProjectMeta({ project }: { project: PersonalProject }) {
   );
 }
 
+function formFrom(project: PersonalProject) {
+  return {
+    name: project.name,
+    status: project.status,
+    priority: project.priority,
+    nextAction: project.nextAction ?? "",
+    description: project.description ?? "",
+    startDate: project.startDate ?? "",
+    targetDate: project.targetDate ?? "",
+  };
+}
+
+function MetaItem({ k, v }: { k: string; v: string }) {
+  return (
+    <span className="text-[#0F172A]">
+      <span className="text-[#94A3B8]">{k}: </span>
+      {v}
+    </span>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -267,97 +377,127 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// ── Overview ──
+// ── Links (inline, compact — replaces the old links tab) ──
 
-function OverviewTab({ project, tasks, timeEntries }: Props) {
-  const openTasks = tasks
-    .filter((t) => t.status !== "done" && t.status !== "canceled")
-    .slice(0, 6);
-  const recentTime = timeEntries.slice(0, 6);
+function LinksInline({
+  projectId,
+  links,
+  onChange,
+}: {
+  projectId: number;
+  links: PersonalLink[];
+  onChange: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({
+    label: "",
+    url: "",
+    kind: "other" as PersonalLink["kind"],
+  });
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    const res = await fetch("/api/admin/personal-links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, ...form }),
+    });
+    if (res.ok) {
+      setForm({ label: "", url: "", kind: "other" });
+      setAdding(false);
+      onChange();
+    } else {
+      toast.error("הוספה נכשלה");
+    }
+  }
+
+  async function del(id: number) {
+    await fetch(`/api/admin/personal-links/${id}`, { method: "DELETE" });
+    onChange();
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      {project.nextAction && (
-        <div className="lg:col-span-3 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#2B7FFF]">הצעד הבא</div>
-          <p className="text-[14px] text-[#0F172A] mt-1">{project.nextAction}</p>
-        </div>
-      )}
-
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-5">
-        <h3 className="text-[13px] font-bold mb-3">משימות פתוחות</h3>
-        {openTasks.length === 0 ? (
-          <p className="text-[12px] text-[#94A3B8]">אין משימות פתוחות.</p>
-        ) : (
-          <ul className="space-y-2">
-            {openTasks.map((t) => (
-              <li key={t.id} className="text-[13px] text-[#0F172A] flex items-baseline justify-between gap-2">
-                <Link href={`/admin/personal/tasks/${t.id}`} className="truncate hover:text-[#2B7FFF]">
-                  {t.title}
-                </Link>
-                {t.dueDate && (
-                  <span className="text-[11px] text-[#94A3B8] shrink-0">{fmtDateHe(t.dueDate)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+    <div>
+      <div className="flex items-center flex-wrap gap-2">
+        {links.map((l) => (
+          <span
+            key={l.id}
+            className="group inline-flex items-center gap-1.5 text-[12px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-full pl-1 pr-2.5 py-1"
+          >
+            <a
+              href={l.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-[#2B7FFF] hover:underline font-medium"
+            >
+              {l.label}
+            </a>
+            <span className="text-[10px] text-[#94A3B8] uppercase">{l.kind}</span>
+            <button
+              onClick={() => del(l.id)}
+              className="text-[#CBD5E1] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="מחק קישור"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {!adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-[12px] font-semibold text-[#94A3B8] hover:text-[#2B7FFF] border border-dashed border-[#E2E8F0] rounded-full px-3 py-1"
+          >
+            + קישור
+          </button>
         )}
       </div>
 
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-5">
-        <h3 className="text-[13px] font-bold mb-3">שעות אחרונות</h3>
-        {recentTime.length === 0 ? (
-          <p className="text-[12px] text-[#94A3B8]">אין רשומות שעות.</p>
-        ) : (
-          <ul className="space-y-2">
-            {recentTime.map((e) => (
-              <li key={e.id} className="text-[13px] flex items-baseline justify-between gap-2">
-                <span className="text-[#64748B] text-[11px]">{fmtDateHe(e.startedAt)}</span>
-                <span className="font-semibold tabular-nums text-[#0F172A]">
-                  {e.endedAt ? fmtHours(e.durationSeconds) : <span className="text-[#2B7FFF]">פעיל</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-5">
-        <h3 className="text-[13px] font-bold mb-3">תאריכים</h3>
-        <dl className="space-y-2 text-[13px]">
-          <div className="flex justify-between gap-2">
-            <dt className="text-[#94A3B8]">התחלה</dt>
-            <dd className="text-[#0F172A]">{fmtDateHe(project.startDate)}</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt className="text-[#94A3B8]">יעד</dt>
-            <dd className="text-[#0F172A]">{fmtDateHe(project.targetDate)}</dd>
-          </div>
-        </dl>
-      </div>
-
-      {project.description && (
-        <div className="lg:col-span-3 bg-white border border-[#E2E8F0] rounded-xl p-5">
-          <h3 className="text-[13px] font-bold mb-2">תיאור</h3>
-          <p className="text-[13px] text-[#475569] whitespace-pre-wrap leading-relaxed">
-            {project.description}
-          </p>
-        </div>
+      {adding && (
+        <form onSubmit={add} className="grid grid-cols-1 md:grid-cols-12 gap-2 mt-2">
+          <input
+            required
+            placeholder="תווית (ריפו, Figma…)"
+            value={form.label}
+            onChange={(e) => setForm({ ...form, label: e.target.value })}
+            className="md:col-span-3 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+          />
+          <input
+            required
+            type="url"
+            placeholder="https://…"
+            value={form.url}
+            onChange={(e) => setForm({ ...form, url: e.target.value })}
+            dir="ltr"
+            className="md:col-span-5 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+          />
+          <select
+            value={form.kind}
+            onChange={(e) => setForm({ ...form, kind: e.target.value as PersonalLink["kind"] })}
+            className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+          >
+            <option value="other">אחר</option>
+            <option value="github">GitHub</option>
+            <option value="figma">Figma</option>
+            <option value="drive">Drive</option>
+            <option value="notion">Notion</option>
+          </select>
+          <button className="md:col-span-1 rounded-md bg-[#2B7FFF] text-white text-[13px] font-semibold px-3 py-2">
+            הוסף
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdding(false)}
+            className="md:col-span-1 text-[12px] text-[#64748B] hover:text-[#0F172A]"
+          >
+            ביטול
+          </button>
+        </form>
       )}
     </div>
   );
 }
 
-// ── Tasks (kanban with add / status change / delete) ──
-
-const TASK_COLS: { key: PersonalTask["status"]; label: string }[] = [
-  { key: "todo", label: "לעשות" },
-  { key: "in_progress", label: "בתהליך" },
-  { key: "waiting", label: "ממתין" },
-  { key: "blocked", label: "חסום" },
-  { key: "done", label: "הושלם" },
-  { key: "canceled", label: "בוטל" },
-];
+// ── Tasks (focus strip + one clean grouped list) ──
 
 function TasksTab({
   project,
@@ -365,7 +505,7 @@ function TasksTab({
   onChange,
 }: {
   project: PersonalProject;
-  tasks: PersonalTask[];
+  tasks: TaskRow[];
   onChange: () => void;
 }) {
   async function setStatus(id: number, status: PersonalTask["status"]) {
@@ -390,9 +530,28 @@ function TasksTab({
     }
   }
 
+  const active = tasks
+    .filter((t) => personalTaskSection(t.status) === "active")
+    .sort((a, b) => {
+      const r = personalActiveRank(a.status) - personalActiveRank(b.status);
+      if (r !== 0) return r;
+      const p = priorityWeight(b.priority) - priorityWeight(a.priority);
+      if (p !== 0) return p;
+      return +new Date(b.createdAt) - +new Date(a.createdAt);
+    });
+  const done = tasks.filter((t) => t.status === "done");
+  const canceled = tasks.filter((t) => t.status === "canceled");
+
+  // Focus: what am I on now — the working task, else the top-priority todo.
+  const focus =
+    active.find((t) => t.status === "in_progress") ??
+    active.find((t) => t.status === "todo") ??
+    null;
+
   return (
     <div className="space-y-4">
-      {/* Same add-flow as everywhere else in the admin — one form, one behaviour. */}
+      {focus && <FocusStrip task={focus} />}
+
       <TaskQuickAdd
         projects={[]}
         fixedProjectId={project.id}
@@ -400,87 +559,192 @@ function TasksTab({
         onCreated={onChange}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {TASK_COLS.map((col) => {
-          const list = tasks.filter((t) => t.status === col.key);
-          return (
-            <div key={col.key} className="bg-[#F1F5F9] rounded-xl p-3 min-h-[200px]">
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-2 px-1">
-                {col.label} · {list.length}
-              </h4>
-              <ul className="space-y-2">
-                {list.map((t) => (
-                  <li
-                    key={t.id}
-                    className="bg-white border border-[#E2E8F0] rounded-lg p-3 text-[13px] group hover:border-[#2B7FFF]/40 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <Link
-                        href={`/admin/personal/tasks/${t.id}`}
-                        className="font-medium text-[#0F172A] hover:text-[#2B7FFF] flex-1 min-w-0"
-                      >
-                        {t.title}
-                      </Link>
-                      <button
-                        onClick={() => del(t.id)}
-                        className="text-[11px] text-[#94A3B8] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                        aria-label="מחק"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    {t.nextAction && (
-                      <div className="text-[11px] text-[#64748B] mt-1 truncate">
-                        → {t.nextAction}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between mt-2 gap-2">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                          t.priority === "high"
-                            ? "bg-red-50 text-red-600"
-                            : t.priority === "medium"
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-[#F1F5F9] text-[#94A3B8]"
-                        }`}
-                      >
-                        {TASK_PRIORITY_HE[t.priority]}
-                      </span>
-                      {t.dueDate && (
-                        <span className="text-[10px] text-[#94A3B8]">{fmtDateHe(t.dueDate)}</span>
-                      )}
-                    </div>
-                    <select
-                      value={t.status}
-                      onChange={(e) => setStatus(t.id, e.target.value as PersonalTask["status"])}
-                      className="mt-2 w-full text-[11px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-2 py-1"
-                    >
-                      {TASK_COLS.map((c) => (
-                        <option key={c.key} value={c.key}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
+      {active.length === 0 && done.length === 0 && canceled.length === 0 ? (
+        <p className="text-[13px] text-[#94A3B8] bg-white border border-[#E2E8F0] rounded-xl py-10 text-center">
+          עוד אין משימות. הוסף את הראשונה למעלה.
+        </p>
+      ) : (
+        <>
+          <TaskGroup
+            title="פעילות"
+            count={active.length}
+            tasks={active}
+            onStatus={setStatus}
+            onDelete={del}
+            defaultOpen
+          />
+          {done.length > 0 && (
+            <TaskGroup
+              title="הושלמו"
+              count={done.length}
+              tasks={done}
+              onStatus={setStatus}
+              onDelete={del}
+            />
+          )}
+          {canceled.length > 0 && (
+            <TaskGroup
+              title="בוטלו"
+              count={canceled.length}
+              tasks={canceled}
+              onStatus={setStatus}
+              onDelete={del}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
 
-// ── Time (live timer + manual + list) ──
-
-function formatElapsed(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return `${m}:${String(s).padStart(2, "0")}`;
+function priorityWeight(p: string): number {
+  return p === "high" ? 3 : p === "medium" ? 2 : 1;
 }
+
+function FocusStrip({ task }: { task: TaskRow }) {
+  const working = task.status === "in_progress";
+  return (
+    <Link
+      href={`/admin/personal/tasks/${task.id}`}
+      className={`block rounded-xl border px-5 py-4 transition hover:brightness-[0.99] ${
+        working ? "bg-[#F5F3FF] border-[#DDD6FE]" : "bg-[#EFF6FF] border-[#BFDBFE]"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${
+            working ? "text-[#7C3AED]" : "text-[#2B7FFF]"
+          }`}
+        >
+          {working && <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] animate-pulse" />}
+          {working ? "על מה אני עכשיו" : "הבא בתור"}
+        </span>
+        {task.stepsTotal > 0 && (
+          <span className="text-[11px] text-[#64748B] tabular-nums">
+            ✔ {task.stepsDone}/{task.stepsTotal}
+          </span>
+        )}
+      </div>
+      <div className="text-[15px] font-semibold text-[#0F172A] mt-1">{task.title}</div>
+      {task.nextAction && (
+        <div className="text-[13px] text-[#475569] mt-0.5">→ {task.nextAction}</div>
+      )}
+      <span className="inline-block mt-2 text-[12px] font-semibold text-[#2B7FFF]">
+        {working ? "המשך לעבוד ←" : "פתח משימה ←"}
+      </span>
+    </Link>
+  );
+}
+
+function TaskGroup({
+  title,
+  count,
+  tasks,
+  onStatus,
+  onDelete,
+  defaultOpen = false,
+}: {
+  title: string;
+  count: number;
+  tasks: TaskRow[];
+  onStatus: (id: number, status: PersonalTask["status"]) => void;
+  onDelete: (id: number) => void;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details open={defaultOpen} className="group">
+      <summary className="flex items-center gap-2 cursor-pointer list-none select-none py-1.5">
+        <svg
+          className="w-3 h-3 text-[#94A3B8] transition-transform group-open:rotate-90"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">
+          {title} · {count}
+        </span>
+      </summary>
+      <ul className="mt-2 bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9] overflow-hidden">
+        {tasks.map((t) => (
+          <TaskListRow key={t.id} task={t} onStatus={onStatus} onDelete={onDelete} />
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function TaskListRow({
+  task,
+  onStatus,
+  onDelete,
+}: {
+  task: TaskRow;
+  onStatus: (id: number, status: PersonalTask["status"]) => void;
+  onDelete: (id: number) => void;
+}) {
+  const closed = task.status === "done" || task.status === "canceled";
+  return (
+    <li className="group flex items-center gap-3 px-4 py-3 hover:bg-[#F8FAFC] transition-colors">
+      <span
+        className={`shrink-0 w-1.5 h-1.5 rounded-full ${TASK_PRIORITY_DOT[task.priority]}`}
+        aria-hidden
+      />
+      <div className="flex-1 min-w-0">
+        <Link
+          href={`/admin/personal/tasks/${task.id}`}
+          className={`block text-[14px] font-medium truncate hover:text-[#2B7FFF] ${
+            closed ? "text-[#94A3B8]" : "text-[#0F172A]"
+          } ${task.status === "canceled" ? "line-through" : ""}`}
+        >
+          {task.title}
+        </Link>
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#94A3B8]">
+          {task.stepsTotal > 0 && (
+            <span className="tabular-nums">✔ {task.stepsDone}/{task.stepsTotal}</span>
+          )}
+          {task.nextAction && !closed && (
+            <span className="truncate text-[#64748B]">→ {task.nextAction}</span>
+          )}
+          {task.dueDate && <span className="tabular-nums">{fmtDateHe(task.dueDate)}</span>}
+        </div>
+      </div>
+
+      <span
+        className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${TASK_STATUS_TONE[task.status]}`}
+      >
+        {TASK_STATUS_HE[task.status]}
+      </span>
+
+      <select
+        value={task.status}
+        onChange={(e) => onStatus(task.id, e.target.value as PersonalTask["status"])}
+        aria-label="שנה סטטוס"
+        className="shrink-0 text-[11px] border border-[#E2E8F0] rounded-md bg-white px-1.5 py-1 text-[#64748B]"
+      >
+        {PERSONAL_TASK_STATUS_ORDER.map((s) => (
+          <option key={s} value={s}>
+            {TASK_STATUS_HE[s]}
+          </option>
+        ))}
+      </select>
+
+      <button
+        onClick={() => onDelete(task.id)}
+        className="shrink-0 text-[12px] text-[#CBD5E1] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="מחק"
+      >
+        ✕
+      </button>
+    </li>
+  );
+}
+
+// ── Time (live timer + manual + list) — unchanged behaviour ──
 
 function TimeTab({
   project,
@@ -490,7 +754,7 @@ function TimeTab({
 }: {
   project: PersonalProject;
   entries: PersonalTimeEntry[];
-  tasks: PersonalTask[];
+  tasks: TaskRow[];
   onChange: () => void;
 }) {
   const [active, setActive] = useState<{ id: number; projectId: number; startedAt: string } | null>(null);
@@ -502,7 +766,6 @@ function TimeTab({
   const openTasks = tasks.filter((t) => t.status !== "done" && t.status !== "canceled");
   const taskTitleById = new Map(tasks.map((t) => [t.id, t.title]));
 
-  // Load the active personal timer once on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -613,10 +876,7 @@ function TimeTab({
               <span className="w-1.5 h-1.5 rounded-full bg-[#2B7FFF] animate-pulse" />
               טיימר פעיל
             </span>
-            <div
-              className="font-mono text-[22px] font-bold text-[#0F172A] tabular-nums mt-1"
-              dir="ltr"
-            >
+            <div className="font-mono text-[22px] font-bold text-[#0F172A] tabular-nums mt-1" dir="ltr">
               {formatElapsed(elapsed)}
             </div>
           </div>
@@ -743,109 +1003,10 @@ function TimeTab({
   );
 }
 
-// ── Links ──
-
-function LinksTab({
-  project,
-  links,
-  onChange,
-}: {
-  project: PersonalProject;
-  links: PersonalLink[];
-  onChange: () => void;
-}) {
-  const [form, setForm] = useState({
-    label: "",
-    url: "",
-    kind: "other" as PersonalLink["kind"],
-  });
-
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    const res = await fetch("/api/admin/personal-links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: project.id, ...form }),
-    });
-    if (res.ok) {
-      setForm({ label: "", url: "", kind: "other" });
-      onChange();
-    } else {
-      toast.error("הוספה נכשלה");
-    }
-  }
-
-  async function del(id: number) {
-    await fetch(`/api/admin/personal-links/${id}`, { method: "DELETE" });
-    onChange();
-  }
-
-  return (
-    <div className="space-y-4">
-      <form
-        onSubmit={add}
-        className="bg-white border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3"
-      >
-        <input
-          required
-          placeholder="תווית (למשל: ריפו)"
-          value={form.label}
-          onChange={(e) => setForm({ ...form, label: e.target.value })}
-          className="md:col-span-3 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-        />
-        <input
-          required
-          type="url"
-          placeholder="https://…"
-          value={form.url}
-          onChange={(e) => setForm({ ...form, url: e.target.value })}
-          dir="ltr"
-          className="md:col-span-6 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-        />
-        <select
-          value={form.kind}
-          onChange={(e) => setForm({ ...form, kind: e.target.value as PersonalLink["kind"] })}
-          className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-        >
-          <option value="other">אחר</option>
-          <option value="github">GitHub</option>
-          <option value="figma">Figma</option>
-          <option value="drive">Drive</option>
-          <option value="notion">Notion</option>
-        </select>
-        <button className="md:col-span-1 rounded-full bg-[#2B7FFF] text-white text-[13px] font-semibold px-3 py-2">
-          הוסף
-        </button>
-      </form>
-
-      {links.length === 0 ? (
-        <p className="text-[13px] text-[#94A3B8] text-center py-6">אין קישורים עדיין.</p>
-      ) : (
-        <ul className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9] overflow-hidden">
-          {links.map((l) => (
-            <li key={l.id} className="px-5 py-3 flex items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#F1F5F9] text-[#64748B]">
-                {l.kind}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-[#0F172A]">{l.label}</div>
-                <a
-                  href={l.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-[11px] text-[#2B7FFF] hover:underline truncate block"
-                  dir="ltr"
-                >
-                  {l.url}
-                </a>
-              </div>
-              <button onClick={() => del(l.id)} className="text-[11px] text-[#94A3B8] hover:text-red-600">
-                מחק
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
 }

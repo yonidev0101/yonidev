@@ -5,8 +5,9 @@ import {
   clients,
   personalTasks,
   personalProjects,
+  personalTaskSteps,
 } from "@/lib/db/client";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import TasksList, { type TaskRow } from "@/components/admin/TasksList";
 import TaskQuickAdd, { type QuickAddProject } from "@/components/admin/TaskQuickAdd";
 import { isTaskClosed } from "@/lib/admin/format";
@@ -27,7 +28,8 @@ export default async function TasksPage({
   const kind: Domain | "all" =
     sp.kind === "personal" || sp.kind === "client" ? sp.kind : "all";
 
-  const [clientRows, personalRows, clientProjectRows, personalProjectRows] = await Promise.all([
+  const [clientRows, personalRows, clientProjectRows, personalProjectRows, personalStepRows] =
+    await Promise.all([
     kind === "personal"
       ? Promise.resolve([])
       : db
@@ -64,6 +66,7 @@ export default async function TasksPage({
             priority: personalTasks.priority,
             dueDate: personalTasks.dueDate,
             nextAction: personalTasks.nextAction,
+            acceptance: personalTasks.acceptance,
             estimateMinutes: personalTasks.estimateMinutes,
             lastUpdateAt: personalTasks.lastUpdateAt,
             createdAt: personalTasks.createdAt,
@@ -83,7 +86,18 @@ export default async function TasksPage({
       .select({ id: personalProjects.id, name: personalProjects.name, status: personalProjects.status })
       .from(personalProjects)
       .orderBy(personalProjects.name),
+    // Checklist progress per personal task, for the "✔ 3/7" badge.
+    db
+      .select({
+        taskId: personalTaskSteps.taskId,
+        total: sql<number>`COUNT(*)::int`,
+        done: sql<number>`COUNT(*) FILTER (WHERE ${personalTaskSteps.done})::int`,
+      })
+      .from(personalTaskSteps)
+      .groupBy(personalTaskSteps.taskId),
   ]);
+
+  const stepsByTask = new Map(personalStepRows.map((r) => [r.taskId, r]));
 
   const iso = (d: Date | string | null) =>
     d instanceof Date ? d.toISOString() : d;
@@ -92,6 +106,8 @@ export default async function TasksPage({
     ...clientRows.map((r) => ({
       ...r,
       domain: "client" as const,
+      stepsDone: 0,
+      stepsTotal: 0,
       lastUpdateAt: iso(r.lastUpdateAt),
       createdAt: iso(r.createdAt),
     })),
@@ -103,6 +119,8 @@ export default async function TasksPage({
       followUpAt: null,
       waitingOn: null,
       waitingSince: null,
+      stepsDone: stepsByTask.get(r.id)?.done ?? 0,
+      stepsTotal: stepsByTask.get(r.id)?.total ?? 0,
       lastUpdateAt: iso(r.lastUpdateAt),
       createdAt: iso(r.createdAt),
     })),

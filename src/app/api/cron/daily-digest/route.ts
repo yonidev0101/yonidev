@@ -47,7 +47,7 @@ export async function GET(req: Request) {
     const followUpKeys = new Set(followUps.map((t) => `${t.domain}:${t.id}`));
 
     // Overdue tasks not already surfaced as a follow-up.
-    const overdueTasks: DigestTask[] = data.upcomingTasks
+    const overdueTasks: DigestTask[] = data.openTasks
       .filter((t) => {
         const d = actionableDate(t);
         return d && d < today && !followUpKeys.has(`${t.domain}:${t.id}`);

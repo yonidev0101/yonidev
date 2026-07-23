@@ -14,6 +14,7 @@ const patchSchema = z.object({
   estimateMinutes: z.coerce.number().int().min(0).nullable().optional(),
   nextAction: z.string().max(500).nullable().optional(),
   acceptance: z.string().max(5000).nullable().optional(),
+  branchName: z.string().max(300).nullable().optional(),
 });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -25,6 +26,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   try {
     const update: Record<string, unknown> = { ...parsed.data };
     if (parsed.data.dueDate === "") update.dueDate = null;
+    if (typeof parsed.data.branchName === "string") {
+      update.branchName = parsed.data.branchName.trim() || null;
+    }
     // Keep completedAt in sync with the done status.
     if (parsed.data.status === "done") update.completedAt = new Date();
     else if (parsed.data.status !== undefined) update.completedAt = null;
