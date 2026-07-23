@@ -35,6 +35,8 @@ export default function TaskQuickAdd({
   fixedDomain = "client",
   /** Show the personal-task "type" selector (feature/bug/idea/…). Personal only. */
   enableType = false,
+  /** Denser layout for narrow hosts like the sidebar. */
+  compact = false,
   /** Called after a successful create, for callers that refresh their own data. */
   onCreated,
 }: {
@@ -45,6 +47,7 @@ export default function TaskQuickAdd({
   triggerLabel?: string;
   fixedDomain?: Domain;
   enableType?: boolean;
+  compact?: boolean;
   onCreated?: () => void;
 }) {
   const router = useRouter();
@@ -110,6 +113,11 @@ export default function TaskQuickAdd({
     }
   }
 
+  // Shared control styling — compact hosts (the sidebar) get denser inputs.
+  const inputCls = `w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] ${
+    compact ? "px-2.5 py-1.5 text-[13px]" : "px-3 py-2 text-[14px]"
+  }`;
+
   if (projects.length === 0 && !fixedProjectId) {
     return (
       <div className="text-[12px] text-[#94A3B8] italic">
@@ -122,7 +130,9 @@ export default function TaskQuickAdd({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl border border-dashed border-[#CBD5E1] hover:border-[#2B7FFF] hover:bg-[#EFF6FF] text-[14px] font-semibold text-[#2B7FFF] py-3 transition-colors"
+        className={`w-full rounded-xl border border-dashed border-[#CBD5E1] hover:border-[#2B7FFF] hover:bg-[#EFF6FF] font-semibold text-[#2B7FFF] transition-colors ${
+          compact ? "text-[13px] py-2" : "text-[14px] py-3"
+        }`}
       >
         {triggerLabel}
       </button>
@@ -135,7 +145,9 @@ export default function TaskQuickAdd({
   return (
     <form
       onSubmit={onSubmit}
-      className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-3"
+      className={`bg-white border border-[#E2E8F0] rounded-xl ${
+        compact ? "p-3 space-y-2.5" : "p-4 space-y-3"
+      }`}
     >
       {showType && (
         <div className="flex flex-wrap gap-1.5">
@@ -166,7 +178,7 @@ export default function TaskQuickAdd({
           value={projectId}
           onChange={(e) => setProjectId(e.target.value)}
           required
-          className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+          className={inputCls}
         >
           <option value="">— בחר {pickerLabel} —</option>
           {projects.map((p) => (
@@ -185,20 +197,20 @@ export default function TaskQuickAdd({
       <input
         autoFocus
         required
-        placeholder="תיאור המשימה (למשל: לשלוח mockup מתוקן לדנה)"
+        placeholder={compact ? "תיאור המשימה…" : "תיאור המשימה (למשל: לשלוח mockup מתוקן לדנה)"}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+        className={inputCls}
       />
 
       {showOptional && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className={compact ? "space-y-2.5" : "grid grid-cols-2 gap-3"}>
           <label className="block">
             <span className="block text-[11px] text-[#94A3B8] mb-1">עדיפות</span>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as Priority)}
-              className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+              className={inputCls}
             >
               {Object.entries(TASK_PRIORITY_HE).map(([k, v]) => (
                 <option key={k} value={k}>
@@ -213,30 +225,39 @@ export default function TaskQuickAdd({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
+              className={inputCls}
             />
           </label>
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className={compact ? "space-y-2 pt-0.5" : "flex items-center gap-3"}>
         <button
           type="submit"
           disabled={submitting || !title.trim() || !projectId}
-          className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 text-white text-[13px] font-semibold px-4 py-1.5"
+          className={`rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 text-white text-[13px] font-semibold px-4 py-1.5 ${
+            compact ? "w-full" : ""
+          }`}
         >
           {submitting ? "שומר..." : "צור משימה"}
         </button>
-        <button
-          type="button"
-          onClick={() => setShowOptional((v) => !v)}
-          className="text-[12px] text-[#64748B] hover:text-[#2B7FFF]"
-        >
-          {showOptional ? "פחות אפשרויות" : "עדיפות / דד-ליין"}
-        </button>
-        <button type="button" onClick={reset} className="ms-auto text-[13px] text-[#64748B]">
-          ביטול
-        </button>
+        {/* On wide hosts these sit inline; in compact mode they drop to their own row. */}
+        <div className={compact ? "flex items-center justify-between" : "contents"}>
+          <button
+            type="button"
+            onClick={() => setShowOptional((v) => !v)}
+            className="text-[12px] text-[#64748B] hover:text-[#2B7FFF]"
+          >
+            {showOptional ? "פחות אפשרויות" : "עדיפות / דד-ליין"}
+          </button>
+          <button
+            type="button"
+            onClick={reset}
+            className={`text-[13px] text-[#64748B] hover:text-[#0F172A] ${compact ? "" : "ms-auto"}`}
+          >
+            ביטול
+          </button>
+        </div>
       </div>
     </form>
   );

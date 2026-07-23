@@ -140,9 +140,6 @@ export default function LiveTimer() {
 
       {showPicker ? (
         <div className="space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] px-1">
-            טיימר
-          </div>
           <select
             value={selected}
             onChange={(e) => pickProject(e.target.value)}

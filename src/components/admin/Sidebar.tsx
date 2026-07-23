@@ -1,9 +1,11 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import LiveTimer from "./LiveTimer";
+import SidebarQuickAdd from "./SidebarQuickAdd";
 
 const ITEMS: { href: string; label: string; icon: React.ReactNode }[] = [
   { href: "/admin",           label: "דשבורד",         icon: <DashIcon /> },
@@ -87,8 +89,13 @@ export default function Sidebar({
         })}
       </nav>
 
-      <div className="px-3 py-3 border-t border-[#F1F5F9]">
-        <LiveTimer />
+      <div className="border-t border-[#F1F5F9] overflow-y-auto">
+        <CollapsibleTool title="הוספה מהירה" storageKey="quickadd">
+          <SidebarQuickAdd />
+        </CollapsibleTool>
+        <CollapsibleTool title="טיימר" storageKey="timer" bordered>
+          <LiveTimer />
+        </CollapsibleTool>
       </div>
 
       <button
@@ -98,6 +105,77 @@ export default function Sidebar({
         יציאה
       </button>
     </aside>
+  );
+}
+
+// Tiny same-tab pub/sub over the collapsed preferences: the "storage" event
+// only fires in *other* tabs, so we notify our own subscribers on toggle.
+const collapseListeners = new Set<() => void>();
+function subscribeCollapse(cb: () => void) {
+  collapseListeners.add(cb);
+  return () => collapseListeners.delete(cb);
+}
+
+/**
+ * A sidebar section that can be minimised to just its title row, so the
+ * quick-add and timer don't have to fill the sidebar at once. The open/closed
+ * state is remembered per-section in localStorage.
+ */
+function CollapsibleTool({
+  title,
+  storageKey,
+  bordered = false,
+  children,
+}: {
+  title: string;
+  storageKey: string;
+  bordered?: boolean;
+  children: React.ReactNode;
+}) {
+  const lsKey = `admin.sidebar.${storageKey}.collapsed`;
+  // useSyncExternalStore reads localStorage on the client while rendering
+  // "expanded" on the server — no hydration mismatch, no setState-in-effect.
+  const collapsed = useSyncExternalStore(
+    subscribeCollapse,
+    () => localStorage.getItem(lsKey) === "1",
+    () => false,
+  );
+
+  function toggle() {
+    localStorage.setItem(lsKey, collapsed ? "0" : "1");
+    collapseListeners.forEach((cb) => cb());
+  }
+
+  return (
+    <div className={bordered ? "border-t border-[#F1F5F9]" : ""}>
+      <button
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        className="w-full flex items-center justify-between px-4 pt-3 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] hover:text-[#0F172A] transition"
+      >
+        <span>{title}</span>
+        <ChevronIcon open={!collapsed} />
+      </button>
+      {!collapsed && <div className="px-3 pb-3">{children}</div>}
+    </div>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`transition-transform ${open ? "" : "-rotate-90"}`}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
   );
 }
 
