@@ -8,6 +8,7 @@ import { json, notFound, parseJson, serverError } from "@/lib/admin/http";
 const patchSchema = z.object({
   title: z.string().min(1).max(300).optional(),
   description: z.string().max(5000).nullable().optional(),
+  type: z.enum(["feature", "bug", "idea", "chore", "research", "design"]).optional(),
   status: z.enum(["todo", "in_progress", "waiting", "blocked", "done", "canceled"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   dueDate: z.string().nullable().optional(),

@@ -17,6 +17,7 @@ import PersonalTaskTimeline, {
   type TimelineSession,
 } from "@/components/admin/PersonalTaskTimeline";
 import PersonalTaskMetaPanel from "@/components/admin/PersonalTaskMetaPanel";
+import TaskTypeTag from "@/components/admin/TaskTypeTag";
 import PersonalTaskChecklist from "@/components/admin/PersonalTaskChecklist";
 import PersonalTaskGitPanel, {
   type GitCommit,
@@ -95,9 +96,12 @@ export default async function PersonalTaskDetailPage({
         </Link>
 
         <div className="flex items-start gap-3 mt-2">
-          <h1 className="flex-1 text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight leading-tight">
-            {task.title}
-          </h1>
+          <div className="flex-1 min-w-0">
+            <TaskTypeTag type={task.type} size="md" />
+            <h1 className="text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight leading-tight mt-1.5">
+              {task.title}
+            </h1>
+          </div>
           <span
             className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 ${TASK_STATUS_TONE[task.status]}`}
           >
@@ -108,6 +112,7 @@ export default async function PersonalTaskDetailPage({
               id: task.id,
               title: task.title,
               description: task.description,
+              type: task.type,
               status: task.status,
               priority: task.priority,
               dueDate: task.dueDate,

@@ -92,8 +92,16 @@ export default function LiveTimer() {
     setTasks([]);
   }
 
+  const isPersonal = selDomain === "personal";
+  // Personal work is task-first: no session without a task. Client work keeps a task optional.
+  const needsTask = isPersonal;
+
   async function onStart() {
     if (!selDomain || !selProjectId) return;
+    if (needsTask && !selectedTaskId) {
+      toast.error("בחר משימה כדי להתחיל");
+      return;
+    }
     setStarting(true);
     const ok = await start(selDomain, {
       projectId: selProjectId,
@@ -161,30 +169,37 @@ export default function LiveTimer() {
             )}
           </select>
 
-          {tasks.length > 0 && (
+          {tasks.length > 0 ? (
             <select
               value={selectedTaskId}
               onChange={(e) => setSelectedTaskId(e.target.value)}
               className="w-full text-[12px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-2 py-1.5"
             >
-              <option value="">— ללא משימה —</option>
+              <option value="">{needsTask ? "— בחר משימה —" : "— ללא משימה —"}</option>
               {tasks.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
                 </option>
               ))}
             </select>
+          ) : (
+            needsTask &&
+            selected && (
+              <p className="text-[11px] text-[#94A3B8] px-1 leading-relaxed">
+                אין משימות פתוחות בפרויקט הזה — פתח משימה כדי לעקוב על הזמן.
+              </p>
+            )
           )}
 
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="על מה אני עובד? (אופציונלי)"
+            placeholder="הערה לסשן (אופציונלי)"
             className="w-full text-[12px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-2 py-1.5"
           />
           <button
             onClick={onStart}
-            disabled={!selected || starting}
+            disabled={!selected || starting || (needsTask && !selectedTaskId)}
             className="w-full rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-semibold py-1.5 transition"
           >
             {starting ? "מתחיל..." : "▶ התחל טיימר"}

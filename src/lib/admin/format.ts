@@ -155,6 +155,47 @@ export const TASK_PRIORITY_HE: Record<string, string> = {
   high: "גבוהה",
 };
 
+// ── personal task "type" (Notion-style property) — labels, icons, chip tones ──
+// The single source of truth for how a personal task's type looks anywhere in the app.
+
+/** Order the types are offered in pickers and filter bars. */
+export const PERSONAL_TASK_TYPE_ORDER = [
+  "feature",
+  "bug",
+  "idea",
+  "chore",
+  "research",
+  "design",
+] as const;
+
+export const PERSONAL_TASK_TYPE_HE: Record<string, string> = {
+  feature: "פיצ׳ר",
+  bug: "באג",
+  idea: "רעיון",
+  chore: "תחזוקה",
+  research: "בירור",
+  design: "עיצוב",
+};
+
+export const PERSONAL_TASK_TYPE_ICON: Record<string, string> = {
+  feature: "✨",
+  bug: "🐛",
+  idea: "💡",
+  chore: "🔧",
+  research: "🔍",
+  design: "🎨",
+};
+
+/** Chip tone (bg + text) per type — mirrors TASK_STATUS_TONE's approach. */
+export const PERSONAL_TASK_TYPE_TONE: Record<string, string> = {
+  feature: "bg-[#EFF6FF] text-[#2B7FFF]",
+  bug: "bg-red-50 text-red-700",
+  idea: "bg-violet-50 text-violet-700",
+  chore: "bg-[#F1F5F9] text-[#64748B]",
+  research: "bg-cyan-50 text-cyan-700",
+  design: "bg-pink-50 text-pink-700",
+};
+
 export const COMM_KIND_HE: Record<string, string> = {
   call: "שיחה",
   email: "מייל",

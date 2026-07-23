@@ -87,6 +87,17 @@ export const personalProjectStatusEnum = pgEnum("personal_project_status", [
   "archived",
 ]);
 
+// What a personal task *is* — a Notion-style "Type" property. Distinct from
+// personalUpdateKindEnum, which classifies journal entries ("what happened").
+export const personalTaskTypeEnum = pgEnum("personal_task_type", [
+  "feature",
+  "bug",
+  "idea",
+  "chore",
+  "research",
+  "design",
+]);
+
 // Solo-dev flavoured update kinds — the client-work equivalent (taskUpdateKindEnum)
 // is about calls/meetings/handoffs, which don't exist on personal projects.
 export const personalUpdateKindEnum = pgEnum("personal_update_kind", [
@@ -338,6 +349,7 @@ export const personalTasks = pgTable(
     description: text("description"),
     status: taskStatusEnum("status").notNull().default("todo"),
     priority: taskPriorityEnum("priority").notNull().default("medium"),
+    type: personalTaskTypeEnum("type").notNull().default("feature"),
     dueDate: date("due_date"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     // Up-front estimate (minutes), compared against logged time to calibrate future guesses.

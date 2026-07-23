@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { confirm } from "./ConfirmDialog";
 import TaskQuickAdd from "./TaskQuickAdd";
+import TaskTypeTag from "./TaskTypeTag";
 import type {
   PersonalProject,
   PersonalTask,
@@ -18,6 +19,9 @@ import {
   TASK_STATUS_TONE,
   TASK_PRIORITY_DOT,
   PERSONAL_TASK_STATUS_ORDER,
+  PERSONAL_TASK_TYPE_ORDER,
+  PERSONAL_TASK_TYPE_HE,
+  PERSONAL_TASK_TYPE_ICON,
   personalTaskSection,
   personalActiveRank,
   fmtDateHe,
@@ -27,11 +31,6 @@ import {
 
 /** Task rows carry checklist progress from the query, for the "✔ 3/7" badge. */
 type TaskRow = PersonalTask & { stepsTotal: number; stepsDone: number };
-
-const TABS: { key: string; label: string }[] = [
-  { key: "tasks", label: "משימות" },
-  { key: "time", label: "זמן" },
-];
 
 type Props = {
   project: PersonalProject;
@@ -47,25 +46,44 @@ export default function PersonalProjectShell(props: Props) {
   const refresh = () => router.refresh();
   const activeTab = tab === "time" ? "time" : "tasks";
 
+  // Live meta so each tab announces what's inside before you click it.
+  const openTaskCount = props.tasks.filter(
+    (t) => t.status !== "done" && t.status !== "canceled",
+  ).length;
+  const totalTimeSec = props.timeEntries.reduce((s, e) => s + (e.durationSeconds ?? 0), 0);
+
+  const tabs = [
+    { key: "tasks", icon: "✓", label: "משימות", meta: `${openTaskCount} פתוחות` },
+    { key: "time", icon: "⏱", label: "זמן", meta: fmtHours(totalTimeSec) },
+  ];
+
   return (
     <div className="space-y-5">
       <ProjectMeta project={project} links={props.links} onChange={refresh} />
 
       <nav className="flex items-center gap-1 border-b border-[#E2E8F0]" dir="rtl">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const active = activeTab === t.key;
           return (
             <Link
               key={t.key}
               href={`/admin/personal/${project.id}?tab=${t.key}`}
               scroll={false}
-              className={`px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition ${
+              className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition ${
                 active
                   ? "border-[#2B7FFF] text-[#2B7FFF]"
                   : "border-transparent text-[#64748B] hover:text-[#0F172A]"
               }`}
             >
+              <span aria-hidden>{t.icon}</span>
               {t.label}
+              <span
+                className={`text-[11px] font-bold tabular-nums rounded-full px-1.5 py-0.5 ${
+                  active ? "bg-[#EFF6FF] text-[#2B7FFF]" : "bg-[#F1F5F9] text-[#94A3B8]"
+                }`}
+              >
+                {t.meta}
+              </span>
             </Link>
           );
         })}
@@ -530,8 +548,31 @@ function TasksTab({
     }
   }
 
+  // One-click "work on this" — starts the project timer on this task (stopping any other).
+  async function startTimer(id: number) {
+    const res = await fetch("/api/admin/personal-time/timer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: project.id, taskId: id, note: null }),
+    });
+    if (res.ok) {
+      toast.success("הטיימר התחיל — עבור לטאב זמן");
+      onChange();
+    } else {
+      toast.error("נכשל להתחיל טיימר");
+    }
+  }
+
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+
+  // Count open tasks per type — drives the filter-chip badges.
+  const openTasks = tasks.filter((t) => personalTaskSection(t.status) === "active");
+  const typeCounts = new Map<string, number>();
+  for (const t of openTasks) typeCounts.set(t.type, (typeCounts.get(t.type) ?? 0) + 1);
+  const matchesFilter = (t: TaskRow) => typeFilter === null || t.type === typeFilter;
+
   const active = tasks
-    .filter((t) => personalTaskSection(t.status) === "active")
+    .filter((t) => personalTaskSection(t.status) === "active" && matchesFilter(t))
     .sort((a, b) => {
       const r = personalActiveRank(a.status) - personalActiveRank(b.status);
       if (r !== 0) return r;
@@ -539,8 +580,8 @@ function TasksTab({
       if (p !== 0) return p;
       return +new Date(b.createdAt) - +new Date(a.createdAt);
     });
-  const done = tasks.filter((t) => t.status === "done");
-  const canceled = tasks.filter((t) => t.status === "canceled");
+  const done = tasks.filter((t) => t.status === "done" && matchesFilter(t));
+  const canceled = tasks.filter((t) => t.status === "canceled" && matchesFilter(t));
 
   // Focus: what am I on now — the working task, else the top-priority todo.
   const focus =
@@ -556,12 +597,35 @@ function TasksTab({
         projects={[]}
         fixedProjectId={project.id}
         fixedDomain="personal"
+        enableType
         onCreated={onChange}
       />
 
+      {typeCounts.size > 1 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FilterChip
+            label="הכל"
+            count={openTasks.length}
+            active={typeFilter === null}
+            onClick={() => setTypeFilter(null)}
+          />
+          {PERSONAL_TASK_TYPE_ORDER.filter((t) => typeCounts.has(t)).map((t) => (
+            <FilterChip
+              key={t}
+              label={`${PERSONAL_TASK_TYPE_ICON[t]} ${PERSONAL_TASK_TYPE_HE[t]}`}
+              count={typeCounts.get(t) ?? 0}
+              active={typeFilter === t}
+              onClick={() => setTypeFilter(typeFilter === t ? null : t)}
+            />
+          ))}
+        </div>
+      )}
+
       {active.length === 0 && done.length === 0 && canceled.length === 0 ? (
         <p className="text-[13px] text-[#94A3B8] bg-white border border-[#E2E8F0] rounded-xl py-10 text-center">
-          עוד אין משימות. הוסף את הראשונה למעלה.
+          {typeFilter
+            ? `אין משימות מסוג ${PERSONAL_TASK_TYPE_HE[typeFilter]}.`
+            : "עוד אין משימות. הוסף את הראשונה למעלה."}
         </p>
       ) : (
         <>
@@ -571,6 +635,7 @@ function TasksTab({
             tasks={active}
             onStatus={setStatus}
             onDelete={del}
+            onStart={startTimer}
             defaultOpen
           />
           {done.length > 0 && (
@@ -601,6 +666,36 @@ function priorityWeight(p: string): number {
   return p === "high" ? 3 : p === "medium" ? 2 : 1;
 }
 
+function FilterChip({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-semibold border transition ${
+        active
+          ? "bg-[#0F172A] text-white border-transparent"
+          : "bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A] hover:border-[#CBD5E1]"
+      }`}
+    >
+      {label}
+      <span className={`tabular-nums ${active ? "text-white/70" : "text-[#94A3B8]"}`}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
 function FocusStrip({ task }: { task: TaskRow }) {
   const working = task.status === "in_progress";
   return (
@@ -619,6 +714,7 @@ function FocusStrip({ task }: { task: TaskRow }) {
           {working && <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] animate-pulse" />}
           {working ? "על מה אני עכשיו" : "הבא בתור"}
         </span>
+        <TaskTypeTag type={task.type} />
         {task.stepsTotal > 0 && (
           <span className="text-[11px] text-[#64748B] tabular-nums">
             ✔ {task.stepsDone}/{task.stepsTotal}
@@ -642,6 +738,7 @@ function TaskGroup({
   tasks,
   onStatus,
   onDelete,
+  onStart,
   defaultOpen = false,
 }: {
   title: string;
@@ -649,6 +746,7 @@ function TaskGroup({
   tasks: TaskRow[];
   onStatus: (id: number, status: PersonalTask["status"]) => void;
   onDelete: (id: number) => void;
+  onStart?: (id: number) => void;
   defaultOpen?: boolean;
 }) {
   return (
@@ -671,7 +769,13 @@ function TaskGroup({
       </summary>
       <ul className="mt-2 bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9] overflow-hidden">
         {tasks.map((t) => (
-          <TaskListRow key={t.id} task={t} onStatus={onStatus} onDelete={onDelete} />
+          <TaskListRow
+            key={t.id}
+            task={t}
+            onStatus={onStatus}
+            onDelete={onDelete}
+            onStart={onStart}
+          />
         ))}
       </ul>
     </details>
@@ -682,10 +786,12 @@ function TaskListRow({
   task,
   onStatus,
   onDelete,
+  onStart,
 }: {
   task: TaskRow;
   onStatus: (id: number, status: PersonalTask["status"]) => void;
   onDelete: (id: number) => void;
+  onStart?: (id: number) => void;
 }) {
   const closed = task.status === "done" || task.status === "canceled";
   return (
@@ -694,6 +800,7 @@ function TaskListRow({
         className={`shrink-0 w-1.5 h-1.5 rounded-full ${TASK_PRIORITY_DOT[task.priority]}`}
         aria-hidden
       />
+      <TaskTypeTag type={task.type} iconOnly />
       <div className="flex-1 min-w-0">
         <Link
           href={`/admin/personal/tasks/${task.id}`}
@@ -713,6 +820,17 @@ function TaskListRow({
           {task.dueDate && <span className="tabular-nums">{fmtDateHe(task.dueDate)}</span>}
         </div>
       </div>
+
+      {onStart && !closed && (
+        <button
+          onClick={() => onStart(task.id)}
+          title="התחל טיימר על המשימה"
+          aria-label="התחל טיימר על המשימה"
+          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-[#2B7FFF] border border-[#BFDBFE] bg-[#EFF6FF] hover:bg-[#2B7FFF] hover:text-white rounded-full px-2.5 py-1 transition-colors"
+        >
+          ▶ עבוד
+        </button>
+      )}
 
       <span
         className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${TASK_STATUS_TONE[task.status]}`}
@@ -757,13 +875,22 @@ function TimeTab({
   tasks: TaskRow[];
   onChange: () => void;
 }) {
-  const [active, setActive] = useState<{ id: number; projectId: number; startedAt: string } | null>(null);
+  const [active, setActive] = useState<{
+    id: number;
+    projectId: number;
+    startedAt: string;
+    taskId?: number | null;
+    taskTitle?: string | null;
+  } | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [note, setNote] = useState("");
   const [taskId, setTaskId] = useState("");
-  const [manual, setManual] = useState({ date: "", hours: "", note: "" });
+  const [manual, setManual] = useState({ taskId: "", date: "", hours: "", note: "" });
 
+  // Task-first: every timer/entry hangs off a task. Live work uses open tasks;
+  // manual backfill can also target a just-finished (done) task, never a canceled one.
   const openTasks = tasks.filter((t) => t.status !== "done" && t.status !== "canceled");
+  const manualTasks = tasks.filter((t) => t.status !== "canceled");
   const taskTitleById = new Map(tasks.map((t) => [t.id, t.title]));
 
   useEffect(() => {
@@ -794,18 +921,29 @@ function TimeTab({
   const isThisProject = active?.projectId === project.id;
 
   async function startTimer() {
+    if (!taskId) {
+      toast.error("בחר משימה כדי להתחיל");
+      return;
+    }
+    const tid = Number(taskId);
     const res = await fetch("/api/admin/personal-time/timer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         projectId: project.id,
-        taskId: taskId ? Number(taskId) : null,
+        taskId: tid,
         note: note || null,
       }),
     });
     if (res.ok) {
       const json = await res.json();
-      setActive({ id: json.entry.id, projectId: project.id, startedAt: json.entry.startedAt });
+      setActive({
+        id: json.entry.id,
+        projectId: project.id,
+        startedAt: json.entry.startedAt,
+        taskId: tid,
+        taskTitle: taskTitleById.get(tid) ?? null,
+      });
       setNote("");
       setTaskId("");
       toast.success("הטיימר התחיל");
@@ -829,6 +967,10 @@ function TimeTab({
   async function addManual(e: React.FormEvent) {
     e.preventDefault();
     const hours = Number(manual.hours);
+    if (!manual.taskId) {
+      toast.error("בחר משימה");
+      return;
+    }
     if (!manual.date || !Number.isFinite(hours) || hours <= 0) {
       toast.error("הזן תאריך ומספר שעות");
       return;
@@ -839,13 +981,14 @@ function TimeTab({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         projectId: project.id,
+        taskId: Number(manual.taskId),
         startedAt: startedAt.toISOString(),
         durationSeconds: Math.round(hours * 3600),
         note: manual.note || null,
       }),
     });
     if (res.ok) {
-      setManual({ date: "", hours: "", note: "" });
+      setManual({ taskId: "", date: "", hours: "", note: "" });
       toast.success("רשומת השעות נוספה");
       onChange();
     } else {
@@ -868,53 +1011,79 @@ function TimeTab({
   const totalSec = entries.reduce((sum, t) => sum + (t.durationSeconds ?? 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <section className="space-y-2">
+        <TimeSection
+          icon="⏱"
+          title="מעקב עכשיו"
+          subtitle="בוחרים משימה ומתחילים — כל דקה נרשמת על המשימה שאתה עובד עליה."
+        />
       {isThisProject ? (
         <div className="rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] p-4 flex items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#2B7FFF] uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-[#2B7FFF] animate-pulse" />
-              טיימר פעיל
+              עובד על
             </span>
+            <div className="text-[14px] font-semibold text-[#0F172A] truncate mt-0.5">
+              {active?.taskTitle ??
+                (active?.taskId ? taskTitleById.get(active.taskId) : null) ??
+                "משימה"}
+            </div>
             <div className="font-mono text-[22px] font-bold text-[#0F172A] tabular-nums mt-1" dir="ltr">
               {formatElapsed(elapsed)}
             </div>
           </div>
           <button
             onClick={stopTimer}
-            className="rounded-full bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[13px] font-semibold px-5 py-2"
+            className="rounded-full bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[13px] font-semibold px-5 py-2 shrink-0"
           >
             ⏹ עצור
           </button>
         </div>
+      ) : openTasks.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-5 py-6 text-center">
+          <p className="text-[13px] text-[#64748B]">
+            אין משימות פתוחות לעבוד עליהן.
+          </p>
+          <p className="text-[12px] text-[#94A3B8] mt-1">
+            כל זמן נרשם על משימה — פתח משימה בטאב <span className="font-semibold">משימות</span> כדי להתחיל.
+          </p>
+        </div>
       ) : (
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 flex items-center gap-3 flex-wrap">
-          {openTasks.length > 0 && (
+        <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-3">
+          <label className="block">
+            <span className="block text-[11px] font-bold uppercase tracking-wider text-[#94A3B8] mb-1">
+              על איזו משימה אתה מתחיל?
+            </span>
             <select
               value={taskId}
               onChange={(e) => setTaskId(e.target.value)}
-              className="min-w-[160px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+              className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
             >
-              <option value="">— ללא משימה —</option>
+              <option value="">— בחר משימה —</option>
               {openTasks.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
                 </option>
               ))}
             </select>
-          )}
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="על מה אני עובד עכשיו? (לא חובה)"
-            className="flex-1 min-w-[200px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
-          />
-          <button
-            onClick={startTimer}
-            className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] text-white text-[13px] font-semibold px-5 py-2"
-          >
-            ▶ התחל טיימר
-          </button>
+          </label>
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="הערה לסשן — מה בדיוק עכשיו? (לא חובה)"
+              className="flex-1 min-w-[200px] border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+            />
+            <button
+              onClick={startTimer}
+              disabled={!taskId}
+              className="rounded-full bg-[#2B7FFF] hover:bg-[#1d6fea] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[13px] font-semibold px-5 py-2"
+            >
+              ▶ התחל טיימר
+            </button>
+          </div>
         </div>
       )}
 
@@ -923,11 +1092,35 @@ function TimeTab({
           יש טיימר פעיל בפרויקט אישי אחר. התחלת טיימר כאן תעצור אותו.
         </p>
       )}
+      </section>
 
+      <section className="space-y-2">
+        <TimeSection
+          icon="✍️"
+          title="רישום ידני"
+          subtitle="עבדת בלי טיימר? הוסף שעות לפי תאריך בדיעבד."
+        />
+      {manualTasks.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-5 py-6 text-center text-[13px] text-[#94A3B8]">
+          אין משימות לשייך אליהן זמן. פתח משימה בטאב משימות קודם.
+        </p>
+      ) : (
       <form
         onSubmit={addManual}
         className="bg-white border border-[#E2E8F0] rounded-xl p-4 grid grid-cols-1 md:grid-cols-12 gap-3"
       >
+        <select
+          value={manual.taskId}
+          onChange={(e) => setManual({ ...manual, taskId: e.target.value })}
+          className="md:col-span-12 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
+        >
+          <option value="">— בחר משימה —</option>
+          {manualTasks.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.title}
+            </option>
+          ))}
+        </select>
         <input
           type="date"
           value={manual.date}
@@ -953,7 +1146,11 @@ function TimeTab({
           + רשומה ידנית
         </button>
       </form>
+      )}
+      </section>
 
+      <section className="space-y-2">
+        <TimeSection icon="📜" title="היסטוריה" subtitle="כל הזמן שנרשם על הפרויקט הזה." />
       <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#F1F5F9]">
           <span className="text-[12px] text-[#64748B]">{entries.length} רשומות</span>
@@ -999,6 +1196,28 @@ function TimeTab({
           </ul>
         )}
       </div>
+      </section>
+    </div>
+  );
+}
+
+/** Small labelled header that tells the user what a block of the Time tab is for. */
+function TimeSection({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: string;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div>
+      <h3 className="flex items-center gap-1.5 text-[13px] font-bold text-[#0F172A]">
+        <span aria-hidden>{icon}</span>
+        {title}
+      </h3>
+      <p className="text-[11px] text-[#94A3B8] mt-0.5">{subtitle}</p>
     </div>
   );
 }

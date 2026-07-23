@@ -1,0 +1,2 @@
+CREATE TYPE "public"."personal_task_type" AS ENUM('feature', 'bug', 'idea', 'chore', 'research', 'design');--> statement-breakpoint
+ALTER TABLE "personal_tasks" ADD COLUMN "type" "personal_task_type" DEFAULT 'feature' NOT NULL;

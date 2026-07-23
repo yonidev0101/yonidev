@@ -4,11 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { confirm } from "./ConfirmDialog";
+import {
+  PERSONAL_TASK_TYPE_ORDER,
+  PERSONAL_TASK_TYPE_HE,
+  PERSONAL_TASK_TYPE_ICON,
+} from "@/lib/admin/format";
 
 interface TaskMeta {
   id: number;
   title: string;
   description: string | null;
+  type: string;
   status: string;
   priority: string;
   dueDate: string | null;
@@ -31,6 +37,7 @@ export default function PersonalTaskMetaPanel({
   const [form, setForm] = useState({
     title: task.title,
     description: task.description ?? "",
+    type: task.type,
     priority: task.priority,
     dueDate: task.dueDate ?? "",
     estimateHours: task.estimateMinutes != null ? String(task.estimateMinutes / 60) : "",
@@ -46,6 +53,7 @@ export default function PersonalTaskMetaPanel({
       body: JSON.stringify({
         title: form.title,
         description: form.description || null,
+        type: form.type,
         priority: form.priority,
         dueDate: form.dueDate || null,
         estimateMinutes: form.estimateHours
@@ -108,6 +116,30 @@ export default function PersonalTaskMetaPanel({
             onChange={(e) => setForm({ ...form, title: e.target.value })}
             className="ipt-task"
           />
+        </Field>
+
+        <Field label="סוג">
+          <div className="flex flex-wrap gap-1.5">
+            {PERSONAL_TASK_TYPE_ORDER.map((t) => {
+              const active = form.type === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm({ ...form, type: t })}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold border transition ${
+                    active
+                      ? "bg-[#0F172A] text-white border-transparent"
+                      : "bg-white text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A] hover:border-[#CBD5E1]"
+                  }`}
+                >
+                  <span aria-hidden>{PERSONAL_TASK_TYPE_ICON[t]}</span>
+                  {PERSONAL_TASK_TYPE_HE[t]}
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <Field label="תיאור — מה צריך לעשות ולמה">

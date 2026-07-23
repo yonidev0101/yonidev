@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { TASK_PRIORITY_HE } from "@/lib/admin/format";
+import {
+  TASK_PRIORITY_HE,
+  PERSONAL_TASK_TYPE_ORDER,
+  PERSONAL_TASK_TYPE_HE,
+  PERSONAL_TASK_TYPE_ICON,
+  PERSONAL_TASK_TYPE_TONE,
+} from "@/lib/admin/format";
 import { DOMAIN_LABEL, routes, type Domain } from "@/lib/admin/domain";
 
 export interface QuickAddProject {
@@ -27,6 +33,8 @@ export default function TaskQuickAdd({
   triggerLabel = "➕ משימה חדשה",
   /** Domain to use when the project is fixed by the caller (project pages). */
   fixedDomain = "client",
+  /** Show the personal-task "type" selector (feature/bug/idea/…). Personal only. */
+  enableType = false,
   /** Called after a successful create, for callers that refresh their own data. */
   onCreated,
 }: {
@@ -36,6 +44,7 @@ export default function TaskQuickAdd({
   pickerLabel?: string;
   triggerLabel?: string;
   fixedDomain?: Domain;
+  enableType?: boolean;
   onCreated?: () => void;
 }) {
   const router = useRouter();
@@ -53,12 +62,14 @@ export default function TaskQuickAdd({
 
   const [projectId, setProjectId] = useState(initialProjectId);
   const [title, setTitle] = useState("");
+  const [type, setType] = useState<string>("feature");
   const [priority, setPriority] = useState<Priority>("medium");
   const [dueDate, setDueDate] = useState("");
   const [showOptional, setShowOptional] = useState(false);
 
   function reset() {
     setTitle("");
+    setType("feature");
     setPriority("medium");
     setDueDate("");
     setShowOptional(false);
@@ -84,6 +95,8 @@ export default function TaskQuickAdd({
         title: title.trim(),
         priority,
         dueDate: dueDate || null,
+        // "type" only exists on personal tasks — don't send it to client tasks.
+        ...(enableType && selDomain === "personal" ? { type } : {}),
       }),
     });
     setSubmitting(false);
@@ -117,12 +130,37 @@ export default function TaskQuickAdd({
   }
 
   const showPicker = !fixedProjectId && projects.length > 1;
+  const showType = enableType && selDomain === "personal";
 
   return (
     <form
       onSubmit={onSubmit}
       className="bg-white border border-[#E2E8F0] rounded-xl p-4 space-y-3"
     >
+      {showType && (
+        <div className="flex flex-wrap gap-1.5">
+          {PERSONAL_TASK_TYPE_ORDER.map((t) => {
+            const active = type === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setType(t)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold border transition ${
+                  active
+                    ? `${PERSONAL_TASK_TYPE_TONE[t]} border-transparent ring-1 ring-inset ring-[#0F172A]/10`
+                    : "bg-white text-[#94A3B8] border-[#E2E8F0] hover:text-[#0F172A] hover:border-[#CBD5E1]"
+                }`}
+              >
+                <span aria-hidden>{PERSONAL_TASK_TYPE_ICON[t]}</span>
+                {PERSONAL_TASK_TYPE_HE[t]}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {showPicker && (
         <select
           value={projectId}
