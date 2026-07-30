@@ -10,6 +10,7 @@ import {
   serial,
   pgEnum,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -116,6 +117,11 @@ export const personalUpdateKindEnum = pgEnum("personal_update_kind", [
   "note",
 ]);
 
+// Who wrote a row: me in the dashboard, or a coding agent through /api/agent.
+// Lets the UI mark agent-written entries and keeps the journal honest about
+// where each line came from.
+export const authorSourceEnum = pgEnum("author_source", ["human", "agent"]);
+
 // ── tables ────────────────────────────────────────────────────────────
 
 export const clients = pgTable("clients", {
@@ -187,6 +193,10 @@ export const tasks = pgTable(
     waitingOn: text("waiting_on"),
     waitingSince: date("waiting_since"),
     lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
+    source: authorSourceEnum("source").notNull().default("human"),
+    // Stable slug an agent picks for a task ("dark-mode"), so it can find the
+    // same task across sessions without persisting a numeric id anywhere.
+    agentKey: text("agent_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -194,6 +204,7 @@ export const tasks = pgTable(
     index("tasks_status_idx").on(t.status),
     index("tasks_due_idx").on(t.dueDate),
     index("tasks_follow_up_idx").on(t.followUpAt),
+    uniqueIndex("tasks_agent_key_idx").on(t.projectId, t.agentKey),
   ],
 );
 
@@ -218,11 +229,18 @@ export const taskUpdates = pgTable(
     communicationId: integer("communication_id").references(() => communications.id, {
       onDelete: "set null",
     }),
+    source: authorSourceEnum("source").notNull().default("human"),
+    // Which agent wrote this, free-form ("claude-code").
+    agentName: text("agent_name"),
+    // Agent-supplied idempotency key — a retried POST returns the existing row
+    // instead of duplicating the journal entry.
+    externalKey: text("external_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("task_updates_task_idx").on(t.taskId),
     index("task_updates_happened_idx").on(t.happenedAt),
+    uniqueIndex("task_updates_external_key_idx").on(t.externalKey),
   ],
 );
 
@@ -367,11 +385,16 @@ export const personalTasks = pgTable(
     branchName: text("branch_name"),
     startedAt: timestamp("started_at", { withTimezone: true }),
     lastUpdateAt: timestamp("last_update_at", { withTimezone: true }),
+    source: authorSourceEnum("source").notNull().default("human"),
+    // Stable slug an agent picks for a task ("dark-mode"), so it can find the
+    // same task across sessions without persisting a numeric id anywhere.
+    agentKey: text("agent_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("personal_tasks_project_idx").on(t.projectId),
     index("personal_tasks_status_idx").on(t.status),
+    uniqueIndex("personal_tasks_agent_key_idx").on(t.projectId, t.agentKey),
   ],
 );
 
@@ -415,11 +438,18 @@ export const personalTaskUpdates = pgTable(
     timeEntryId: integer("time_entry_id").references(() => personalTimeEntries.id, {
       onDelete: "set null",
     }),
+    source: authorSourceEnum("source").notNull().default("human"),
+    // Which agent wrote this, free-form ("claude-code").
+    agentName: text("agent_name"),
+    // Agent-supplied idempotency key — a retried POST returns the existing row
+    // instead of duplicating the journal entry.
+    externalKey: text("external_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("personal_task_updates_task_idx").on(t.taskId),
     index("personal_task_updates_happened_idx").on(t.happenedAt),
+    uniqueIndex("personal_task_updates_external_key_idx").on(t.externalKey),
   ],
 );
 

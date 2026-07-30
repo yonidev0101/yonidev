@@ -24,6 +24,8 @@ export interface TimelineUpdate {
   followUpAt: string | null;
   communicationId: number | null;
   timeEntry: { durationSeconds: number | null } | null;
+  source: string;
+  agentName: string | null;
 }
 
 const TONE_CLASS: Record<ReturnType<typeof taskUpdateKindTone>, string> = {
@@ -81,6 +83,14 @@ export default function TaskTimeline({
                   {TASK_UPDATE_KIND_HE[u.kind]}
                 </span>
                 <span className="text-[12px] text-[#94A3B8]">{fmtDateTimeHe(u.happenedAt)}</span>
+                {u.source === "agent" && (
+                  <span
+                    title={`נכתב אוטומטית על ידי ${u.agentName ?? "סוכן"}`}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F3FF] text-[#7C3AED]"
+                  >
+                    🤖 {u.agentName ?? "סוכן"}
+                  </span>
+                )}
                 {u.timeEntry?.durationSeconds != null && u.timeEntry.durationSeconds > 0 && (
                   <span className="text-[12px] text-[#64748B] tabular-nums">
                     · {fmtHours(u.timeEntry.durationSeconds)}

@@ -49,6 +49,8 @@ export default async function TaskDetailPage({
     timeEntry: u.timeEntry
       ? { durationSeconds: u.timeEntry.durationSeconds }
       : null,
+    source: u.source,
+    agentName: u.agentName,
   }));
 
   return (

@@ -24,6 +24,8 @@ export interface TimelineUpdate {
   nextAction: string | null;
   commitSha: string | null;
   commitUrl: string | null;
+  source: string;
+  agentName: string | null;
 }
 
 export interface TimelineSession {
@@ -133,6 +135,14 @@ export default function PersonalTaskTimeline({
               <span className="text-[11px] text-[#94A3B8]">
                 {fmtDateTimeHe(item.update.happenedAt)}
               </span>
+              {item.update.source === "agent" && (
+                <span
+                  title={`נכתב אוטומטית על ידי ${item.update.agentName ?? "סוכן"}`}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#F5F3FF] text-[#7C3AED]"
+                >
+                  🤖 {item.update.agentName ?? "סוכן"}
+                </span>
+              )}
               <span className="flex-1" />
               <button
                 onClick={() => delUpdate(item.update.id)}

@@ -107,13 +107,27 @@ A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL
 ### API routes (`src/app/api/admin/*`)
 - Route handlers with `export const runtime = "nodejs"`. Validate input with zod via `parseJson`; respond with `json` / `notFound` / `serverError` from `src/lib/admin/http.ts`. Client-work and personal-* resources have parallel CRUD routes.
 
+### Agent API (`src/app/api/agent/*`)
+Narrow, token-authenticated surface so Claude Code sessions on *other* projects can keep tasks and the progress journal up to date while they work. Three endpoints only — it can't read clients/invoices and can't delete anything:
+
+| Route | Purpose |
+|---|---|
+| `GET /api/agent/context` | Project list, or (with `?projectKind=&projectId=`) open tasks + their `taskKey`s, checklists, recent journal, and the allowed enum values. |
+| `POST /api/agent/task` | Upsert a task, idempotent on `(projectId, agentKey)`. Won't move status — that must be journalled. |
+| `POST /api/agent/log` | Journal entry + status move + checklist ticks + time entry in one request. Idempotent via `externalKey`. |
+
+- Auth: `x-agent-token` (or `Authorization: Bearer`) compared to `AGENT_API_TOKEN` with `safeEqual`, in `src/lib/auth/agent.ts`. `src/middleware.ts` gates `/api/agent/*` with the token **only** — the admin cookie is deliberately not accepted there, so a browser session can't be driven into it cross-site.
+- Shared vocabulary, task resolution by `taskKey`, and update-kind mapping between the two domains live in `src/lib/agent/core.ts`.
+- Rows written this way carry `source: "agent"` + `agentName`; both timelines render a 🤖 badge for them. `tasks.agentKey` / `personalTasks.agentKey` are the stable slugs agents address tasks by.
+- The paste-into-another-session prompt that documents all of this is `admin-sync-prompt.md` at the repo root — update it whenever these routes change.
+
 ### Migrations — IMPORTANT (env quirk)
 - Generate SQL with `npm run db:generate` (writes to `drizzle/`).
 - **Do NOT use `drizzle-kit push`/`migrate` here** — they use a websocket connection that this environment's corporate proxy blocks (same self-signed-cert issue that blocks `git fetch`), so they hang.
 - Apply instead over Neon's HTTP driver: `node scripts/apply-migrations.mjs <drizzle/NNNN_name.sql>` with `DATABASE_URL` (load from `.env.local`) and `NODE_TLS_REJECT_UNAUTHORIZED=0` set. The DB was provisioned via `push`, so drizzle's `__drizzle_migrations` table is empty — apply only the new file's statements, never the full migrator. (Use the `/migrate` skill to do all of this.)
 
 ### Env vars
-`DATABASE_URL`, `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD`, plus nodemailer SMTP vars for invoice sending. `CRON_SECRET` (set in Vercel) guards the daily-digest cron route (`/api/cron/daily-digest`, scheduled in `vercel.json`); Vercel auto-injects it as a `Bearer` token.
+`DATABASE_URL`, `ADMIN_SESSION_SECRET`, `ADMIN_PASSWORD`, `AGENT_API_TOKEN` (≥16 chars; when unset the agent API stays closed, returning 401), plus nodemailer SMTP vars for invoice sending. `CRON_SECRET` (set in Vercel) guards the daily-digest cron route (`/api/cron/daily-digest`, scheduled in `vercel.json`); Vercel auto-injects it as a `Bearer` token.
 
 ## Git workflow
 

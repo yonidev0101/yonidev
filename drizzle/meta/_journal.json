@@ -71,6 +71,13 @@
       "when": 1784837763726,
       "tag": "0009_ancient_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785418893445,
+      "tag": "0010_curious_archangel",
+      "breakpoints": true
     }
   ]
 }

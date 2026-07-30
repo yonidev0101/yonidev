@@ -56,6 +56,8 @@ export default async function PersonalTaskDetailPage({
     nextAction: u.nextAction,
     commitSha: u.commitSha,
     commitUrl: u.commitUrl,
+    source: u.source,
+    agentName: u.agentName,
   }));
 
   const timelineSessions: TimelineSession[] = sessions.map((s) => ({
