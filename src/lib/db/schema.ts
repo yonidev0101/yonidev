@@ -50,6 +50,12 @@ export const linkKindEnum = pgEnum("link_kind", [
   "github",
   "notion",
   "other",
+  // Infra links common to every Next.js + Vercel + Neon project.
+  "live",
+  "preview",
+  "vercel",
+  "database",
+  "domain",
 ]);
 
 export const commKindEnum = pgEnum("comm_kind", [

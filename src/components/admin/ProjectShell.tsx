@@ -8,6 +8,7 @@ import { confirm } from "./ConfirmDialog";
 import ManualTimeEntryForm from "./ManualTimeEntryForm";
 import TaskEditRow from "./TaskEditRow";
 import TimeEntryEditRow from "./TimeEntryEditRow";
+import { LinkKindTag, LinkKindOptions } from "./LinkKindTag";
 import { useInlineEdit } from "@/lib/admin/useInlineEdit";
 import type {
   Project,
@@ -20,6 +21,7 @@ import type {
 import {
   TASK_PRIORITY_HE,
   COMM_KIND_HE,
+  detectLinkKind,
   fmtDateHe,
   fmtDateTimeHe,
   fmtHours,
@@ -662,6 +664,16 @@ function LinksTab({
     url: "",
     kind: "other" as ProjectLink["kind"],
   });
+  // Once the user picks a kind by hand, stop overriding it from the URL.
+  const [kindTouched, setKindTouched] = useState(false);
+
+  function onUrlChange(url: string) {
+    setForm((f) => ({
+      ...f,
+      url,
+      kind: kindTouched ? f.kind : (detectLinkKind(url) ?? f.kind),
+    }));
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -672,6 +684,7 @@ function LinksTab({
     });
     if (res.ok) {
       setForm({ label: "", url: "", kind: "other" });
+      setKindTouched(false);
       onChange();
     }
   }
@@ -696,20 +709,19 @@ function LinksTab({
           type="url"
           placeholder="https://…"
           value={form.url}
-          onChange={(e) => setForm({ ...form, url: e.target.value })}
+          onChange={(e) => onUrlChange(e.target.value)}
           dir="ltr"
           className="md:col-span-6 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
         />
         <select
           value={form.kind}
-          onChange={(e) => setForm({ ...form, kind: e.target.value as ProjectLink["kind"] })}
+          onChange={(e) => {
+            setKindTouched(true);
+            setForm({ ...form, kind: e.target.value as ProjectLink["kind"] });
+          }}
           className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
         >
-          <option value="other">אחר</option>
-          <option value="figma">Figma</option>
-          <option value="drive">Drive</option>
-          <option value="github">GitHub</option>
-          <option value="notion">Notion</option>
+          <LinkKindOptions />
         </select>
         <button className="md:col-span-1 rounded-full bg-[#2B7FFF] text-white text-[13px] font-semibold px-3 py-2">
           הוסף
@@ -722,9 +734,10 @@ function LinksTab({
         <ul className="bg-white border border-[#E2E8F0] rounded-xl divide-y divide-[#F1F5F9] overflow-hidden">
           {links.map((l) => (
             <li key={l.id} className="px-5 py-3 flex items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#F1F5F9] text-[#64748B]">
-                {l.kind}
-              </span>
+              <LinkKindTag
+                kind={l.kind}
+                className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-[#F1F5F9] text-[#64748B]"
+              />
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-medium text-[#0F172A]">{l.label}</div>
                 <a

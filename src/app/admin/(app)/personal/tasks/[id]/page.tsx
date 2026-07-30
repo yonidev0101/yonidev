@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getPersonalTaskWithUpdates } from "@/lib/admin/queries";
 import {
   TASK_STATUS_HE,
-  TASK_STATUS_TONE,
   TASK_PRIORITY_HE,
   fmtDateHe,
   fmtDateTimeHe,
@@ -17,6 +16,7 @@ import PersonalTaskTimeline, {
   type TimelineSession,
 } from "@/components/admin/PersonalTaskTimeline";
 import PersonalTaskMetaPanel from "@/components/admin/PersonalTaskMetaPanel";
+import TaskStatusPicker from "@/components/admin/TaskStatusPicker";
 import TaskTypeTag from "@/components/admin/TaskTypeTag";
 import PersonalTaskChecklist from "@/components/admin/PersonalTaskChecklist";
 import PersonalTaskGitPanel, {
@@ -102,11 +102,7 @@ export default async function PersonalTaskDetailPage({
               {task.title}
             </h1>
           </div>
-          <span
-            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0 ${TASK_STATUS_TONE[task.status]}`}
-          >
-            {TASK_STATUS_HE[task.status as TaskStatus]}
-          </span>
+          <TaskStatusPicker taskId={task.id} status={task.status} kind="personal-task" />
           <PersonalTaskMetaPanel
             task={{
               id: task.id,

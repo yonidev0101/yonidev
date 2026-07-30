@@ -17,10 +17,20 @@ export interface ActiveTimer {
 /**
  * Single source of truth for "is a timer running, and which one".
  *
- * The two domains have independent timers (separate tables), so both can run at
- * once and this returns a list. Every timer surface in the admin — sidebar,
- * mobile bar, project tab, task page — uses this hook so they can never disagree.
+ * Client work runs one timer at a time; personal work can run several at once
+ * (parallel tasks), so this always returns a list. Every timer surface in the
+ * admin — sidebar, mobile bar, project tab, task page — uses this hook so they
+ * can never disagree.
  */
+interface PersonalTimerRow {
+  id: number;
+  projectId: number;
+  taskId: number | null;
+  projectName: string | null;
+  taskTitle: string | null;
+  startedAt: string;
+}
+
 export function useLiveTimer(pollMs = 30_000) {
   const [active, setActive] = useState<ActiveTimer[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -45,15 +55,21 @@ export function useLiveTimer(pollMs = 30_000) {
       });
     }
     const personal = results[1].status === "fulfilled" ? results[1].value : null;
-    if (personal?.active) {
+    // Personal timers come back as a list — several tasks can be running.
+    const personalRows: PersonalTimerRow[] = Array.isArray(personal?.active)
+      ? personal.active
+      : personal?.active
+        ? [personal.active]
+        : [];
+    for (const row of personalRows) {
       next.push({
         domain: "personal",
-        id: personal.active.id,
-        projectId: personal.active.projectId,
-        taskId: personal.active.taskId ?? null,
-        projectName: personal.active.projectName ?? "",
-        subtitle: "",
-        startedAt: personal.active.startedAt,
+        id: row.id,
+        projectId: row.projectId,
+        taskId: row.taskId ?? null,
+        projectName: row.projectName ?? "",
+        subtitle: row.taskTitle ?? "",
+        startedAt: row.startedAt,
       });
     }
     setActive(next);
@@ -85,9 +101,18 @@ export function useLiveTimer(pollMs = 30_000) {
     [refresh],
   );
 
+  /** `entryId` stops that one timer; without it, every timer in the domain. */
   const stop = useCallback(
-    async (domain: Domain) => {
-      const res = await fetch(ROUTES[domain].timerApi, { method: "PATCH" });
+    async (domain: Domain, entryId?: number) => {
+      const res = await fetch(ROUTES[domain].timerApi, {
+        method: "PATCH",
+        ...(entryId
+          ? {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: entryId }),
+            }
+          : {}),
+      });
       if (res.ok) await refresh();
       return res.ok;
     },

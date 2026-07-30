@@ -36,13 +36,22 @@ export async function POST(req: Request) {
   if (!parsed.ok) return parsed.res;
   try {
     const startedAt = new Date(parsed.data.startedAt);
-    const endedAt = parsed.data.endedAt ? new Date(parsed.data.endedAt) : null;
     const duration =
       parsed.data.durationSeconds != null
         ? parsed.data.durationSeconds
-        : endedAt
-        ? Math.max(0, Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000))
+        : parsed.data.endedAt
+        ? Math.max(
+            0,
+            Math.floor((new Date(parsed.data.endedAt).getTime() - startedAt.getTime()) / 1000),
+          )
         : null;
+    // A finished entry must carry an end. Backfilled hours arrive as a duration
+    // only, and a null endedAt is what marks a timer as still running.
+    const endedAt = parsed.data.endedAt
+      ? new Date(parsed.data.endedAt)
+      : duration != null
+      ? new Date(startedAt.getTime() + duration * 1000)
+      : null;
     const [created] = await db
       .insert(personalTimeEntries)
       .values({

@@ -27,7 +27,8 @@
       "Bash(npx drizzle-kit *)",
       "Bash(npx tsc *)",
       "WebSearch",
-      "Bash(cd *)"
+      "Bash(cd *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

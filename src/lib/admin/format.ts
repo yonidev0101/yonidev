@@ -196,6 +196,82 @@ export const PERSONAL_TASK_TYPE_TONE: Record<string, string> = {
   design: "bg-pink-50 text-pink-700",
 };
 
+// ── Project links ────────────────────────────────────────────────────────────
+export type LinkKind =
+  | "live"
+  | "preview"
+  | "vercel"
+  | "database"
+  | "domain"
+  | "github"
+  | "figma"
+  | "notion"
+  | "drive"
+  | "other";
+
+/** Display order in the picker: infra first, then code/design/docs, custom last. */
+export const LINK_KIND_ORDER: LinkKind[] = [
+  "live",
+  "preview",
+  "vercel",
+  "database",
+  "domain",
+  "github",
+  "figma",
+  "notion",
+  "drive",
+  "other",
+];
+
+export const LINK_KIND_HE: Record<LinkKind, string> = {
+  live: "אתר חי",
+  preview: "Preview",
+  vercel: "Vercel",
+  database: "Database",
+  domain: "דומיין",
+  github: "GitHub",
+  figma: "Figma",
+  notion: "Notion",
+  drive: "Drive",
+  other: "מותאם אישית",
+};
+
+export const LINK_KIND_ICON: Record<LinkKind, string> = {
+  live: "🌐",
+  preview: "🔍",
+  vercel: "▲",
+  database: "🗄️",
+  domain: "🌍",
+  github: "🐙",
+  figma: "🎨",
+  notion: "📝",
+  drive: "📁",
+  other: "🔗",
+};
+
+/**
+ * Best-effort guess of a link's kind from its URL, so the picker can pre-select
+ * for common hosts. Returns null when nothing matches confidently — the caller
+ * should keep whatever the user already chose in that case.
+ */
+export function detectLinkKind(url: string): LinkKind | null {
+  const u = url.trim().toLowerCase();
+  if (!u) return null;
+  if (/github\.com/.test(u)) return "github";
+  if (/figma\.com/.test(u)) return "figma";
+  if (/notion\.(so|site)/.test(u)) return "notion";
+  if (/(drive|docs)\.google\.com/.test(u)) return "drive";
+  if (/vercel\.com/.test(u)) return "vercel";
+  if (/(neon\.tech|supabase\.(com|co)|planetscale\.com|railway\.app|turso\.tech|xata\.io)/.test(u))
+    return "database";
+  if (/(cloudflare\.com|namecheap\.com|godaddy\.com|porkbun\.com|name\.com|gandi\.net)/.test(u))
+    return "domain";
+  // A preview deploy is a *.vercel.app URL with a branch/hash segment; the bare
+  // project host is treated as the live site.
+  if (/\.vercel\.app/.test(u)) return /-(git-|[a-z0-9]{9,})/.test(u) ? "preview" : "live";
+  return null;
+}
+
 export const COMM_KIND_HE: Record<string, string> = {
   call: "שיחה",
   email: "מייל",

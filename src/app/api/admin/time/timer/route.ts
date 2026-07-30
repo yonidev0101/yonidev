@@ -5,6 +5,12 @@ import { db, timeEntries, projects, clients, tasks } from "@/lib/db/client";
 import { eq, isNull, and } from "drizzle-orm";
 import { json, parseJson, serverError } from "@/lib/admin/http";
 
+/**
+ * A live timer has neither an end nor a duration. Hours entered by hand may
+ * arrive as a duration alone, and stopping those would overwrite what was typed.
+ */
+const running = () => and(isNull(timeEntries.endedAt), isNull(timeEntries.durationSeconds));
+
 const startSchema = z.object({
   projectId: z.coerce.number().int().positive(),
   taskId: z.coerce.number().int().positive().optional().nullable(),
@@ -26,7 +32,7 @@ async function getActiveJoined() {
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .leftJoin(tasks, eq(tasks.id, timeEntries.taskId))
-    .where(isNull(timeEntries.endedAt))
+    .where(running())
     .limit(1);
   return rows[0] ?? null;
 }
@@ -49,13 +55,13 @@ export async function POST(req: Request) {
     const existing = await db
       .select()
       .from(timeEntries)
-      .where(isNull(timeEntries.endedAt));
+      .where(running());
     for (const row of existing) {
       const duration = Math.max(0, Math.floor((now.getTime() - row.startedAt.getTime()) / 1000));
       await db
         .update(timeEntries)
         .set({ endedAt: now, durationSeconds: duration })
-        .where(and(eq(timeEntries.id, row.id), isNull(timeEntries.endedAt)));
+        .where(and(eq(timeEntries.id, row.id), running()));
     }
     const [created] = await db
       .insert(timeEntries)
@@ -76,7 +82,7 @@ export async function POST(req: Request) {
 export async function PATCH() {
   try {
     const now = new Date();
-    const existing = await db.select().from(timeEntries).where(isNull(timeEntries.endedAt));
+    const existing = await db.select().from(timeEntries).where(running());
     if (existing.length === 0) {
       return json({ ok: true, stopped: 0 });
     }
