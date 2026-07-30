@@ -8,6 +8,9 @@ import { toast } from "sonner";
  * The "am I working right now" control for a single personal task.
  * Starting a session also moves the task to in_progress, so the board never
  * disagrees with the timer.
+ *
+ * Other tasks may have their own timers running at the same time — this one
+ * only ever starts and stops its own, and never touches theirs.
  */
 export default function PersonalTaskSession({
   taskId,
@@ -63,8 +66,13 @@ export default function PersonalTaskSession({
   }
 
   async function stop() {
+    if (!active) return;
     setBusy(true);
-    const res = await fetch("/api/admin/personal-time/timer", { method: "PATCH" });
+    const res = await fetch("/api/admin/personal-time/timer", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: active.id }),
+    });
     if (res.ok) {
       setActive(null);
       setElapsed(0);

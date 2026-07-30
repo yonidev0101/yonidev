@@ -121,8 +121,8 @@ export default function LiveTimer() {
     }
   }
 
-  async function onStop(domain: Domain) {
-    if (await stop(domain)) {
+  async function onStop(domain: Domain, entryId: number) {
+    if (await stop(domain, entryId)) {
       toast.success("הטיימר נעצר");
       router.refresh();
     } else {
@@ -135,7 +135,7 @@ export default function LiveTimer() {
   return (
     <div className="space-y-2" dir="rtl">
       {active.map((t) => (
-        <ActiveCard key={`${t.domain}-${t.id}`} timer={t} onStop={() => onStop(t.domain)} />
+        <ActiveCard key={`${t.domain}-${t.id}`} timer={t} onStop={() => onStop(t.domain, t.id)} />
       ))}
 
       {showPicker ? (

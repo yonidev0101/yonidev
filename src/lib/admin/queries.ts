@@ -17,6 +17,7 @@ import {
 } from "@/lib/db/client";
 import { and, asc, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
 import { isTaskClosed } from "@/lib/admin/format";
+import { rawSeconds, wallClockSeconds, overlapSeconds } from "@/lib/admin/time";
 
 export async function getDashboardData() {
   const now = new Date();
@@ -146,7 +147,7 @@ export async function getDashboardData() {
     .from(timeEntries)
     .leftJoin(projects, eq(projects.id, timeEntries.projectId))
     .leftJoin(clients, eq(clients.id, projects.clientId))
-    .where(isNull(timeEntries.endedAt))
+    .where(and(isNull(timeEntries.endedAt), isNull(timeEntries.durationSeconds)))
     .limit(1);
 
   // ── personal side ───────────────────────────────────────────────────
@@ -161,9 +162,13 @@ export async function getDashboardData() {
     personalActiveTimerRows,
     activePersonalProjects,
   ] = await Promise.all([
+    // Raw intervals, not a SUM: personal timers can run in parallel, so the
+    // week's real hours are the union of the stretches, counted once.
     db
       .select({
-        totalSec: sql<number>`COALESCE(SUM(${personalTimeEntries.durationSeconds}), 0)::int`,
+        startedAt: personalTimeEntries.startedAt,
+        endedAt: personalTimeEntries.endedAt,
+        durationSeconds: personalTimeEntries.durationSeconds,
       })
       .from(personalTimeEntries)
       .where(gte(personalTimeEntries.startedAt, weekStart)),
@@ -224,8 +229,13 @@ export async function getDashboardData() {
       })
       .from(personalTimeEntries)
       .leftJoin(personalProjects, eq(personalProjects.id, personalTimeEntries.projectId))
-      .where(isNull(personalTimeEntries.endedAt))
-      .limit(1),
+      // No limit: personal work can have several timers going at once.
+      .where(
+        and(
+          isNull(personalTimeEntries.endedAt),
+          isNull(personalTimeEntries.durationSeconds),
+        ),
+      ),
     db
       .select({
         id: personalProjects.id,
@@ -255,7 +265,8 @@ export async function getDashboardData() {
   const openByProject = new Map(personalOpenCounts.map((r) => [r.projectId, r.open]));
 
   const clientWeekSeconds = weekHours[0]?.totalSec ?? 0;
-  const personalWeekSeconds = personalWeekHours[0]?.totalSec ?? 0;
+  const personalWeekSeconds = wallClockSeconds(personalWeekHours);
+  const personalWeekOverlapSeconds = overlapSeconds(personalWeekHours);
 
   // ── unified open-work list (client + personal), prioritized in JS so date-less
   //    tasks are ranked, not dropped: overdue → in-progress/blocked → priority. ──
@@ -300,6 +311,8 @@ export async function getDashboardData() {
     weekHoursSeconds: clientWeekSeconds + personalWeekSeconds,
     weekHoursClientSeconds: clientWeekSeconds,
     weekHoursPersonalSeconds: personalWeekSeconds,
+    /** How much of the week's personal work ran in parallel — 0 when nothing overlapped. */
+    weekHoursPersonalOverlapSeconds: personalWeekOverlapSeconds,
     outstandingInvoices,
     // One prioritized to-do reality across both domains; top slice for the panel,
     // full counts for the KPI card.
@@ -603,8 +616,11 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
       .orderBy(asc(personalTaskSteps.sortOrder), asc(personalTaskSteps.id)),
   ]);
 
-  const totalSeconds = sessions.reduce((sum, s) => sum + (s.durationSeconds ?? 0), 0);
-  const activeSession = sessions.find((s) => !s.endedAt) ?? null;
+  // A task's own time is raw and never scaled down — an hour worked on it is an
+  // hour, even if another task was running alongside. A live session counts up.
+  const totalSeconds = rawSeconds(sessions);
+  // Running = no end and no duration; backfilled hours have one without the other.
+  const activeSession = sessions.find((s) => !s.endedAt && s.durationSeconds == null) ?? null;
 
   return {
     task: row.task,
@@ -638,18 +654,28 @@ export async function getPersonalProjects() {
       .from(personalTasks)
       .where(inArray(personalTasks.projectId, ids))
       .groupBy(personalTasks.projectId),
+    // Intervals per project — merged in JS so parallel timers aren't counted twice.
     db
       .select({
         projectId: personalTimeEntries.projectId,
-        totalSec: sql<number>`COALESCE(SUM(${personalTimeEntries.durationSeconds}), 0)::int`,
+        startedAt: personalTimeEntries.startedAt,
+        endedAt: personalTimeEntries.endedAt,
+        durationSeconds: personalTimeEntries.durationSeconds,
       })
       .from(personalTimeEntries)
-      .where(inArray(personalTimeEntries.projectId, ids))
-      .groupBy(personalTimeEntries.projectId),
+      .where(inArray(personalTimeEntries.projectId, ids)),
   ]);
 
   const openByProject = new Map(taskCounts.map((r) => [r.projectId, r.open]));
-  const secByProject = new Map(timeAgg.map((r) => [r.projectId, r.totalSec]));
+  const intervalsByProject = new Map<number, typeof timeAgg>();
+  for (const row of timeAgg) {
+    const list = intervalsByProject.get(row.projectId);
+    if (list) list.push(row);
+    else intervalsByProject.set(row.projectId, [row]);
+  }
+  const secByProject = new Map(
+    [...intervalsByProject].map(([pid, rows]) => [pid, wallClockSeconds(rows)]),
+  );
 
   return rows.map((p) => ({
     ...p,

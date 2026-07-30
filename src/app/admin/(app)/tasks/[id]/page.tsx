@@ -2,8 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTaskWithUpdates } from "@/lib/admin/queries";
 import {
-  TASK_STATUS_HE,
-  TASK_STATUS_TONE,
   TASK_PRIORITY_HE,
   fmtDateHe,
   fmtHours,
@@ -12,6 +10,7 @@ import {
   waitingSinceDaysHe,
 } from "@/lib/admin/format";
 import TaskUpdateForm from "@/components/admin/TaskUpdateForm";
+import TaskStatusPicker from "@/components/admin/TaskStatusPicker";
 import TaskDetailEditPanel from "@/components/admin/TaskDetailEditPanel";
 import TaskTimeline, { type TimelineUpdate } from "@/components/admin/TaskTimeline";
 
@@ -66,11 +65,7 @@ export default async function TaskDetailPage({
           <h1 className="flex-1 text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight leading-tight">
             {task.title}
           </h1>
-          <span
-            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${TASK_STATUS_TONE[task.status]}`}
-          >
-            {TASK_STATUS_HE[task.status]}
-          </span>
+          <TaskStatusPicker taskId={task.id} status={task.status} kind="task" />
           <TaskDetailEditPanel
             task={{
               id: task.id,

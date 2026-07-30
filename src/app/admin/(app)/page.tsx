@@ -73,7 +73,13 @@ export default async function DashboardPage() {
           value={fmtHours(data.weekHoursSeconds)}
           sub={
             data.weekHoursPersonalSeconds > 0
-              ? `${fmtHours(data.weekHoursPersonalSeconds)} אישי`
+              ? // Parallel personal timers are counted once here; say so, or the
+                // number looks like it lost hours next to the per-task totals.
+                `${fmtHours(data.weekHoursPersonalSeconds)} אישי${
+                  data.weekHoursPersonalOverlapSeconds > 0
+                    ? ` · ${fmtHours(data.weekHoursPersonalOverlapSeconds)} במקביל`
+                    : ""
+                }`
               : undefined
           }
         />

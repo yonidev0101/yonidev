@@ -8,7 +8,20 @@ const createSchema = z.object({
   projectId: z.coerce.number().int().positive(),
   label: z.string().min(1).max(120),
   url: z.string().url().max(2000),
-  kind: z.enum(["figma", "drive", "github", "notion", "other"]).optional(),
+  kind: z
+    .enum([
+      "figma",
+      "drive",
+      "github",
+      "notion",
+      "other",
+      "live",
+      "preview",
+      "vercel",
+      "database",
+      "domain",
+    ])
+    .optional(),
 });
 
 export async function POST(req: Request) {

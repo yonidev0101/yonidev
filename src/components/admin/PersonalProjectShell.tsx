@@ -5,8 +5,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { confirm } from "./ConfirmDialog";
+import { useElapsed } from "@/lib/admin/useLiveTimer";
+import { timeTotals } from "@/lib/admin/time";
 import TaskQuickAdd from "./TaskQuickAdd";
 import TaskTypeTag from "./TaskTypeTag";
+import { LinkKindTag, LinkKindOptions } from "./LinkKindTag";
 import type {
   PersonalProject,
   PersonalTask,
@@ -24,6 +27,7 @@ import {
   PERSONAL_TASK_TYPE_ICON,
   personalTaskSection,
   personalActiveRank,
+  detectLinkKind,
   fmtDateHe,
   fmtDateTimeHe,
   fmtHours,
@@ -218,7 +222,7 @@ function ProjectMeta({
                 className="inline-flex items-center gap-1.5 text-[12px] bg-[#F8FAFC] border border-[#E2E8F0] rounded-full px-2.5 py-1 text-[#2B7FFF] hover:border-[#2B7FFF]/40"
               >
                 {l.label}
-                <span className="text-[10px] text-[#94A3B8] uppercase">{l.kind}</span>
+                <LinkKindTag kind={l.kind} className="text-[10px] text-[#94A3B8]" />
               </a>
             ))}
           </div>
@@ -412,6 +416,16 @@ function LinksInline({
     url: "",
     kind: "other" as PersonalLink["kind"],
   });
+  // Once the user picks a kind by hand, stop overriding it from the URL.
+  const [kindTouched, setKindTouched] = useState(false);
+
+  function onUrlChange(url: string) {
+    setForm((f) => ({
+      ...f,
+      url,
+      kind: kindTouched ? f.kind : (detectLinkKind(url) ?? f.kind),
+    }));
+  }
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -422,6 +436,7 @@ function LinksInline({
     });
     if (res.ok) {
       setForm({ label: "", url: "", kind: "other" });
+      setKindTouched(false);
       setAdding(false);
       onChange();
     } else {
@@ -450,7 +465,7 @@ function LinksInline({
             >
               {l.label}
             </a>
-            <span className="text-[10px] text-[#94A3B8] uppercase">{l.kind}</span>
+            <LinkKindTag kind={l.kind} className="text-[10px] text-[#94A3B8]" />
             <button
               onClick={() => del(l.id)}
               className="text-[#CBD5E1] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -484,20 +499,19 @@ function LinksInline({
             type="url"
             placeholder="https://…"
             value={form.url}
-            onChange={(e) => setForm({ ...form, url: e.target.value })}
+            onChange={(e) => onUrlChange(e.target.value)}
             dir="ltr"
             className="md:col-span-5 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
           />
           <select
             value={form.kind}
-            onChange={(e) => setForm({ ...form, kind: e.target.value as PersonalLink["kind"] })}
+            onChange={(e) => {
+              setKindTouched(true);
+              setForm({ ...form, kind: e.target.value as PersonalLink["kind"] });
+            }}
             className="md:col-span-2 border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[13px]"
           >
-            <option value="other">אחר</option>
-            <option value="github">GitHub</option>
-            <option value="figma">Figma</option>
-            <option value="drive">Drive</option>
-            <option value="notion">Notion</option>
+            <LinkKindOptions />
           </select>
           <button className="md:col-span-1 rounded-md bg-[#2B7FFF] text-white text-[13px] font-semibold px-3 py-2">
             הוסף
@@ -548,7 +562,7 @@ function TasksTab({
     }
   }
 
-  // One-click "work on this" — starts the project timer on this task (stopping any other).
+  // One-click "work on this" — starts a timer on this task, alongside any others.
   async function startTimer(id: number) {
     const res = await fetch("/api/admin/personal-time/timer", {
       method: "POST",
@@ -558,6 +572,8 @@ function TasksTab({
     if (res.ok) {
       toast.success("הטיימר התחיל — עבור לטאב זמן");
       onChange();
+    } else if (res.status === 409) {
+      toast.error("כבר רץ טיימר על המשימה הזו");
     } else {
       toast.error("נכשל להתחיל טיימר");
     }
@@ -875,14 +891,7 @@ function TimeTab({
   tasks: TaskRow[];
   onChange: () => void;
 }) {
-  const [active, setActive] = useState<{
-    id: number;
-    projectId: number;
-    startedAt: string;
-    taskId?: number | null;
-    taskTitle?: string | null;
-  } | null>(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [actives, setActives] = useState<ActiveTimerRow[]>([]);
   const [note, setNote] = useState("");
   const [taskId, setTaskId] = useState("");
   const [manual, setManual] = useState({ taskId: "", date: "", hours: "", note: "" });
@@ -899,7 +908,7 @@ function TimeTab({
       try {
         const res = await fetch("/api/admin/personal-time/timer", { cache: "no-store" });
         const json = await res.json();
-        if (!cancelled) setActive(json.active ?? null);
+        if (!cancelled) setActives(Array.isArray(json.active) ? json.active : []);
       } catch {
         /* ignore */
       }
@@ -909,16 +918,11 @@ function TimeTab({
     };
   }, []);
 
-  useEffect(() => {
-    if (!active) return;
-    const startMs = new Date(active.startedAt).getTime();
-    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startMs) / 1000)));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [active]);
-
-  const isThisProject = active?.projectId === project.id;
+  // Several tasks can be timed at once — split what's mine from what's elsewhere.
+  const projectActives = actives.filter((a) => a.projectId === project.id);
+  const elsewhere = actives.length - projectActives.length;
+  const runningTaskIds = new Set(actives.map((a) => a.taskId).filter(Boolean));
+  const startableTasks = openTasks.filter((t) => !runningTaskIds.has(t.id));
 
   async function startTimer() {
     if (!taskId) {
@@ -937,26 +941,35 @@ function TimeTab({
     });
     if (res.ok) {
       const json = await res.json();
-      setActive({
-        id: json.entry.id,
-        projectId: project.id,
-        startedAt: json.entry.startedAt,
-        taskId: tid,
-        taskTitle: taskTitleById.get(tid) ?? null,
-      });
+      setActives((prev) => [
+        {
+          id: json.entry.id,
+          projectId: project.id,
+          startedAt: json.entry.startedAt,
+          taskId: tid,
+          taskTitle: taskTitleById.get(tid) ?? null,
+        },
+        ...prev,
+      ]);
       setNote("");
       setTaskId("");
       toast.success("הטיימר התחיל");
       onChange();
+    } else if (res.status === 409) {
+      toast.error("כבר רץ טיימר על המשימה הזו");
     } else {
       toast.error("נכשל להתחיל טיימר");
     }
   }
 
-  async function stopTimer() {
-    const res = await fetch("/api/admin/personal-time/timer", { method: "PATCH" });
+  async function stopTimer(entryId: number) {
+    const res = await fetch("/api/admin/personal-time/timer", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: entryId }),
+    });
     if (res.ok) {
-      setActive(null);
+      setActives((prev) => prev.filter((a) => a.id !== entryId));
       toast.success("הטיימר נעצר");
       onChange();
     } else {
@@ -976,6 +989,7 @@ function TimeTab({
       return;
     }
     const startedAt = new Date(`${manual.date}T09:00:00`);
+    const durationSeconds = Math.round(hours * 3600);
     const res = await fetch("/api/admin/personal-time", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -983,7 +997,10 @@ function TimeTab({
         projectId: project.id,
         taskId: Number(manual.taskId),
         startedAt: startedAt.toISOString(),
-        durationSeconds: Math.round(hours * 3600),
+        // Backfilled hours are finished work — give them an end, so nothing
+        // mistakes them for a timer that's still running.
+        endedAt: new Date(startedAt.getTime() + durationSeconds * 1000).toISOString(),
+        durationSeconds,
         note: manual.note || null,
       }),
     });
@@ -1008,7 +1025,9 @@ function TimeTab({
     }
   }
 
-  const totalSec = entries.reduce((sum, t) => sum + (t.durationSeconds ?? 0), 0);
+  // Two numbers, on purpose: `wall` is time actually spent (parallel timers
+  // counted once), `raw` is the sum across tasks. They differ when work overlapped.
+  const { raw: rawSec, wall: wallSec, overlap: overlapSec } = timeTotals(entries);
 
   return (
     <div className="space-y-6">
@@ -1016,35 +1035,29 @@ function TimeTab({
         <TimeSection
           icon="⏱"
           title="מעקב עכשיו"
-          subtitle="בוחרים משימה ומתחילים — כל דקה נרשמת על המשימה שאתה עובד עליה."
+          subtitle="בוחרים משימה ומתחילים — אפשר כמה משימות במקביל, כל אחת עם הטיימר שלה."
         />
-      {isThisProject ? (
-        <div className="rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] p-4 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#2B7FFF] uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2B7FFF] animate-pulse" />
-              עובד על
-            </span>
-            <div className="text-[14px] font-semibold text-[#0F172A] truncate mt-0.5">
-              {active?.taskTitle ??
-                (active?.taskId ? taskTitleById.get(active.taskId) : null) ??
-                "משימה"}
-            </div>
-            <div className="font-mono text-[22px] font-bold text-[#0F172A] tabular-nums mt-1" dir="ltr">
-              {formatElapsed(elapsed)}
-            </div>
-          </div>
-          <button
-            onClick={stopTimer}
-            className="rounded-full bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[13px] font-semibold px-5 py-2 shrink-0"
-          >
-            ⏹ עצור
-          </button>
+      {projectActives.length > 0 && (
+        <div className="space-y-2">
+          {projectActives.map((a) => (
+            <RunningTimerCard
+              key={a.id}
+              startedAt={a.startedAt}
+              title={
+                a.taskTitle ?? (a.taskId ? taskTitleById.get(a.taskId) : null) ?? "משימה"
+              }
+              onStop={() => stopTimer(a.id)}
+            />
+          ))}
         </div>
-      ) : openTasks.length === 0 ? (
+      )}
+
+      {startableTasks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-white px-5 py-6 text-center">
           <p className="text-[13px] text-[#64748B]">
-            אין משימות פתוחות לעבוד עליהן.
+            {openTasks.length === 0
+              ? "אין משימות פתוחות לעבוד עליהן."
+              : "כל המשימות הפתוחות כבר מתוזמנות."}
           </p>
           <p className="text-[12px] text-[#94A3B8] mt-1">
             כל זמן נרשם על משימה — פתח משימה בטאב <span className="font-semibold">משימות</span> כדי להתחיל.
@@ -1062,7 +1075,7 @@ function TimeTab({
               className="w-full border border-[#E2E8F0] rounded-md bg-[#F8FAFC] px-3 py-2 text-[14px]"
             >
               <option value="">— בחר משימה —</option>
-              {openTasks.map((t) => (
+              {startableTasks.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
                 </option>
@@ -1087,9 +1100,9 @@ function TimeTab({
         </div>
       )}
 
-      {active && !isThisProject && (
-        <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          יש טיימר פעיל בפרויקט אישי אחר. התחלת טיימר כאן תעצור אותו.
+      {elsewhere > 0 && (
+        <p className="text-[12px] text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-3 py-2">
+          רצים עוד {elsewhere} טיימרים בפרויקטים אחרים — הם ממשיכים לרוץ.
         </p>
       )}
       </section>
@@ -1154,8 +1167,13 @@ function TimeTab({
       <div className="bg-white border border-[#E2E8F0] rounded-xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#F1F5F9]">
           <span className="text-[12px] text-[#64748B]">{entries.length} רשומות</span>
-          <span className="text-[13px] font-bold text-[#0F172A] tabular-nums">
-            סה&quot;כ {fmtHours(totalSec)}
+          <span className="text-[13px] font-bold text-[#0F172A] tabular-nums text-left">
+            {fmtHours(wallSec)} עבודה
+            {overlapSec > 0 && (
+              <span className="block text-[11px] font-normal text-[#94A3B8]">
+                {fmtHours(rawSec)} על פני המשימות · {fmtHours(overlapSec)} במקביל
+              </span>
+            )}
           </span>
         </div>
         {entries.length === 0 ? (
@@ -1218,6 +1236,47 @@ function TimeSection({
         {title}
       </h3>
       <p className="text-[11px] text-[#94A3B8] mt-0.5">{subtitle}</p>
+    </div>
+  );
+}
+
+interface ActiveTimerRow {
+  id: number;
+  projectId: number;
+  startedAt: string;
+  taskId?: number | null;
+  taskTitle?: string | null;
+}
+
+/** One running timer. Each keeps its own tick, so several can run side by side. */
+function RunningTimerCard({
+  startedAt,
+  title,
+  onStop,
+}: {
+  startedAt: string;
+  title: string;
+  onStop: () => void;
+}) {
+  const elapsed = useElapsed(startedAt);
+  return (
+    <div className="rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] p-4 flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#2B7FFF] uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2B7FFF] animate-pulse" />
+          עובד על
+        </span>
+        <div className="text-[14px] font-semibold text-[#0F172A] truncate mt-0.5">{title}</div>
+        <div className="font-mono text-[22px] font-bold text-[#0F172A] tabular-nums mt-1" dir="ltr">
+          {formatElapsed(elapsed)}
+        </div>
+      </div>
+      <button
+        onClick={onStop}
+        className="rounded-full bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[13px] font-semibold px-5 py-2 shrink-0"
+      >
+        ⏹ עצור
+      </button>
     </div>
   );
 }
