@@ -102,6 +102,7 @@ A real, auth-gated CRM/PM tool — separate from the marketing site. Hebrew, RTL
 ### Data layer (DB)
 - **Neon Postgres + Drizzle ORM.** Schema: `src/lib/db/schema.ts`. Client: `src/lib/db/client.ts` (lazy proxy — throws only on first query if `DATABASE_URL` is missing, so builds don't break).
 - Two domains: **client work** (`clients → projects → tasks / time_entries / project_links / communications / invoices`) and **personal projects** (`personal_projects → personal_tasks / personal_links / personal_time_entries` — no client, no billing).
+- **Tags** (personal projects only): `personal_tags` is a per-project catalogue (`slug` = the English handle agents send, `label` = the Hebrew display text, `color` = a palette key), joined to tasks many-to-many through `personal_task_tags`. A tag says *which area* the work touches ("PWA", "נדל״ן"); `personalTasks.type` says what the task *is*. All reads/writes go through `src/lib/admin/tags.ts` so the admin UI and the agent API resolve tags identically — matching by slug, then by label, then creating.
 - Read/aggregation helpers: `src/lib/admin/queries.ts`. Hebrew date/money/status formatting + label maps: `src/lib/admin/format.ts`.
 
 ### API routes (`src/app/api/admin/*`)
@@ -112,12 +113,13 @@ Narrow, token-authenticated surface so Claude Code sessions on *other* projects 
 
 | Route | Purpose |
 |---|---|
-| `GET /api/agent/context` | Project list, or (with `?projectKind=&projectId=`) open tasks + their `taskKey`s, checklists, recent journal, and the allowed enum values. |
-| `POST /api/agent/task` | Upsert a task, idempotent on `(projectId, agentKey)`. Won't move status — that must be journalled. |
-| `POST /api/agent/log` | Journal entry + status move + checklist ticks + time entry in one request. Idempotent via `externalKey`. |
+| `GET /api/agent/context` | Project list, or (with `?projectKind=&projectId=`) open tasks + their `taskKey`s and tags, checklists, recent journal, the project's tag catalogue, and the allowed enum values. |
+| `POST /api/agent/task` | Upsert a task, idempotent on `(projectId, agentKey)`. Won't move status — that must be journalled. `tags` here **replaces** the task's set. |
+| `POST /api/agent/log` | Journal entry + status move + checklist ticks + time entry in one request. Idempotent via `externalKey`. `tags` here is **additive**. |
 
 - Auth: `x-agent-token` (or `Authorization: Bearer`) compared to `AGENT_API_TOKEN` with `safeEqual`, in `src/lib/auth/agent.ts`. `src/middleware.ts` gates `/api/agent/*` with the token **only** — the admin cookie is deliberately not accepted there, so a browser session can't be driven into it cross-site.
 - Shared vocabulary, task resolution by `taskKey`, and update-kind mapping between the two domains live in `src/lib/agent/core.ts`.
+- A tag the agent names but the project doesn't have yet is **created** (`source: "agent"`) and reported in `warnings` — the taxonomy stays honest without the agent getting stuck mid-session.
 - Rows written this way carry `source: "agent"` + `agentName`; both timelines render a 🤖 badge for them. `tasks.agentKey` / `personalTasks.agentKey` are the stable slugs agents address tasks by.
 - The paste-into-another-session prompt that documents all of this is `admin-sync-prompt.md` at the repo root — update it whenever these routes change.
 
@@ -185,7 +187,8 @@ curl -sS --ssl-no-revoke -X POST "$YONIDEV_URL/api/agent/task" \
   "title": "מצב כהה לאתר",
   "description": "מה בדיוק צריך לעשות",
   "type": "feature", "priority": "medium", "estimateMinutes": 120,
-  "acceptance": "תנאי קבלה", "steps": ["טוקנים של צבע", "מתג בהדר"]
+  "acceptance": "תנאי קבלה", "steps": ["טוקנים של צבע", "מתג בהדר"],
+  "tags": ["admin", "ui"]
 }'
 ```
 
@@ -200,12 +203,17 @@ curl -sS --ssl-no-revoke -X POST "$YONIDEV_URL/api/agent/log" \
   "status": "in_progress",
   "nextAction": "הצעד הבא הקונקרטי",
   "completedSteps": ["טוקנים של צבע"],
+  "tags": ["ui"],
   "commitSha": "abc1234", "timeMinutes": 45,
   "agent": "claude-code", "externalKey": "dark-mode-2026-07-31-01"
 }'
 ```
 
 - `taskKey` — slug באנגלית קטנה עם מקפים, יציב. קריאה חוזרת עם אותו `taskKey` לא תיצור כפילות.
+- **`tags`** — על מה העבודה (אזור בפרויקט), לא מה סוג המשימה. קח את הסלאגים מ-`project.tags`
+  שחוזר ב-`context`. ב-`/task` הרשימה **מחליפה** את מה שיש; ב-`/log` היא **מתווספת**.
+  התגיות של הריפו הזה: `admin` (לוח בקרה), `db` (בסיס נתונים), `agent-api` (API סוכנים),
+  `ui` (ממשק) — הוסף חדשות רק כשבאמת אין מתאימה, ואז עם `{"slug":"x","label":"עברית"}`.
 - ערכי enum מגיעים ב-`vocabulary` שבתשובת `context` — אל תנחש.
   `kind`: `progress|decision|blocker|commit|research|bug|note|handoff`.
   `status`: `todo|in_progress|waiting|blocked|done|canceled`. **זו הדרך היחידה להזיז משימה.**

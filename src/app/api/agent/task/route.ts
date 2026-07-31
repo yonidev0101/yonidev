@@ -12,8 +12,10 @@ import {
   findTask,
   projectRefSchema,
   slugify,
+  tagInputSchema,
   taskUrl,
 } from "@/lib/agent/core";
+import { resolveTags, setTaskTags, tagsByTask } from "@/lib/admin/tags";
 
 /**
  * Upsert the task an agent is about to work on.
@@ -40,6 +42,11 @@ const bodySchema = projectRefSchema.extend({
   branchName: z.string().max(300).nullable().optional(),
   /** Checklist for the planned work. Personal projects only. */
   steps: z.array(z.string().min(1).max(300)).max(30).optional(),
+  /**
+   * Area tags. Personal projects only. Either a slug from the project's
+   * catalogue, or `{slug, label}` to define one that doesn't exist yet.
+   */
+  tags: z.array(tagInputSchema).max(20).optional(),
 });
 
 export async function POST(req: Request) {
@@ -55,8 +62,10 @@ export async function POST(req: Request) {
     const existing = await findTask(d.projectKind, d.projectId, { taskKey });
     const warnings: string[] = [];
 
-    if (d.projectKind === "client" && (d.steps?.length || d.type || d.acceptance)) {
-      warnings.push("steps / type / acceptance are personal-project fields and were ignored.");
+    if (d.projectKind === "client" && (d.steps?.length || d.type || d.acceptance || d.tags?.length)) {
+      warnings.push(
+        "steps / type / acceptance / tags are personal-project fields and were ignored.",
+      );
     }
 
     if (existing) {
@@ -82,6 +91,13 @@ export async function POST(req: Request) {
       if (d.projectKind === "personal" && d.steps?.length) {
         await addMissingSteps(existing.id, d.steps);
       }
+      // Sending tags on an existing task replaces the set — the agent is
+      // restating what this task is about, not appending to history.
+      if (d.projectKind === "personal" && d.tags) {
+        const resolved = await resolveTags(d.projectId, d.tags, "agent");
+        warnings.push(...resolved.warnings);
+        await setTaskTags(existing.id, resolved.tagIds);
+      }
       if (d.status && d.status !== existing.status) {
         warnings.push(
           `Task is "${existing.status}". Change status through POST /api/agent/log with "status": "${d.status}" so it is journalled.`,
@@ -90,7 +106,13 @@ export async function POST(req: Request) {
       return json({
         ok: true,
         created: false,
-        task: { id: existing.id, taskKey, title: existing.title, status: existing.status },
+        task: {
+          id: existing.id,
+          taskKey,
+          title: existing.title,
+          status: existing.status,
+          tags: await taskTagSlugs(d.projectKind, existing.id),
+        },
         url: taskUrl(req, d.projectKind, existing.id),
         warnings,
       });
@@ -118,11 +140,24 @@ export async function POST(req: Request) {
         })
         .returning();
       if (d.steps?.length) await addMissingSteps(created.id, d.steps);
+      let tagSlugs: string[] = [];
+      if (d.tags?.length) {
+        const resolved = await resolveTags(d.projectId, d.tags, "agent");
+        warnings.push(...resolved.warnings);
+        await setTaskTags(created.id, resolved.tagIds);
+        tagSlugs = await taskTagSlugs("personal", created.id);
+      }
       return json(
         {
           ok: true,
           created: true,
-          task: { id: created.id, taskKey, title: created.title, status: created.status },
+          task: {
+            id: created.id,
+            taskKey,
+            title: created.title,
+            status: created.status,
+            tags: tagSlugs,
+          },
           url: taskUrl(req, "personal", created.id),
           warnings,
         },
@@ -159,6 +194,13 @@ export async function POST(req: Request) {
   } catch (e) {
     return serverError(e);
   }
+}
+
+/** Tag slugs currently on a task — echoed back so the agent sees what stuck. */
+async function taskTagSlugs(projectKind: string, taskId: number): Promise<string[]> {
+  if (projectKind !== "personal") return [];
+  const map = await tagsByTask([taskId]);
+  return (map.get(taskId) ?? []).map((t) => t.slug);
 }
 
 /** Adds only the checklist items that aren't on the task yet — re-running a

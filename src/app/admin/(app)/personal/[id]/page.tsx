@@ -53,6 +53,7 @@ export default async function PersonalProjectDetailPage({
         tasks={data.tasks}
         links={data.links}
         timeEntries={data.timeEntries}
+        tags={data.tags}
       />
     </div>
   );

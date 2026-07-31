@@ -22,9 +22,11 @@ import {
   findTask,
   mapUpdateKind,
   projectRefSchema,
+  tagInputSchema,
   taskRefSchema,
   taskUrl,
 } from "@/lib/agent/core";
+import { addTaskTags, resolveTags, tagsByTask } from "@/lib/admin/tags";
 
 /**
  * The one endpoint an agent calls while it works: writes a journal entry, moves
@@ -44,6 +46,12 @@ const bodySchema = projectRefSchema.merge(taskRefSchema).extend({
   timeMinutes: z.coerce.number().int().min(0).max(24 * 60).nullable().optional(),
   /** Checklist titles to mark done (personal projects). Unknown titles are reported back. */
   completedSteps: z.array(z.string().min(1).max(300)).max(30).optional(),
+  /**
+   * Area tags to add to the task (personal projects). Additive, unlike
+   * POST /api/agent/task — work that turns out to touch the server too should
+   * gain "server", not lose the tags it already had.
+   */
+  tags: z.array(tagInputSchema).max(20).optional(),
   /** Name of the writing agent, for the "🤖" marker in the dashboard. */
   agent: z.string().max(80).optional(),
   /** Idempotency key — resend the same one and you get the original entry back. */
@@ -122,6 +130,11 @@ export async function POST(req: Request) {
           id: task.id,
           taskKey: task.agentKey,
           status: d.status ?? task.status,
+          ...(d.projectKind === "personal"
+            ? {
+                tags: ((await tagsByTask([task.id])).get(task.id) ?? []).map((t) => t.slug),
+              }
+            : {}),
         },
         loggedMinutes: result.loggedMinutes,
         url: taskUrl(req, d.projectKind, task.id),
@@ -231,6 +244,12 @@ async function logPersonal(
     }
   }
 
+  if (d.tags?.length) {
+    const resolved = await resolveTags(task.projectId, d.tags, "agent");
+    warnings.push(...resolved.warnings);
+    await addTaskTags(task.id, resolved.tagIds);
+  }
+
   return { updateId: created.id, loggedMinutes };
 }
 
@@ -242,8 +261,10 @@ async function logClient(
   statusChanged: boolean,
   warnings: string[],
 ) {
-  if (d.completedSteps?.length || d.commitSha) {
-    warnings.push("Checklist steps and commit links exist on personal projects only.");
+  if (d.completedSteps?.length || d.commitSha || d.tags?.length) {
+    warnings.push(
+      "Checklist steps, commit links and tags exist on personal projects only.",
+    );
   }
 
   const [created] = await db

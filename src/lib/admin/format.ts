@@ -504,3 +504,62 @@ export const INVOICE_STATUS_HE: Record<string, string> = {
   paid: "שולם",
   void: "בוטל",
 };
+
+// ── project tags ──────────────────────────────────────────────────────
+
+/**
+ * Tag palette. Keys are stored in `personal_tags.color`; the classes are
+ * written out in full because Tailwind only keeps classes it can see as
+ * literals — never build these strings by interpolation.
+ */
+export const TAG_COLOR_ORDER = [
+  "slate",
+  "blue",
+  "violet",
+  "emerald",
+  "amber",
+  "rose",
+  "cyan",
+  "fuchsia",
+] as const;
+
+export type TagColor = (typeof TAG_COLOR_ORDER)[number];
+
+export const TAG_COLOR_TONE: Record<string, string> = {
+  slate: "bg-[#F1F5F9] text-[#475569] border-[#E2E8F0]",
+  blue: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
+  violet: "bg-[#F5F3FF] text-[#6D28D9] border-[#DDD6FE]",
+  emerald: "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]",
+  amber: "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]",
+  rose: "bg-[#FFF1F2] text-[#BE123C] border-[#FECDD3]",
+  cyan: "bg-[#ECFEFF] text-[#0E7490] border-[#A5F3FC]",
+  fuchsia: "bg-[#FDF4FF] text-[#A21CAF] border-[#F5D0FE]",
+};
+
+/** Solid swatch for the colour picker in the tag manager. */
+export const TAG_COLOR_SWATCH: Record<string, string> = {
+  slate: "bg-[#94A3B8]",
+  blue: "bg-[#2B7FFF]",
+  violet: "bg-[#8B5CF6]",
+  emerald: "bg-[#10B981]",
+  amber: "bg-[#F59E0B]",
+  rose: "bg-[#F43F5E]",
+  cyan: "bg-[#06B6D4]",
+  fuchsia: "bg-[#D946EF]",
+};
+
+export function tagTone(color: string | null | undefined): string {
+  return TAG_COLOR_TONE[color ?? ""] ?? TAG_COLOR_TONE.slate;
+}
+
+/**
+ * Deterministic colour for a tag created without one (an agent inventing a tag
+ * mid-session). Same slug always lands on the same colour, so the palette stays
+ * stable instead of shuffling on every write.
+ */
+export function autoTagColor(slug: string): TagColor {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  // Skip "slate" — it reads as "uncategorised" and is reserved for manual use.
+  return TAG_COLOR_ORDER[1 + (h % (TAG_COLOR_ORDER.length - 1))];
+}

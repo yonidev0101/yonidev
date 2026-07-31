@@ -9,6 +9,8 @@ import { useElapsed } from "@/lib/admin/useLiveTimer";
 import { timeTotals } from "@/lib/admin/time";
 import TaskQuickAdd from "./TaskQuickAdd";
 import TaskTypeTag from "./TaskTypeTag";
+import TagChip, { type TagLite } from "./TagChip";
+import ProjectTagManager from "./ProjectTagManager";
 import { LinkKindTag, LinkKindOptions } from "./LinkKindTag";
 import type {
   PersonalProject,
@@ -31,10 +33,11 @@ import {
   fmtDateHe,
   fmtDateTimeHe,
   fmtHours,
+  tagTone,
 } from "@/lib/admin/format";
 
-/** Task rows carry checklist progress from the query, for the "✔ 3/7" badge. */
-type TaskRow = PersonalTask & { stepsTotal: number; stepsDone: number };
+/** Task rows carry checklist progress and tags from the query, for the badges. */
+type TaskRow = PersonalTask & { stepsTotal: number; stepsDone: number; tags: TagLite[] };
 
 type Props = {
   project: PersonalProject;
@@ -42,6 +45,8 @@ type Props = {
   tasks: TaskRow[];
   links: PersonalLink[];
   timeEntries: PersonalTimeEntry[];
+  /** The project's tag catalogue — what the filter row and manager offer. */
+  tags: TagLite[];
 };
 
 export default function PersonalProjectShell(props: Props) {
@@ -94,7 +99,12 @@ export default function PersonalProjectShell(props: Props) {
       </nav>
 
       {activeTab === "tasks" && (
-        <TasksTab project={project} tasks={props.tasks} onChange={refresh} />
+        <TasksTab
+          project={project}
+          tasks={props.tasks}
+          tags={props.tags}
+          onChange={refresh}
+        />
       )}
       {activeTab === "time" && (
         <TimeTab
@@ -534,10 +544,12 @@ function LinksInline({
 function TasksTab({
   project,
   tasks,
+  tags,
   onChange,
 }: {
   project: PersonalProject;
   tasks: TaskRow[];
+  tags: TagLite[];
   onChange: () => void;
 }) {
   async function setStatus(id: number, status: PersonalTask["status"]) {
@@ -580,12 +592,32 @@ function TasksTab({
   }
 
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  // Tag filters stack: picking two tags shows tasks carrying *both*, which is
+  // how you find "the PWA work on the info page" rather than either of them.
+  const [tagFilter, setTagFilter] = useState<number[]>([]);
 
-  // Count open tasks per type — drives the filter-chip badges.
+  // Count open tasks per type / tag — drives the filter-chip badges.
   const openTasks = tasks.filter((t) => personalTaskSection(t.status) === "active");
   const typeCounts = new Map<string, number>();
   for (const t of openTasks) typeCounts.set(t.type, (typeCounts.get(t.type) ?? 0) + 1);
-  const matchesFilter = (t: TaskRow) => typeFilter === null || t.type === typeFilter;
+  const tagCounts = new Map<number, number>();
+  for (const t of openTasks) {
+    for (const tag of t.tags) tagCounts.set(tag.id, (tagCounts.get(tag.id) ?? 0) + 1);
+  }
+  // Usage across *all* tasks, so the manager's delete warning is honest.
+  const tagUsage: Record<number, number> = {};
+  for (const t of tasks) for (const tag of t.tags) tagUsage[tag.id] = (tagUsage[tag.id] ?? 0) + 1;
+
+  const matchesFilter = (t: TaskRow) => {
+    if (typeFilter !== null && t.type !== typeFilter) return false;
+    if (tagFilter.length) {
+      const own = new Set(t.tags.map((tag) => tag.id));
+      if (!tagFilter.every((id) => own.has(id))) return false;
+    }
+    return true;
+  };
+  const toggleTag = (id: number) =>
+    setTagFilter((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const active = tasks
     .filter((t) => personalTaskSection(t.status) === "active" && matchesFilter(t))
@@ -637,10 +669,51 @@ function TasksTab({
         </div>
       )}
 
+      {tags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#CBD5E1]">
+            תגיות
+          </span>
+          {tags.map((tag) => {
+            const on = tagFilter.includes(tag.id);
+            const count = tagCounts.get(tag.id) ?? 0;
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => toggleTag(tag.id)}
+                aria-pressed={on}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                  on
+                    ? "bg-[#0F172A] text-white border-transparent"
+                    : `${tagTone(tag.color)} hover:brightness-95`
+                }`}
+              >
+                {tag.label}
+                <span className={`tabular-nums ${on ? "text-white/60" : "opacity-60"}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+          {tagFilter.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setTagFilter([])}
+              className="text-[11px] font-semibold text-[#94A3B8] hover:text-[#2B7FFF] px-1"
+            >
+              נקה
+            </button>
+          )}
+        </div>
+      )}
+
+      <ProjectTagManager projectId={project.id} tags={tags} usage={tagUsage} />
+
       {active.length === 0 && done.length === 0 && canceled.length === 0 ? (
         <p className="text-[13px] text-[#94A3B8] bg-white border border-[#E2E8F0] rounded-xl py-10 text-center">
-          {typeFilter
-            ? `אין משימות מסוג ${PERSONAL_TASK_TYPE_HE[typeFilter]}.`
+          {typeFilter || tagFilter.length
+            ? "אין משימות שתואמות את הסינון."
             : "עוד אין משימות. הוסף את הראשונה למעלה."}
         </p>
       ) : (
@@ -731,6 +804,9 @@ function FocusStrip({ task }: { task: TaskRow }) {
           {working ? "על מה אני עכשיו" : "הבא בתור"}
         </span>
         <TaskTypeTag type={task.type} />
+        {task.tags.map((tag) => (
+          <TagChip key={tag.id} tag={tag} size="xs" />
+        ))}
         {task.stepsTotal > 0 && (
           <span className="text-[11px] text-[#64748B] tabular-nums">
             ✔ {task.stepsDone}/{task.stepsTotal}
@@ -827,6 +903,9 @@ function TaskListRow({
           {task.title}
         </Link>
         <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#94A3B8]">
+          {task.tags.map((tag) => (
+            <TagChip key={tag.id} tag={tag} size="xs" />
+          ))}
           {task.stepsTotal > 0 && (
             <span className="tabular-nums">✔ {task.stepsDone}/{task.stepsTotal}</span>
           )}
