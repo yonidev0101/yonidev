@@ -144,3 +144,89 @@ Narrow, token-authenticated surface so Claude Code sessions on *other* projects 
 | `public/logo/y-logo-full.png` | Y + "YoniDev" text — for OG images / splash |
 | `public/tech/*.svg` | Tech logo SVGs for the Technologies section |
 | `public/projects/*.png` | Project screenshots — filename must match `project.image` in data |
+
+## סנכרון עם לוח הבקרה של YoniDev (חובה)
+
+העבודה בפרויקט הזה מנוהלת בלוח הבקרה של YoniDev — כלומר בפרויקט הזה עצמו, בפרודקשן.
+**אתה** אחראי לעדכן שם את המשימה ואת לוג ההתקדמות — אל תחכה שיבקשו ממך.
+
+### הגדרות
+
+- `PROJECT_KIND` = `personal`
+- `PROJECT_ID` = `2` (הפרויקט "yonidev" בלוח)
+- `YONIDEV_URL`, `YONIDEV_AGENT_TOKEN` — ב-`.env.local` בלבד, לא ב-git.
+  ברירת מחדל: `https://yonidev.vercel.app`. אם שרת הפיתוח רץ אפשר גם `http://localhost:3000`.
+
+כל הקריאות נושאות `x-agent-token: $YONIDEV_AGENT_TOKEN`. אין login, אין cookie.
+
+> על Windows כאן: `curl` דרך schannel נופל על `CRYPT_E_NO_REVOCATION_CHECK` בגלל
+> ה-MITM של Rimon — הוסף `--ssl-no-revoke` לכל קריאה.
+
+יש בדיוק שלוש נקודות קצה (מוגדרות ב-`src/app/api/agent/*` בריפו הזה):
+
+| מתי | קריאה |
+|---|---|
+| בתחילת סשן | `GET /api/agent/context?projectKind=personal&projectId=2` |
+| כשמתחילים משימה | `POST /api/agent/task` — יוצר או מוצא (idempotent על `taskKey`) |
+| תוך כדי ובסיום | `POST /api/agent/log` — יומן + סטטוס + זמן + צ'קליסט |
+
+### דוגמאות
+
+```bash
+curl -sS --ssl-no-revoke -H "x-agent-token: $YONIDEV_AGENT_TOKEN" \
+  "$YONIDEV_URL/api/agent/context?projectKind=personal&projectId=2"
+```
+
+```bash
+curl -sS --ssl-no-revoke -X POST "$YONIDEV_URL/api/agent/task" \
+  -H "x-agent-token: $YONIDEV_AGENT_TOKEN" -H 'Content-Type: application/json' -d '{
+  "projectKind": "personal", "projectId": 2,
+  "taskKey": "dark-mode",
+  "title": "מצב כהה לאתר",
+  "description": "מה בדיוק צריך לעשות",
+  "type": "feature", "priority": "medium", "estimateMinutes": 120,
+  "acceptance": "תנאי קבלה", "steps": ["טוקנים של צבע", "מתג בהדר"]
+}'
+```
+
+```bash
+curl -sS --ssl-no-revoke -X POST "$YONIDEV_URL/api/agent/log" \
+  -H "x-agent-token: $YONIDEV_AGENT_TOKEN" -H 'Content-Type: application/json' -d '{
+  "projectKind": "personal", "projectId": 2,
+  "taskKey": "dark-mode",
+  "kind": "progress",
+  "summary": "משפט אחד בעברית — מה נעשה",
+  "details": "קבצים שנגעתי בהם, החלטות, מה נשאר",
+  "status": "in_progress",
+  "nextAction": "הצעד הבא הקונקרטי",
+  "completedSteps": ["טוקנים של צבע"],
+  "commitSha": "abc1234", "timeMinutes": 45,
+  "agent": "claude-code", "externalKey": "dark-mode-2026-07-31-01"
+}'
+```
+
+- `taskKey` — slug באנגלית קטנה עם מקפים, יציב. קריאה חוזרת עם אותו `taskKey` לא תיצור כפילות.
+- ערכי enum מגיעים ב-`vocabulary` שבתשובת `context` — אל תנחש.
+  `kind`: `progress|decision|blocker|commit|research|bug|note|handoff`.
+  `status`: `todo|in_progress|waiting|blocked|done|canceled`. **זו הדרך היחידה להזיז משימה.**
+- `externalKey` — מפתח ייחודי לעדכון; ניסיון חוזר עם אותו מפתח מחזיר `"duplicate": true`.
+- `commitSha` לבד מספיק — הלוח בונה את הקישור לגיטהאב לפי הריפו של הפרויקט.
+
+### מתי לעדכן
+
+1. **בתחילת משימה** — `POST /api/agent/task`, ואז `log` עם `"status": "in_progress"`.
+2. **תוך כדי** — `log` אחרי כל צעד משמעותי: פיצ'ר, החלטה, באג שנפתר, חסימה, קומיט.
+3. **בסיום** — `log` עם סיכום, `"status": "done"`, ו-`nextAction` אם נשאר משהו פתוח.
+
+**אל תשאל רשות לפני כל עדכון** — פשוט עשה, וציין בשורה אחת מה נכתב ולאיזה `url`.
+
+### כללים
+
+- `summary` / `details` / `nextAction` **בעברית**, ענייני. `summary` = שורה אחת עד 500 תווים.
+- `taskKey` נשמר כאן ב-`CLAUDE.md` ליד תיאור המשימה.
+- אל תנסה בלולאה אחרי שגיאה: `401` = טוקן, `404` = משימה לא קיימת, `422` = שדה לא תקין
+  (פירוט ב-`issues`). דווח ותמשיך לעבוד.
+- אם הלוח לא זמין — המשך לעבוד וציין בסוף שהעדכון לא נשמר.
+- **זהירות מיוחדת בריפו הזה:** שינוי ב-`src/app/api/agent/*` או ב-`src/lib/agent/core.ts`
+  משנה את ה-API שאתה עצמך משתמש בו. אחרי דיפלוי כזה, ודא ב-`context` שהכל עדיין עונה,
+  ועדכן את `admin-sync-prompt.md` (ה-prompt להדבקה בפרויקטים אחרים) ואת הסעיף הזה.
