@@ -65,6 +65,19 @@ export function mapUpdateKind(projectKind: ProjectKind, kind: AgentUpdateKind): 
   }
 }
 
+/**
+ * A tag reference: a bare slug from the project's catalogue, or an object that
+ * also carries the Hebrew label to use if the tag has to be created.
+ */
+export const tagInputSchema = z.union([
+  z.string().min(1).max(60),
+  z.object({
+    slug: z.string().min(1).max(40).optional(),
+    label: z.string().min(1).max(60).optional(),
+    color: z.string().max(20).optional(),
+  }),
+]);
+
 export const projectRefSchema = z.object({
   projectKind: z.enum(PROJECT_KINDS),
   projectId: z.coerce.number().int().positive(),

@@ -15,6 +15,7 @@ import {
   tasks,
 } from "@/lib/db/client";
 import { json, serverError } from "@/lib/admin/http";
+import { listProjectTags, tagsByTask } from "@/lib/admin/tags";
 import { requireAgent } from "@/lib/auth/agent";
 import {
   AGENT_UPDATE_KINDS,
@@ -70,6 +71,8 @@ const VOCABULARY = {
   personalTaskType: PERSONAL_TASK_TYPES,
   updateKind: AGENT_UPDATE_KINDS,
   note: "Write Hebrew in summary / details / nextAction. Statuses change through POST /api/agent/log so the move is journalled.",
+  tagsNote:
+    "Personal projects only. Send tag slugs from project.tags on every task — they say which area of the project the work touches. A slug that doesn't exist is created and reported in warnings, so prefer the listed ones.",
 };
 
 async function listProjects() {
@@ -120,7 +123,7 @@ async function personalContext(projectId: number) {
     .where(eq(personalProjects.id, projectId));
   if (!project) return null;
 
-  const [openTasks, links, recent] = await Promise.all([
+  const [openTasks, links, recent, tagCatalog] = await Promise.all([
     db
       .select()
       .from(personalTasks)
@@ -145,7 +148,10 @@ async function personalContext(projectId: number) {
       .where(eq(personalTasks.projectId, projectId))
       .orderBy(desc(personalTaskUpdates.happenedAt))
       .limit(10),
+    listProjectTags(projectId),
   ]);
+
+  const taskTags = await tagsByTask(openTasks.map((t) => t.id));
 
   const stepRows = openTasks.length
     ? await db
@@ -169,6 +175,8 @@ async function personalContext(projectId: number) {
       description: project.description,
       nextAction: project.nextAction,
       links: links.map((l) => ({ kind: l.kind, label: l.label, url: l.url })),
+      // The project's own tag vocabulary — pick from these, don't invent.
+      tags: tagCatalog.map((t) => ({ slug: t.slug, label: t.label })),
     },
     openTasks: openTasks.map((t) => ({
       id: t.id,
@@ -176,6 +184,7 @@ async function personalContext(projectId: number) {
       title: t.title,
       status: t.status,
       type: t.type,
+      tags: (taskTags.get(t.id) ?? []).map((tag) => tag.slug),
       priority: t.priority,
       nextAction: t.nextAction,
       acceptance: t.acceptance,

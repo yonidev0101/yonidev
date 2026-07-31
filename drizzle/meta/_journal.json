@@ -78,6 +78,13 @@
       "when": 1785418893445,
       "tag": "0010_curious_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785491261445,
+      "tag": "0011_perfect_thanos",
+      "breakpoints": true
     }
   ]
 }

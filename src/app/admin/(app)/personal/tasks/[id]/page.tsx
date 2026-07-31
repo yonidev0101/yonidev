@@ -18,6 +18,7 @@ import PersonalTaskTimeline, {
 import PersonalTaskMetaPanel from "@/components/admin/PersonalTaskMetaPanel";
 import TaskStatusPicker from "@/components/admin/TaskStatusPicker";
 import TaskTypeTag from "@/components/admin/TaskTypeTag";
+import TaskTagPicker from "@/components/admin/TaskTagPicker";
 import PersonalTaskChecklist from "@/components/admin/PersonalTaskChecklist";
 import PersonalTaskGitPanel, {
   type GitCommit,
@@ -41,6 +42,12 @@ export default async function PersonalTaskDetailPage({
   const data = await getPersonalTaskWithUpdates(id);
   if (!data) notFound();
   const { task, project, repoUrl, updates, sessions, activeSession, steps, totalSeconds } = data;
+  const tagLite = (t: { id: number; slug: string; label: string; color: string }) => ({
+    id: t.id,
+    slug: t.slug,
+    label: t.label,
+    color: t.color,
+  });
 
   const estSeconds = task.estimateMinutes != null ? task.estimateMinutes * 60 : null;
   const overBudget = estSeconds != null && totalSeconds > estSeconds;
@@ -103,6 +110,14 @@ export default async function PersonalTaskDetailPage({
             <h1 className="text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight leading-tight mt-1.5">
               {task.title}
             </h1>
+            <div className="mt-2">
+              <TaskTagPicker
+                taskId={task.id}
+                projectId={task.projectId}
+                tags={data.tags.map(tagLite)}
+                projectTags={data.projectTags.map(tagLite)}
+              />
+            </div>
           </div>
           <TaskStatusPicker taskId={task.id} status={task.status} kind="personal-task" />
           <PersonalTaskMetaPanel

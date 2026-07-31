@@ -11,6 +11,7 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -418,6 +419,54 @@ export const personalTaskSteps = pgTable(
   (t) => [index("personal_task_steps_task_idx").on(t.taskId)],
 );
 
+/**
+ * Per-project tag catalogue. `type` says what a task *is* (feature/bug); a tag
+ * says what area of the project it touches — "PWA", "נדל״ן", "עיצוב". Each
+ * project defines its own vocabulary, so "שרת" on one project is unrelated to
+ * "שרת" on another and they can carry different colours.
+ *
+ * `slug` is the stable English handle an agent addresses the tag by; `label` is
+ * what the dashboard shows (usually Hebrew).
+ */
+export const personalTags = pgTable(
+  "personal_tags",
+  {
+    id: serial("id").primaryKey(),
+    projectId: integer("project_id")
+      .notNull()
+      .references(() => personalProjects.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    label: text("label").notNull(),
+    // Palette key resolved to classes in lib/admin/format.ts — not a raw colour.
+    color: text("color").notNull().default("slate"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    source: authorSourceEnum("source").notNull().default("human"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("personal_tags_project_idx").on(t.projectId),
+    uniqueIndex("personal_tags_slug_idx").on(t.projectId, t.slug),
+  ],
+);
+
+/** Many-to-many: a task carries as many area tags as it actually touches. */
+export const personalTaskTags = pgTable(
+  "personal_task_tags",
+  {
+    taskId: integer("task_id")
+      .notNull()
+      .references(() => personalTasks.id, { onDelete: "cascade" }),
+    tagId: integer("tag_id")
+      .notNull()
+      .references(() => personalTags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.taskId, t.tagId] }),
+    index("personal_task_tags_tag_idx").on(t.tagId),
+  ],
+);
+
 /** Work journal for a personal task: what happened, when, and against which commit. */
 export const personalTaskUpdates = pgTable(
   "personal_task_updates",
@@ -543,6 +592,7 @@ export const personalProjectsRelations = relations(personalProjects, ({ many }) 
   tasks: many(personalTasks),
   links: many(personalLinks),
   timeEntries: many(personalTimeEntries),
+  tags: many(personalTags),
 }));
 
 export const personalTasksRelations = relations(personalTasks, ({ one, many }) => ({
@@ -553,6 +603,26 @@ export const personalTasksRelations = relations(personalTasks, ({ one, many }) =
   timeEntries: many(personalTimeEntries),
   updates: many(personalTaskUpdates),
   steps: many(personalTaskSteps),
+  taskTags: many(personalTaskTags),
+}));
+
+export const personalTagsRelations = relations(personalTags, ({ one, many }) => ({
+  project: one(personalProjects, {
+    fields: [personalTags.projectId],
+    references: [personalProjects.id],
+  }),
+  taskTags: many(personalTaskTags),
+}));
+
+export const personalTaskTagsRelations = relations(personalTaskTags, ({ one }) => ({
+  task: one(personalTasks, {
+    fields: [personalTaskTags.taskId],
+    references: [personalTasks.id],
+  }),
+  tag: one(personalTags, {
+    fields: [personalTaskTags.tagId],
+    references: [personalTags.id],
+  }),
 }));
 
 export const personalTaskStepsRelations = relations(personalTaskSteps, ({ one }) => ({
@@ -623,3 +693,5 @@ export type PersonalTaskUpdate = typeof personalTaskUpdates.$inferSelect;
 export type NewPersonalTaskUpdate = typeof personalTaskUpdates.$inferInsert;
 export type PersonalTaskStep = typeof personalTaskSteps.$inferSelect;
 export type NewPersonalTaskStep = typeof personalTaskSteps.$inferInsert;
+export type PersonalTag = typeof personalTags.$inferSelect;
+export type NewPersonalTag = typeof personalTags.$inferInsert;

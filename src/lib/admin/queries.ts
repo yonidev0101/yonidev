@@ -17,6 +17,7 @@ import {
 } from "@/lib/db/client";
 import { and, asc, desc, eq, gte, isNull, lte, sql, inArray } from "drizzle-orm";
 import { isTaskClosed } from "@/lib/admin/format";
+import { listProjectTags, tagsByTask } from "@/lib/admin/tags";
 import { rawSeconds, wallClockSeconds, overlapSeconds } from "@/lib/admin/time";
 
 export async function getDashboardData() {
@@ -622,6 +623,11 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
   // Running = no end and no duration; backfilled hours have one without the other.
   const activeSession = sessions.find((s) => !s.endedAt && s.durationSeconds == null) ?? null;
 
+  const [tagCatalog, taskTags] = await Promise.all([
+    listProjectTags(row.task.projectId),
+    tagsByTask([taskId]),
+  ]);
+
   return {
     task: row.task,
     project: row.project,
@@ -631,6 +637,8 @@ export async function getPersonalTaskWithUpdates(taskId: number) {
     activeSession,
     steps,
     totalSeconds,
+    tags: taskTags.get(taskId) ?? [],
+    projectTags: tagCatalog,
   };
 }
 
@@ -717,14 +725,20 @@ export async function getPersonalProjectWithRelations(projectId: number) {
       .groupBy(personalTaskSteps.taskId),
   ]);
 
+  const [tagCatalog, taskTags] = await Promise.all([
+    listProjectTags(projectId),
+    tagsByTask(projectTasks.map((t) => t.id)),
+  ]);
+
   const stepsByTask = new Map(stepCounts.map((r) => [r.taskId, r]));
   const tasksWithSteps = projectTasks.map((t) => ({
     ...t,
     stepsTotal: stepsByTask.get(t.id)?.total ?? 0,
     stepsDone: stepsByTask.get(t.id)?.done ?? 0,
+    tags: taskTags.get(t.id) ?? [],
   }));
 
-  return { project, tasks: tasksWithSteps, links, timeEntries: time };
+  return { project, tasks: tasksWithSteps, links, timeEntries: time, tags: tagCatalog };
 }
 
 export async function getProjectWithRelations(projectId: number) {
